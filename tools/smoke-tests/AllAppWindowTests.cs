@@ -39,6 +39,8 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 Require(uv.x >= 0 && uv.x <= 1 && uv.y >= 0 && uv.y <= 1, "App control lies outside the desktop texture");
                 Vector3 point = surface.transform.TransformPoint(new Vector3(uv.x - .5f, uv.y - .5f, 0));
                 manager.Rig.Right.Aim.SetPositionAndRotation(point - surface.transform.forward * .35f, surface.transform.rotation);
+                // The fixture teleports the aim between controls rather than moving a real hand.
+                typeof(VRPointer).GetMethod("ResetAim", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(manager.Pointer, null);
             }
             try
             {

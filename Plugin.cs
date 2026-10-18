@@ -30,6 +30,8 @@ namespace ScamWithYourFriendsInVR
         public static ConfigEntry<int> PanelPixels;
         public static ConfigEntry<int> DesktopCameraFPS;
         public static ConfigEntry<bool> VirtualKeyboard;
+        public static ConfigEntry<bool> AlwaysShowPointer;
+        public static ConfigEntry<float> PointerSmoothing, DoubleClickWindow;
         private Component manager;
         private Component multiplayer;
 
@@ -50,6 +52,9 @@ namespace ScamWithYourFriendsInVR
             MirrorFullView = Config.Bind("UI", "MirrorFullView", true, "Fit the full left eye image in the PC window when the XR provider exposes a 2D eye texture. Unsupported array/foveated/packed mirrors retain provider behavior.");
             PhysicalDesktop = Config.Bind("UI", "PhysicalDesktop", false, "Optional: keep computer UI on the desk monitor. Off opens a readable floating controller-pointer desktop.");
             VirtualKeyboard = Config.Bind("UI", "VirtualKeyboard", false, "Experimental floating text keyboard. Disabled by default; computer interaction uses the controller pointer and text entry uses your PC keyboard.");
+            AlwaysShowPointer = Config.Bind("UI", "AlwaysShowPointer", false, "Keep the laser visible during ordinary gameplay. Off shows it for menus, computers and usable targets.");
+            PointerSmoothing = Config.Bind("UI", "PointerSmoothing", .025f, new ConfigDescription("Seconds of adaptive aim smoothing for UI; 0 disables it. Hand tracking stays direct.", new AcceptableValueRange<float>(0, .1f)));
+            DoubleClickWindow = Config.Bind("UI", "DoubleClickWindow", .4f, new ConfigDescription("Maximum interval between controller clicks for a double click", new AcceptableValueRange<float>(.2f, .7f)));
             PanelPixels = Config.Bind("UI", "PanelPixels", 2560, new ConfigDescription("Floating desktop texture width; 16:9. Higher improves text clarity and costs GPU memory.", new AcceptableValueRange<int>(1280, 3840)));
             BalancedVR = Config.Bind("Performance", "BalancedVR", true, "Apply reversible VR scene render/shadow limits without changing saved game graphics preferences.");
             DesktopCameraFPS = Config.Bind("Performance", "DesktopCameraFPS", 15, new ConfigDescription("Maximum frame rate of the in-game camera app preview. The headset keeps its own frame rate; photographs use the most recent preview frame.", new AcceptableValueRange<int>(5, 60)));

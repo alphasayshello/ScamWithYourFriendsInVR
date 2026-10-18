@@ -16,6 +16,8 @@ Standing room movement is disabled while seated or when native gameplay input is
 
 Aim the right controller at a button and press the trigger. Hold the trigger to drag a slider or scroll bar. Use the left stick vertically to scroll while pointing at UI; right-stick vertical scrolling also works. Let the stick return to centre afterward.
 
+The laser stays visible in menus and computers. During normal play it appears for usable targets and hides when idle. Temporary controller capsules have been removed; the game's tracked avatar hands remain. UI aiming uses light adaptive smoothing while hands stay directly tracked. Set `UI.AlwaysShowPointer = true` for a permanent beam, or `UI.PointerSmoothing = 0` for direct aiming. Controller double clicks allow 0.4 seconds between presses by default (`UI.DoubleClickWindow`).
+
 **Left X** opens players. **Left Y** or the controller menu backs out of players, exits a captured computer, or toggles settings. Floating menus/HUD follow your view at **0.9 metres** by default. Adjust `[UI] PanelDistance` and `PanelWidth` if needed.
 
 ## Computers

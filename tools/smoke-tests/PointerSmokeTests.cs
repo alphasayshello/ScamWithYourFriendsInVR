@@ -20,6 +20,10 @@ namespace ScamWithYourFriendsInVR.SmokeTests
         {
             if (!Environment.GetCommandLineArgs().Contains("--swyf-vr-smoke-tests")) yield break;
             yield return null;
+            try { TestGameAdapterCache(); Logger.LogInfo("SMOKE PASS: cached game fields, properties, owner types, inherited methods and optional arguments"); }
+            catch (Exception ex) { Logger.LogError("SMOKE FAIL: game adapter cache: " + ex.GetBaseException()); }
+            try { TestPointerAim(); Logger.LogInfo("SMOKE PASS: adaptive aim stability, direct fast turns, reset and contextual pointer visibility"); }
+            catch (Exception ex) { Logger.LogError("SMOKE FAIL: pointer aim: " + ex.GetBaseException()); }
             try { TestRoomScale(); Logger.LogInfo("SMOKE PASS: room-scale body follows tracking without double movement and respects walls/disabled controllers"); }
             catch (Exception ex) { Logger.LogError("SMOKE FAIL: room-scale body: " + ex.GetBaseException()); }
             try { TestPoseProtocol(); Logger.LogInfo("SMOKE PASS: pose serialization, invalid data rejection, sequence wrap and remote arm solve/restore"); }
@@ -185,7 +189,10 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             typeof(VRPointer).GetField("toolkitDown", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(pointer, true);
             typeof(VRPointer).GetField("pressedElement", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(pointer, element);
             element.RemoveFromHierarchy();
-            pointer.Cancel();
+            typeof(VRPointer).GetMethod("CancelToolkit", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(pointer, null);
+            Type pointerState = typeof(VisualElement).Assembly.GetType("UnityEngine.UIElements.PointerDeviceState");
+            Check((int)pointerState.GetMethod("GetPressedButtons", BindingFlags.Public | BindingFlags.Static).Invoke(null, new object[] { VRPointer.ToolkitPointerId }) == 0,
+                "Removing a pressed panel left the controller's global button state held");
             document.rootVisualElement.Add(element);
             Send(EventType.MouseMove, false);
             Check(string.Join(",", events) == "down:1,move:0", "Detached target left a pressed pointer button: " + string.Join(",", events));
@@ -237,9 +244,21 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             Check(canvas.transform.parent == parent.transform, "VR canvas escaped its native parent");
             Check(Vector3.Distance(rect.position, patcher.Anchor.position) < 0.001f, "VR canvas did not follow its anchor");
             Check(Mathf.Abs(rect.lossyScale.x * pixelsWide - Plugin.PanelWidth.Value) < 0.005f, "Native parent scale changed VR canvas width");
+            var image = new GameObject("temporary menu graphic", typeof(RectTransform), typeof(UnityEngine.UI.Image)).GetComponent<UnityEngine.UI.Image>();
+            image.transform.SetParent(canvas.transform, false);
+            var survivingImage = new GameObject("surviving menu graphic", typeof(RectTransform), typeof(UnityEngine.UI.Image)).GetComponent<UnityEngine.UI.Image>();
+            survivingImage.transform.SetParent(canvas.transform, false);
+            Material nativeMaterial = survivingImage.material;
+            typeof(VRUIPatcher).GetMethod("PrepareFloatingGraphics", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(patcher, new object[] { canvas });
+            var materials = (System.Collections.IDictionary)typeof(VRUIPatcher).GetField("floatingMaterials", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(patcher);
+            Check(materials.Count == 2 && survivingImage.material != nativeMaterial, "Floating graphics ownership was not recorded");
+            DestroyImmediate(image.gameObject);
+            typeof(VRUIPatcher).GetMethod("PruneDestroyedGraphics", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(patcher, null);
+            Check(materials.Count == 1, "Destroyed UI retained its owned material cache entry");
             parent.SetActive(false);
             Check(!canvas.isActiveAndEnabled, "Native parent no longer hides converted canvas");
             patcher.Restore();
+            Check(survivingImage.material == nativeMaterial && materials.Count == 0, "Live UI material was not restored after cache pruning");
             Check(rect.parent == parent.transform && Vector3.Distance(rect.localPosition, position) < 0.001f && Vector3.Distance(rect.localScale, scale) < 0.001f
                 && canvas.renderMode == originalMode && !canvas.isActiveAndEnabled, "Canvas restoration changed native visibility or transform: " + rect.localPosition + "/" + position + "; mode=" + canvas.renderMode + "/" + originalMode);
             var settings = Own(ScriptableObject.CreateInstance<PanelSettings>());

@@ -8,7 +8,18 @@ namespace ScamWithYourFriendsInVR.Patches
 {
     internal static class GameAdapter
     {
-        private static readonly Dictionary<string, MemberInfo> members = new Dictionary<string, MemberInfo>();
+        private readonly struct MemberKey : IEquatable<MemberKey>
+        {
+            private readonly Type type;
+            private readonly string name;
+            private readonly bool method;
+            internal MemberKey(Type type, string name, bool method = false) { this.type = type; this.name = name; this.method = method; }
+            public bool Equals(MemberKey other) => type == other.type && name == other.name && method == other.method;
+            public override bool Equals(object other) => other is MemberKey key && Equals(key);
+            public override int GetHashCode() { unchecked { return ((type.GetHashCode() * 397) ^ name.GetHashCode()) * 397 ^ (method ? 1 : 0); } }
+            public override string ToString() => type.FullName + "." + name + (method ? "()" : "");
+        }
+        private static readonly Dictionary<MemberKey, MemberInfo> members = new Dictionary<MemberKey, MemberInfo>();
         private static readonly Dictionary<MethodInfo, ParameterInfo[]> methodParameters = new Dictionary<MethodInfo, ParameterInfo[]>();
         private static readonly HashSet<string> failures = new HashSet<string>();
         internal static Component LocalPlayer => Static("Metater.MetaPlayer", "LocalPlayerInstance") as Component;
@@ -33,7 +44,7 @@ namespace ScamWithYourFriendsInVR.Patches
 
         private static object Get(Type type, object target, string name)
         {
-            string key = type.FullName + "." + name;
+            var key = new MemberKey(type, name);
             try
             {
                 if (!members.TryGetValue(key, out MemberInfo info))
@@ -48,32 +59,32 @@ namespace ScamWithYourFriendsInVR.Patches
                 if (info is PropertyInfo property) return property.GetValue(target);
                 return (info as FieldInfo)?.GetValue(target);
             }
-            catch (Exception ex) { Report(key, ex); return null; }
+            catch (Exception ex) { Report(key.ToString(), ex); return null; }
         }
 
         internal static void Write(object target, string name, object value)
         {
             if (target == null) return;
-            string key = target.GetType().FullName + "." + name;
+            var key = new MemberKey(target.GetType(), name);
             try
             {
                 Get(target.GetType(), target, name);
                 if (members[key] is FieldInfo field) field.SetValue(target, value);
                 else if (members[key] is PropertyInfo property && property.CanWrite) property.SetValue(target, value);
             }
-            catch (Exception ex) { Report(key, ex); }
+            catch (Exception ex) { Report(key.ToString(), ex); }
         }
 
         internal static object Call(object target, string name, params object[] args)
         {
             if (target == null || target is UnityEngine.Object obj && obj == null) return null;
-            string key = target.GetType().FullName + "." + name;
+            var key = new MemberKey(target.GetType(), name, true);
             try
             {
-                if (!members.TryGetValue(key + "()", out MemberInfo info))
+                if (!members.TryGetValue(key, out MemberInfo info))
                 {
                     info = AccessTools.Method(target.GetType(), name);
-                    members[key + "()"] = info;
+                    members[key] = info;
                 }
                 if (!(info is MethodInfo method)) return null;
                 if (!methodParameters.TryGetValue(method, out ParameterInfo[] parameters))
@@ -91,7 +102,7 @@ namespace ScamWithYourFriendsInVR.Patches
                 }
                 return method.Invoke(target, args);
             }
-            catch (Exception ex) { Report(key, ex); return null; }
+            catch (Exception ex) { Report(key.ToString(), ex); return null; }
         }
 
         internal static bool Allowed(Component interactor)

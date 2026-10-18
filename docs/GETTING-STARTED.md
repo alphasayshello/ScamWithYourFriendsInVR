@@ -31,6 +31,9 @@ Quest Link/Air Link can use the Meta PC OpenXR runtime. Index/Vive use a suitabl
 | `UI / PanelWidth` | `1.6` | Floating UI width, metres |
 | `UI / PhysicalDesktop` | `false` | Optional desktop on the native monitor |
 | `UI / VirtualKeyboard` | `false` | Experimental floating keyboard; PC keyboard otherwise |
+| `UI / AlwaysShowPointer` | `false` | Keep the laser visible during ordinary gameplay |
+| `UI / PointerSmoothing` | `0.025` | Adaptive UI aim smoothing, seconds; 0 disables |
+| `UI / DoubleClickWindow` | `0.4` | Allowed time between controller double clicks, seconds |
 | `Comfort / Seated` | `false` | Recenter with seated height compensation |
 | `Comfort / SnapDegrees` | `30` | Snap-turn angle |
 | `Performance / SceneRenderScale` | `0.85` | VR scene render scale |

@@ -13,6 +13,9 @@
 
 ## Changed, needs another headset check
 
+- Temporary controller capsules (the bean shapes) are removed. The laser now hides during idle gameplay and uses steadier UI aiming, a smaller distance-scaled reticle and more forgiving double clicks. Its feel still needs a headset check.
+- Tracking reads and UI scans do less repeated work, and destroyed menu graphics release their owned material entries. Smooth performance in busy scenes still needs more work.
+
 - Computers now use a floating desktop and controller pointer. Clicking, dragging, scrolling and window controls have been checked, but the revised computer experience still needs headset testing.
 - Head turns now drive the local model, with body turning kept separate from view rotation.
 - Moving around your room now moves the collision body while keeping the headset aligned. Leaning, walls, stairs and in-game chairs need more checking.

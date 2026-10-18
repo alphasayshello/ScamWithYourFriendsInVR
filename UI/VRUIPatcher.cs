@@ -28,6 +28,8 @@ namespace ScamWithYourFriendsInVR.UI
         private bool lastSettings;
         private readonly Dictionary<Graphic, GraphicMaterial> floatingMaterials = new Dictionary<Graphic, GraphicMaterial>();
         private readonly Dictionary<Canvas, AdditionalCanvasShaderChannels> canvasChannels = new Dictionary<Canvas, AdditionalCanvasShaderChannels>();
+        private readonly List<Canvas> nestedCanvasBuffer = new List<Canvas>(), deadCanvases = new List<Canvas>();
+        private readonly List<Graphic> graphicBuffer = new List<Graphic>(), deadGraphics = new List<Graphic>();
         private sealed class GraphicMaterial { internal Material Original, Overlay; }
 
         private sealed class CanvasState
@@ -85,6 +87,8 @@ namespace ScamWithYourFriendsInVR.UI
             if (!placed || manager.Input.RecenterDown) Place();
             if (!placed || Time.unscaledTime < nextScan) return;
             nextScan = Time.unscaledTime + 0.5f;
+            PruneDestroyedGraphics();
+            canvases.RemoveAll(state => state.Canvas == null);
             Canvases.RemoveAll(c => c == null);
             Panels.RemoveAll(p =>
             {
@@ -224,12 +228,14 @@ namespace ScamWithYourFriendsInVR.UI
 
         private void PrepareFloatingGraphics(Canvas canvas)
         {
-            foreach (Canvas nested in canvas.GetComponentsInChildren<Canvas>(true))
+            nestedCanvasBuffer.Clear(); canvas.GetComponentsInChildren(true, nestedCanvasBuffer);
+            foreach (Canvas nested in nestedCanvasBuffer)
             {
                 if (!canvasChannels.ContainsKey(nested)) canvasChannels[nested] = nested.additionalShaderChannels;
                 nested.additionalShaderChannels |= AdditionalCanvasShaderChannels.TexCoord1 | AdditionalCanvasShaderChannels.Normal | AdditionalCanvasShaderChannels.Tangent;
             }
-            foreach (Graphic graphic in canvas.GetComponentsInChildren<Graphic>(true))
+            graphicBuffer.Clear(); canvas.GetComponentsInChildren(true, graphicBuffer);
+            foreach (Graphic graphic in graphicBuffer)
             {
                 if (graphic == null || !graphic.gameObject.activeInHierarchy) continue;
                 if (floatingMaterials.TryGetValue(graphic, out var saved) && graphic.material == saved.Overlay) continue;
@@ -243,6 +249,22 @@ namespace ScamWithYourFriendsInVR.UI
                 graphic.material = overlay;
                 graphic.SetVerticesDirty();
             }
+            nestedCanvasBuffer.Clear(); graphicBuffer.Clear();
+        }
+
+        private void PruneDestroyedGraphics()
+        {
+            deadGraphics.Clear(); deadCanvases.Clear();
+            foreach (var state in floatingMaterials)
+                if (state.Key == null)
+                {
+                    if (state.Value.Overlay != null) Destroy(state.Value.Overlay);
+                    deadGraphics.Add(state.Key);
+                }
+            foreach (Graphic graphic in deadGraphics) floatingMaterials.Remove(graphic);
+            foreach (var state in canvasChannels) if (state.Key == null) deadCanvases.Add(state.Key);
+            foreach (Canvas canvas in deadCanvases) canvasChannels.Remove(canvas);
+            deadGraphics.Clear(); deadCanvases.Clear();
         }
 
         internal static bool RequiresFloatingPanel(PanelSettings settings)

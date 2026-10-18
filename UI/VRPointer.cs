@@ -38,9 +38,12 @@ namespace ScamWithYourFriendsInVR.UI
         private float lastClickTime;
         private int clickCount;
         private readonly VRGripInteractor grab = new VRGripInteractor();
-
-
-
+        private readonly VRPointerAim aimFilter = new VRPointerAim();
+        private readonly List<BaseInputModule> moduleBuffer = new List<BaseInputModule>();
+        private Quaternion visualRotation, sampledRotation;
+        private float nextModuleScan;
+        private const float BeamOffset = .06f;
+        private float showUntil;
         private EventSystem createdSystem;
         private static MethodInfo setWorldHover;
         private static readonly System.Type pointerState = ReflectionTypes.Find("UnityEngine.UIElements.PointerDeviceState");
@@ -70,7 +73,7 @@ namespace ScamWithYourFriendsInVR.UI
             gameObject.layer = 5;
             line = gameObject.AddComponent<LineRenderer>();
             line.positionCount = 2;
-            line.startWidth = line.endWidth = 0.002f;
+            line.startWidth = .0015f; line.endWidth = .001f;
             line.useWorldSpace = true;
             Shader shader = Shader.Find("UI/Default") ?? Shader.Find("Sprites/Default");
             if (shader != null)
@@ -107,8 +110,13 @@ namespace ScamWithYourFriendsInVR.UI
                 if (module != null) { module.Cancel(); Destroy(module); }
                 RestoreModules();
                 module = system.gameObject.AddComponent<VRPointerModule>();
+                nextModuleScan = 0;
             }
-            foreach (BaseInputModule input in system.GetComponents<BaseInputModule>())
+            foreach (var state in modules) if (state.Key != null && state.Key.enabled) state.Key.enabled = false;
+            if (Time.unscaledTime < nextModuleScan) return;
+            nextModuleScan = Time.unscaledTime + .5f;
+            moduleBuffer.Clear(); system.GetComponents(moduleBuffer);
+            foreach (BaseInputModule input in moduleBuffer)
             {
                 if (input == module || modules.ContainsKey(input)) continue;
                 modules[input] = input.enabled;
@@ -134,7 +142,13 @@ namespace ScamWithYourFriendsInVR.UI
             }
             EnsureModule();
             if (toolkitDown && pressedWorldDocument == null && (pressedPanel == null || !pressedPanel.CanInteract)) CancelToolkit();
-            Ray ray = new Ray(manager.Rig.Right.Aim.position, manager.Rig.Right.Aim.forward);
+            bool context = GameAdapter.InMainMenu || GameAdapter.SettingsOpen || GameAdapter.MonitorCaptured
+                || GameAdapter.Read(GameAdapter.Static("TabMenu", "Instance"), "IsOpen") is bool playersOpen && playersOpen;
+            sampledRotation = manager.Rig.Right.Aim.rotation;
+            if (!context && !HasPanelHit && !toolkitDown && !module.IsPressed) aimFilter.Reset();
+            visualRotation = aimFilter.Sample(sampledRotation, Plugin.PointerSmoothing.Value, Time.unscaledDeltaTime);
+            Vector3 direction = visualRotation * Vector3.forward;
+            Ray ray = new Ray(manager.Rig.Right.Aim.position + direction * BeamOffset, direction);
             float nearest = 10f;
             Transform player = GameAdapter.LocalPlayer?.transform;
             int hitCount = Plugin.OccludeFloatingUI.Value ? Physics.RaycastNonAlloc(ray, worldHits, 10f, ~(1 << 2), QueryTriggerInteraction.Ignore) : 0;
@@ -170,7 +184,9 @@ namespace ScamWithYourFriendsInVR.UI
                 raycaster.Raycast(rayData, results);
                 if (results.Count == 0) continue;
                 results.Sort((a, b) => b.depth.CompareTo(a.depth));
-                graphic = results[0]; graphicPosition = screen;
+                int actionable = results.FindIndex(result => CanUseGraphic(result.gameObject));
+                if (actionable < 0) continue;
+                graphic = results[actionable]; graphicPosition = screen;
                 nearest = distance; endpoint = world;
             }
             foreach (VRPanelSurface surface in manager.UI.Panels)
@@ -242,8 +258,11 @@ namespace ScamWithYourFriendsInVR.UI
             }
             if (panelHit != null) lastPanelPosition = panelHit.PanelPosition(uvHit);
             else if (worldDocumentHit != null) lastPanelPosition = worldPanelPosition;
-            if (toolkitDown && pressedPanel != null && pressedPanel.Intersect(ray, out _, out Vector2 dragUv, out _, false))
+            if (toolkitDown && pressedPanel != null && pressedPanel.Intersect(ray, out Vector3 dragPoint, out Vector2 dragUv, out _, false))
+            {
                 lastPanelPosition = pressedPanel.PanelPosition(dragUv);
+                if (!HasPanelHit) endpoint = dragPoint;
+            }
             if (toolkitDown && pressedWorldDocument != null && VRWorldPanelPicker.TryDrag(pressedWorldDocument, CapturedOrPressed(), ray, out Vector3 nativeDrag))
                 lastPanelPosition = nativeDrag;
             VisualElement recipient = toolkitDown ? CapturedOrPressed() : elementHit;
@@ -282,26 +301,40 @@ namespace ScamWithYourFriendsInVR.UI
                 Send3D(elementHit, EventType.MouseUp, lastPanelPosition, 1, false);
             }
             if (manager.Input.TriggerUp && graphic.gameObject != null) manager.Keyboard.TryOpen(graphic.gameObject);
-            visualHit = HasPanelHit || worldDown;
+            visualHit = HasPanelHit || toolkitDown;
             visualDistance = visualHit ? Vector3.Distance(ray.origin, endpoint) : Mathf.Min(nearest, 2);
-            line.enabled = true; dot.SetActive(visualHit);
+            object nativeTarget = GameAdapter.Read(GameAdapter.Interactor, "currentInteractable") ?? GameAdapter.Read(GameAdapter.Interactor, "currentScenePickup");
+            bool worldTarget = !context && nativeTarget is UnityEngine.Object target && target != null;
+            bool show = VRPointerAim.Visible(Plugin.AlwaysShowPointer.Value, context, HasPanelHit, toolkitDown || module.IsPressed || worldDown, worldTarget);
+            if (show) showUntil = Time.unscaledTime + .12f;
+            line.enabled = show || Time.unscaledTime < showUntil;
+            dot.SetActive(line.enabled && visualHit);
+            if (visualHit) dot.transform.localScale = Vector3.one * Mathf.Clamp(visualDistance * .008f, .003f, .012f);
             line.SetPosition(0, ray.origin); line.SetPosition(1, ray.GetPoint(visualDistance)); dot.transform.position = endpoint;
         }
 
         private void OnEnable() => Application.onBeforeRender += BeforeRender;
+        private static bool CanUseGraphic(GameObject target) => target != null
+            && (ExecuteEvents.GetEventHandler<IPointerDownHandler>(target) != null
+                || ExecuteEvents.GetEventHandler<IPointerClickHandler>(target) != null
+                || ExecuteEvents.GetEventHandler<IDragHandler>(target) != null
+                || ExecuteEvents.GetEventHandler<IScrollHandler>(target) != null);
         private void OnDisable() { Application.onBeforeRender -= BeforeRender; Cancel(); Hide(); }
 
         [BeforeRenderOrder(-100)]
         private void BeforeRender()
         {
             var manager = VRManager.Instance;
-            if (line == null || !line.enabled || manager == null || !manager.Interactive || manager.Rig.HeadObstructed) return;
+            if (line == null || !line.enabled || manager == null || !manager.Interactive) return;
             if (!VRInputManager.Tracked(UnityEngine.XR.InputDevices.GetDeviceAtXRNode(UnityEngine.XR.XRNode.RightHand))) return;
             manager.Rig.Left.Sync(); manager.Rig.Right.Sync();
             if (!manager.Rig.Right.IsTracked) { Hide(); return; }
             Transform aim = manager.Rig.Right.Aim;
-            Vector3 endpoint = aim.position + aim.forward * visualDistance;
-            line.SetPosition(0, aim.position); line.SetPosition(1, endpoint);
+            Quaternion rotation = aim.rotation * Quaternion.Inverse(sampledRotation) * visualRotation;
+            Vector3 direction = rotation * Vector3.forward;
+            Vector3 origin = aim.position + direction * BeamOffset;
+            Vector3 endpoint = origin + direction * visualDistance;
+            line.SetPosition(0, origin); line.SetPosition(1, endpoint);
             if (visualHit && dot != null) dot.transform.position = endpoint;
         }
 
@@ -322,8 +355,9 @@ namespace ScamWithYourFriendsInVR.UI
             if (target?.panel == null && type != EventType.MouseUp) return;
             if (type == EventType.MouseDown)
             {
-                clickCount = lastClicked == target && Time.unscaledTime - lastClickTime < 0.3f ? clickCount + 1 : 1;
-                lastClicked = target; lastClickTime = Time.unscaledTime;
+                VisualElement clickElement = target as UnityEngine.UIElements.Button ?? target?.GetFirstAncestorOfType<UnityEngine.UIElements.Button>() ?? target;
+                clickCount = lastClicked == clickElement && Time.unscaledTime - lastClickTime < Plugin.DoubleClickWindow.Value ? clickCount + 1 : 1;
+                lastClicked = clickElement; lastClickTime = Time.unscaledTime;
             }
             Event source = new Event { type = type, mousePosition = position, button = button, clickCount = Mathf.Max(1, clickCount),
                 delta = position - previousEventPosition };
@@ -335,7 +369,10 @@ namespace ScamWithYourFriendsInVR.UI
                     break;
                 case EventType.MouseUp:
                     using (PointerUpEvent evt = PointerUpEvent.GetPooled(source))
-                        if (target?.panel != null) { PreparePointer(evt, button, held); PrepareWorldEvent(evt, target, position, type); evt.target = target; target.SendEvent(evt); }
+                    {
+                        PreparePointer(evt, button, held);
+                        if (target?.panel != null) { PrepareWorldEvent(evt, target, position, type); evt.target = target; target.SendEvent(evt); }
+                    }
                     break;
                 case EventType.MouseMove:
                     using (PointerMoveEvent evt = PointerMoveEvent.GetPooled(source)) { PreparePointer(evt, button, held); PrepareWorldEvent(evt, target, position, type); evt.target = target; target.SendEvent(evt); }
@@ -429,6 +466,7 @@ namespace ScamWithYourFriendsInVR.UI
 
         public void Cancel()
         {
+            ResetAim(); showUntil = 0;
             releasePointers?.Invoke(null, new object[] { ToolkitPointerId });
 
             if (attacking) { GameAdapter.Attack(false); attacking = false; }
@@ -443,6 +481,7 @@ namespace ScamWithYourFriendsInVR.UI
         }
 
         private void Hide() { if (line != null) line.enabled = false; if (dot != null) dot.SetActive(false); }
+        internal void ResetAim() => aimFilter.Reset();
         private void RestoreModules() { foreach (var pair in modules) if (pair.Key != null) pair.Key.enabled = pair.Value; modules.Clear(); }
         private void OnDestroy()
         {
@@ -455,6 +494,7 @@ namespace ScamWithYourFriendsInVR.UI
     public sealed class VRPointerModule : PointerInputModule
     {
         private PointerEventData data;
+        internal bool IsPressed => data?.pointerPress != null;
         public override void Process() { }
         public override bool ShouldActivateModule() => isActiveAndEnabled && VRManager.Instance != null && VRManager.Instance.Ready;
         public override bool IsPointerOverGameObject(int pointerId) => data?.pointerEnter != null;
@@ -480,7 +520,7 @@ namespace ScamWithYourFriendsInVR.UI
             {
                 data.eligibleForClick = true; data.dragging = false;
                 data.pressPosition = position; data.pointerPressRaycast = hit;
-                data.clickCount = data.lastPress == hit.gameObject && Time.unscaledTime - data.clickTime < 0.3f ? data.clickCount + 1 : 1;
+                data.clickCount = data.lastPress == hit.gameObject && Time.unscaledTime - data.clickTime < Plugin.DoubleClickWindow.Value ? data.clickCount + 1 : 1;
                 data.clickTime = Time.unscaledTime;
                 data.pointerPress = ExecuteEvents.ExecuteHierarchy(hit.gameObject, data, ExecuteEvents.pointerDownHandler)
                     ?? ExecuteEvents.GetEventHandler<IPointerClickHandler>(hit.gameObject);

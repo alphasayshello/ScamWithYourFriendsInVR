@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Remove temporary capsule controller visuals; use native tracked avatar hands in gameplay.
+- Add contextual laser visibility, adaptive UI aim smoothing, a smaller distance-scaled reticle and adjustable double-click timing.
+- Ignore decorative uGUI graphics during pointer selection and keep capture visible during UI dragging.
+- Release controller button state when a pressed panel disappears, preventing stuck input.
+- Reuse tracking/UI scan buffers, avoid duplicate tracking reads and release material entries for destroyed menu graphics.
+- Reuse typed game-member cache keys instead of constructing lookup strings during normal gameplay.
+
 - Default computer operation returns to a floating controller-pointer desktop.
 - Remove experimental physical desk mouse and touch-keyboard code. The optional floating keyboard is off by default.
 - Add standing room-scale collision-body following and separate body/head turning from tracking-origin yaw.

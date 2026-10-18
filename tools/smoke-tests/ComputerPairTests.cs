@@ -255,6 +255,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 // Native desktop icons open on a double-click, unlike taskbar buttons.
                 yield return new WaitForEndOfFrame();
                 manager.Rig.Right.Aim.SetPositionAndRotation(point - surface.transform.forward * .4f, surface.transform.rotation);
+                typeof(VRPointer).GetMethod("ResetAim", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(manager.Pointer, null);
                 Logger.LogInfo("COMPUTER click probe: expected=" + button.name + "; bounds=" + button.worldBound + "; uv=" + uv
                     + "; directPick=" + surface.Pick(uv)?.name + "; interactive=" + manager.Interactive + "; right=" + manager.Rig.Right.IsTracked);
                 for (int click = 0; click < 2; click++)

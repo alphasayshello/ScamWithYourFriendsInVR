@@ -105,8 +105,10 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 typeof(VRPointer).GetMethod("LateUpdate", flags).Invoke(manager.Pointer, null);
                 var line = manager.Pointer.GetComponent<LineRenderer>();
                 Check(!manager.Pointer.HasPanelHit && line.enabled, "Missing a UI target hid the controller beam");
-                Check(Vector3.Distance(line.GetPosition(0), manager.Rig.Right.Aim.position) < .001f,
+                Check(Mathf.Abs(Vector3.Distance(line.GetPosition(0), manager.Rig.Right.Aim.position) - .06f) < .001f,
                     "Beam origin detached from the controller aim transform");
+                Check(manager.Rig.Left.transform.Find("Procedural controller grip") == null && manager.Rig.Right.transform.Find("Procedural controller grip") == null,
+                    "Temporary controller capsules remain visible");
                 Check(manager.Pointer.gameObject.layer == 5 && line.sharedMaterial.GetInt("unity_GUIZTestMode") == 8,
                     "Menu beam is culled or depth-occluded by the background scene");
             }
