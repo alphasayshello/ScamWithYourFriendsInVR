@@ -4,7 +4,7 @@
 
 An open-source VR conversion for **Scam With Your Friends**, built with BepInEx and OpenXR.
 
-[Quick start](docs/GETTING-STARTED.md) · [How to play](docs/HOW-TO-PLAY.md) · [Build](docs/BUILD.md) · [Troubleshooting](docs/TROUBLESHOOTING.md) · [Validation](docs/VALIDATION.md)
+[Quick start](docs/GETTING-STARTED.md) · [How to play](docs/HOW-TO-PLAY.md) · [Build](docs/BUILD.md) · [Troubleshooting](docs/TROUBLESHOOTING.md) · [Project status](docs/VALIDATION.md)
 
 > **Banner artwork goes here.** See [artwork slots](docs/images/README.md) for the images you can add later.
 
@@ -18,7 +18,7 @@ An open-source VR conversion for **Scam With Your Friends**, built with BepInEx 
 - Modded PC/VR lobbies with tracked avatar poses and a PC mode that skips XR startup.
 - A Visual Studio solution, dependency preparation, reversible runtime hooks and optional in-game tests.
 
-> **Status: development preview.** The latest headset feedback accepts the general view/menu experience. Computer usability and the revised body/room-scale changes still need headset acceptance. All-app workflows, full multiplayer and performance acceptance remain open. This is not a production-certified release. [See the evidence and gaps.](docs/VALIDATION.md)
+> **Status: development preview.** The general VR view and menus work. Computers, body movement, multiplayer and performance still need work and more headset testing. [What works and what needs work.](docs/VALIDATION.md)
 
 ## Get started
 

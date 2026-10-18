@@ -1,20 +1,46 @@
+# Build output
 bin/
 obj/
 **/bin/
 **/obj/
-work/
-Local.Build.props
-*.user
-*.log
-*.zip
-*.tgz
-.vs/
-*.suo
-
+artifacts/
+dist/
+packages/
 *.dll
 *.exe
 *.pdb
-artifacts/
-packages/
+*.nupkg
+
+# Local dependencies, test copies and machine paths
+work/
+Local.Build.props
+
+# Visual Studio and editor state
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Generated archives, diagnostics and temporary files
+*.zip
+*.tgz
+*.7z
+*.log
+*.dmp
+*.stackdump
+*.tmp
+*.temp
+*.bak
+*.orig
+
+# Local secrets
 .env
 .env.*
+!.env.example
+
+# Operating system files
+Thumbs.db
+Desktop.ini
+.DS_Store

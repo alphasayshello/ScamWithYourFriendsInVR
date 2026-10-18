@@ -1,227 +1,39 @@
-# validation and release gate
+# What works and what needs work
 
-Status: **experimental / incomplete**. No production-readiness or headset certification claim is made.
+**Status: development preview.** The mod is playable, but it is not finished or production ready yet.
 
-## latest user acceptance and scope change
+## Working
 
-The latest Quest 3/Steam Link run accepted the general view/menu experience, rejected computer usability, and requested pointer-only computers with no VR keyboard for now. Earlier physical desk tests did not constitute headset acceptance; that experiment has been removed. Floating computer UI is now the default, and the optional floating keyboard is disabled by default.
+- Quest 3 headset/controller tracking through Steam Link and SteamVR.
+- The general VR view, controller laser and main-menu experience.
+- Floating menus and a HUD that follow your view.
+- Readable settings controls, with controller clicking and scrolling.
+- PC mode and tracked-avatar support for modded players.
+- The Visual Studio project, build tools, setup/play guides, Git repository and MIT license.
 
-This revision adds local head/body turning, collision-aware standing room movement, stable eye-anchor calibration and remote voice mouth positioning. Native collision-body software checks pass; actual room movement, chairs and body/head appearance require a new headset run. Historical evidence below describes earlier revisions unless explicitly repeated.
+## Changed, needs another headset check
 
-## evidence so far
+- Computers now use a floating desktop and controller pointer. Clicking, dragging, scrolling and window controls have been checked, but the revised computer experience still needs headset testing.
+- Head turns now drive the local model, with body turning kept separate from view rotation.
+- Moving around your room now moves the collision body while keeping the headset aligned. Leaning, walls, stairs and in-game chairs need more checking.
+- The computer camera app uses a separate webcam view instead of taking over the headset camera.
+- Remote voice position follows the tracked head, but how that sounds to other players still needs checking.
 
-- Current pointer-first revision: `single-rig-check-20261018-172748.log` passed floating desktop controller opening, six available app window-control groups, native back/monitor release, all tested settings tabs, rendered settings colour, head-follow UI placement and native gameplay binding checks. Text input did not open a VR keyboard. This is software evidence; the reported computer usability still needs a new headset check.
-- `single-rig-check-20261018-172855.log` passed all eleven core groups, including actual CharacterController wall collision/body following without double camera displacement and remote voice mouth pose/restore assertions. The optional keyboard fixture explicitly enables its feature and restores the disabled default afterward. Room-scale headset feel and audible remote spatialization remain unverified.
-- Both the .NET build and Visual Studio 2026 solution build passed. A full provider rebuild reports four existing Unity XR Management analytics `CS0649` warnings; these are not mod runtime test failures.
+## Not finished
 
-- Single-client mock run `single-rig-check-20261018-170518.log` passed controller opening and maximize/restore/minimize/close for the six native applications available in the lobby: banditcam, browser, camera, checklist, phone and scamazon. External invitation links and game-disabled apps were skipped. This covers window management, not each application's complete workflow.
-- The same run passed existing desk keyboard ray typing, shift, backspace, select-all/replacement and cleanup, with no floating replacement; existing desk mouse grip, trigger click, planar cursor movement, pad limits, release and model-pose restoration. Touch typing and physical key alignment require headset acceptance.
-- The same run switched every tested native settings tab, confirmed the floating anchor follows head translation and rotation at 0.9 metres, and sampled the rendered General button's native brown background. Captured settings text is readable after suppressing rounded control geometry in mod-owned UI textures. Hardware clarity remains unverified.
-- Synthetic cross-frame trigger tests now preserve the injected held state through native input polling. Earlier intermittent release failures in those fixtures must not be treated as evidence of a production click failure.
-- Single-client mock run `single-rig-check-20261018-170702.log` repeated the computer/settings checks and passed native jump input, pee/fart binding routing, pee host-state synchronization/release, suppression while settings is open, and the gameplay HUD's LEFT X/LEFT Y hints. Fart playback, food-triggered poop, punch damage/cooldowns and real multiplayer observation remain unverified.
-- Single-client mock run `single-rig-check-20261018-170832.log` passed all ten core groups: pose/arm protocol, uGUI input, canvas ownership, Toolkit pointer state, real native button/cancellation, shared-panel routing, native world documents, authored mesh UVs/ownership, keyboard editing/browser dispatch, and menu camera/beam integration. Direct event fixtures now explicitly establish hover, matching the production pointer's separate picking step.
+- Every computer app and every action inside those apps.
+- Full combat, punch damage/cooldowns, food/poop effects and all held-item interactions in VR.
+- Complete multiplayer checks across separate Steam accounts, including reconnecting and joining late.
+- Consistently smooth performance, especially in busy scenes.
+- Ragdoll, spectating, tracking loss and every seated/standing transition.
+- Headset/controller compatibility beyond the setup already tried.
+- Final artwork and screenshots; placeholders are ready for them.
 
-- Installed game inspected: Windows x64 Mono, Unity 6000.3.10f1 (e35f0c77bd8e).
-- Identified `Metater.MetaPlayer`, `Metater.MetaPlayerController`, `PlayerInteractor`, `MonitorInteractable`, `KolkataMonitorInputState`, `SettingsUi`, `Kolkata.UI.KolkataOsController` and its browser host through the installed assemblies.
-- All three mod assemblies compile against full matching 6000.3.10 engine references and the game's uGUI/TMP assemblies with zero errors and warnings.
-- Official Input System 1.19.0, XR Management 4.4.0 and OpenXR 1.15.1 runtime sources compile with XR support.
-- The current eight-project Visual Studio solution builds with `dotnet build ScamWithYourFriendsInVR.sln -c Release`. Visual Studio 2026 MSBuild also passed on the earlier seven-project revision. Full rebuilds can report four upstream `CS0649` warnings in Unity XR Management analytics.
-- An isolated game copy discovered the OpenXR input/display manifest under Direct3D 11.
-- Early isolated launches failed because the stripped BCL blocked BepInEx reflection and incomplete runtime restoration invalidated game types. Staging now uses the exact editor's player/BCL files and optional default implementations for restored interface members. Deleting those interface methods was tested and rejected because it breaks callers in full libraries.
-- Isolated Direct3D 11 test 11: BepInEx and the mod loaded; a deliberately nonexistent process-local `XR_RUNTIME_JSON` produced `XR_ERROR_RUNTIME_UNAVAILABLE`, then the mod logged no running display without activating the VR session. The global runtime registration and Steam installation were unchanged.
-- In that same game process, optional pointer tests passed uGUI down/up/click, double click, drag/drop, release over another target, scrolling and cancellation. UI Toolkit down/held move/up/released move passed with button masks `1,1,0,0`. The test caught and led to a fix for missing explicit UI Toolkit event targets.
-- Isolated test 12 using the official Unity Mock Runtime reached `VR session active`, initialized the native provider, and installed the game interaction patches. Both pointer test groups passed. This is software lifecycle evidence, not headset rendering or tracking evidence.
-- Mock tests 13/14 exposed the menu's disabled tagged main camera. Camera selection now also follows an active untagged scene camera while excluding webcam/portrait render textures. Test 15 passed session/camera startup, found 18 canvases and 10 UI Toolkit panel surfaces, stopped XR, then verified camera settings, converted UI cleanup and removal of gameplay patches. Both pointer groups passed in that run. This does not prove that every discovered panel is visually correct or usable.
-- Baseline test 16 restored the stock managed directory and disabled Doorstop in the launch process. Both that baseline and mock lifecycle test 15 logged 242 missing Enlighten/GI data warnings and one `Mirror.NetworkServer.DestroyPlayerForConnection` exception during menu transition. Neither logged `TypeLoadException`, `MissingMethodException` or `NotSupportedException`; no mod stack frames appeared in the lifecycle player log. These observations establish the compared warnings as baseline behavior for this isolated batch-mode run, not a guarantee about other scenes or gameplay.
-- A Quest 3 connected through Steam Link reached a real `SteamVR/OpenXR` session. The user reported unusable UI interaction, broken model/arm tracking and lag. This is a failed gameplay acceptance run despite successful session initialization. No complete physical headset test has passed.
-- Follow-up source adds an OpenXR session focus feature, local Mixamo arm IK and a separate pose-network assembly with VR/PC mode configuration. UI/PC view and performance improvements are still required.
-- PC-mode tests 24/25 skipped OpenXR initialization and passed codec validation/sequence-wrap and synthetic remote arm solve/restore checks. The game's actual isolated local host negotiated pose support, accepted an actual Mirror pose message, and rejected duplicate and invalid packets. Remote Steam relay, actual remote avatar appearance, late join and vanilla-peer compatibility remain unverified; see [multiplayer acceptance](MULTIPLAYER.md).
-- Test 26 ran the new multiplayer assembly and session-focus feature in VR mode using Unity Mock Runtime. All codec, pointer and keyboard checks passed; VR session startup and camera/UI/patch restoration after stopping XR passed. The local host negotiated the pose protocol in VR mode. This does not validate physical controller movement or remote rendering.
-- Isolated keyboard test 23 passed UI Toolkit selection replacement, backspace, max length, read-only guards and delayed commit on Enter; uGUI InputField selection replacement, backspace, integer validation, character limit, read-only guards and a custom uppercase validator. Keyboard input now routes through native key processing instead of assigning text values directly. These tests do not cover TMP fields or the embedded browser.
+## Not included right now
 
-The following checks remain release requirements. Record actual game build hashes, headset/runtime versions, results and logs; do not replace them with source inspection or compilation results.
+- Grabbing the desk mouse or touch typing on the desk keyboard. That experiment was removed.
+- A VR keyboard by default. Use a physical PC keyboard for text entry; the optional floating keyboard remains experimental and disabled.
+- A standalone Quest app or an IL2CPP version.
+- The separate general game optimization mod. That comes after the VR mod is finished.
 
-## startup and lifecycle
-
-- [ ] Full matching player/BCL restoration starts BepInEx and reaches the game menu without engine exceptions.
-- [ ] No headset/runtime available: logged failure, working flat-screen game, no camera/input/UI mutations.
-- [ ] Connected headset: OpenXR loader and display/input subsystems running, stereo scene in both eyes.
-- [ ] Restart, scene changes, reconnect, tracking loss, runtime stop, focus loss, pause and plugin unload release all pressed/captured states and restore owned state.
-- [ ] Cinemachine transitions, main menu, joining/leaving a lobby, spectating, ragdoll, seating and teleports retain a usable tracked camera.
-
-## input, comfort and audio
-
-- [ ] Standing floor height and seated offset, recenter, scaling, hand pose orientation and controller reconnect.
-- [ ] Smooth movement uses game collision, stairs/gravity, seating/menu/death blockers and multiplayer authority correctly.
-- [ ] Snap thresholds/debounce, controller menu binding and Vive touchpad behavior.
-- [ ] Head collision/overlap blackout prevents peeking and resets when clear, excluding the player's own collider layers.
-- [ ] Correct ear-level listener and output selection; microphone/voice spatial origin meets the intended headset behavior.
-- [ ] Grip pickup, quick grip release before network acknowledgement, drop velocity, telephone receiver, native hold interactions, disconnect and host/client behavior.
-
-## complete UI coverage
-
-- [ ] Menus, lobby UI, pause/settings, HUD, victim screens, calling/scamming panels, all desktop apps and dynamic dialogs are visible and reachable.
-- [ ] Both uGUI and UI Toolkit: correct hover, down/up/click order, double click, disabled controls, right click, scroll, press-drag-release, drag off panel, release on another target, drop, capture cancellation and nested scrollers.
-
-The optional [in-player tests](../tools/smoke-tests/README.md) cover a subset of these event paths. Full raycast, app and control behavior still requires the checks above.
-- [ ] Native screen-space canvases and panel settings are correctly restored and do not survive unrelated scene unloads.
-- [ ] Physical monitor mesh UV mapping, material tiling/offset and submesh handling cover the in-game monitors as required by the original objective.
-- [ ] Desktop window move/resize, chat, paint strokes, recorder, browser viewport, victim PC and input fields work across UI scales/aspect ratios.
-- [ ] Keyboard insertion/replacement, backspace, enter/submit, password fields, character validation, delayed fields and browser text work without leaking gameplay input.
-- [ ] World occlusion and multiple transparent/shared panels choose the intended interactive target.
-
-## compatibility and release
-
-- [ ] Quest 2, Quest 3 and Quest Pro through Link/Air Link.
-- [ ] Index, Vive and a supported WMR OpenXR installation.
-- [ ] Supported controller profiles and OpenXR runtimes verified individually, with performance and stereo-shader compatibility checks.
-- [ ] IL2CPP support implemented and verified if it remains a release requirement; current build is Mono only.
-- [ ] Clean-machine build/install/rollback, third-party license review and source archive audit.
-
-Until these checks pass, the original request for a complete, production-ready conversion remains unmet. Do not infer that a profile name or API wrapper proves hardware support.
-
-## latest local pair revision
-
-The user reported twisted head/arms on the second connected PC/mock-VR pair. The simulated rig had a 180-degree rotation relative to the body. The revision now turns the native polar frame toward the host and generates modest head/hand movements in that same frame. Remote head calibration removes the native visual body's yaw before applying the received tracking rotation, and elbow poles follow tracked facing.
-
-The solution builds with zero warnings/errors. The initial launcher put updated DLLs outside their provider folder and left duplicate plugins; this caused XR startup failure and has been corrected. The launcher updates the canonical `BepInEx/plugins/ScamWithYourFriendsInVR` directory and removes only the four duplicate mod/test DLLs from its parent. The corrected two-client pair initialized mock XR, negotiated poses, and rendered an upright remote avatar with bent arms in the host screenshot. The user confirmed: "yes, body looks right now". This verifies this scripted body test, not actual controller-to-wrist calibration or headset rendering.
-
-The revision also suppresses native remote arm solvers while motion tracking owns the hands, restores their previous enabled states on timeout/disable, and resolves the authored arm chain before falling back to an explicitly named Mixamo hierarchy. In-player regression checks for ownership restoration, timeout and rejection of unknown wrist helper hierarchies pass. The real SteamVR launcher selects the dedicated VR copy, ensures its VR setting, and permits the separate PC client to remain open.
-
-Source inspection showed `MaxFpsSetting.Apply(int)` controls global frame pacing. The VR session removes the desktop frame cap/vsync, intercepts subsequent native applies while recording their requested values, and restores those values on shutdown. Active-pair logs verify `flatFrameLimit=-1` and `vSync=0`. Frame samples wait for a full ten-second interval and report worst frame duration/current cap/panel count/pipeline. Zero or nonfinite GPU timing is unavailable. Updated lifecycle restoration assertions passed in the run recorded below.
-
-The game's UberPost/FinalPost shaders lack the XR visibility-mesh pass. Runtime detection now switches XR to their existing full-screen passes through the verified `XRSystem.s_UseVisibilityMesh` field, saving its value for restoration. This preserves post-processing. The stripped assembly omits the corresponding setter. The latest pair log `pair-vr-20261017-224500.log` has no invalid-pass or built-in stereo-property errors. Built-in-only camera stereo properties are now avoided under URP.
-
-The latest pair runs all five optional smoke-test groups on both clients with zero failures: pose validation/arm solve/ownership, uGUI interaction, UI Toolkit pointer state, real UI Toolkit button, and keyboard selection/deletion/validation/limits/read-only/delayed commit. The keyboard test now waits for its field's text layout before establishing a selection; it previously attempted selection before layout was ready. This does not establish end-to-end keyboard usability in every game app.
-
-Recent simultaneous-client samples are about 25–30 FPS, with worst-frame times still around 150 ms and a 504 ms spike. Performance remains unacceptable for a native-quality VR release. This machine reports AMD Radeon 780M integrated graphics; both clients share it. No headset or two-account Steam transport pass is claimed. The launcher creates a private Steam lobby but connects this pair through loopback KCP.
-
-## computer and keyboard hardening
-
-- Controller menu now closes the virtual keyboard first, otherwise requests native computer exit without standing the player, otherwise opens/closes pause. This input is processed before the right-hand tracking and head-obstruction gates so a valid menu input can back out of an obstructed pointer state.
-- A pressed UI Toolkit button is released globally even if its element was detached before cancellation. The in-player regression verifies the next move has no held button.
-- Shared panel surfaces resolve the actual owning UIDocument for keyboard routing. New floating textures use transparent clearing and restore the original panel clear settings on teardown. Quads have explicit white vertex colours and follow the existing floating-UI occlusion option for depth testing. This has not yet established correct visual layering for every game overlay.
-- Virtual keyboard adds Tab, arrow, Home, End, Delete and Escape controls. Hidden/disabled/read-only targets and closed browser windows dismiss stale keyboards. Browser-send failure closes safely even when no keyboard mesh exists.
-- Seated tracking uses the native first-person camera marker, recentres on seating transitions, and restores the camera culling mask on shutdown. A local mesh-visibility postfix preserves body-without-head rendering during computer use. Screenshots still reveal camera/body/overlay problems; a visually correct seated headset view is not proven.
-- The optional local computer test uses the game's networked monitor/seating path and the real VR pointer ray/panel picking path. It double-clicked the available checklist desktop icon, observed `OpenVisible`, invoked the controller menu path, and verified native monitor input capture released. Paint was unavailable behind the game's app license, which the test did not bypass. Paint drawing, window resize/drag, victim apps and real browser pages remain unverified.
-- The captured desktop render texture is readable and contains the native shell. Camera screenshots have shown an overlapping performance-review panel and local body clipping. Successful click assertions do not constitute a visual pass.
-
-Final lifecycle run `pair-vr-20261017-234115.log`: six smoke groups passed in both PC and mock-VR processes with zero failures; the mock-VR process additionally passed XR stop/restoration checks for near clip/stereo where applicable, camera culling mask, converted UI cleanup, patch removal, desktop frame pacing and the XR visibility-mesh flag. Expanded keyboard coverage includes TMP selection/backspace/integer/read-only/submit and a simulated browser dispatch/failure probe. The browser probe deliberately raises one disposed-client warning. It does not access a website.
-
-Synthetic key tests now give text geometry time to update between virtual-key presses. Same-frame bulk UI Toolkit insertion exposed unstable native text state; an attempted focus-only selection restore regressed and was reverted. This revision retains clamped selection restoration for each key and does not claim a general paste implementation. Native TMP test fields require a real canvas/font/character layout; the corrected test supplies them.
-
-## native UI ownership and current regressions
-
-Subsequent runs supersede the earlier all-green snapshot: the UI Toolkit character-limit test remains intermittent (examples include `125` and `152` instead of `123`), even with frame-separated key presses. The latest source keeps the original clamped selection restoration; the focus-only experiment was reverted. Do not claim stable keyboard acceptance from the previous passing run.
-
-The floating orange performance-review overlay was identified as an authored texture-backed `ReviewProjectorSurface`, and the blue overlay as a native world-space quota-board panel. They had been duplicated into floating HUD surfaces. Conversion now excludes authored texture targets and native `PanelRenderMode.WorldSpace` panels, leaving their original presenters intact. This removes the unwanted floating copies; it does not yet supply controller UV input for arbitrary native world surfaces.
-
-Converted screen canvases retain their original transform parent. Only active canvases are converted; world placement follows the VR anchor in LateUpdate with parent-scale compensation. Parent activation continues to hide/show the canvas, and scene ownership remains native. The added in-player ownership test passes: inactive canvases are skipped, active conversion retains the parent, rendered width compensates for parent scale, and original mode/transform/visibility restore within numeric tolerance. It also verifies that native texture/world panels are excluded from floating conversion.
-
-The optional computer probe now captures render-texture and post-click camera images and logs eye view matrices. The rendered XR eye matches the tracked camera position (within the stereo eye offset) and facing; the floating desktop is in front of both. The quad is enabled, visible to culling, uses a supported single-pass `UI/Default` material, has no shader keywords, and has expected 1.6 x 0.9 metre bounds and a 2560 x 1440 texture. Moving it and the reticle to the UI layer did not establish a visual pass. The readable desktop texture and successful controller-ray click/exit assertions coexist with screenshots where the actual floating desktop is missing and local body geometry clips the view. Material/render-pass compatibility and body occlusion remain unresolved.
-
-The latest computer-only pair passes monitor seating/capture, native checklist app double-click and menu-button release. The latest combined smoke/computer run passed the new canvas test but failed keyboard character limits. Solution build remains clean. These are software-only tests; headset rendering, performance and full app workflows remain open.
-
-## isolated camera preview and keyboard caret fix (October 18)
-
-Further camera diagnostics identified the missing-screen trigger: `KolkataOsCameraApp.AssignRenderTexture` assigns its preview texture directly to `Camera.main`. During computer use this was the tracked headset camera. The runtime now patches only that native assignment in VR mode and supplies a separate mono preview camera. Native app allocation, preview display, capture and unassignment remain native. The preview follows the tracked camera, excludes the UI layer to avoid a recursive desktop feed, and uses URP additional camera data with XR rendering disabled. PC mode retains the original assignment. Preview ownership uses weak references, and session teardown releases the auxiliary camera and restores any still-active native preview assignment after runtime patches are removed.
-
-The combined local-pair run `pair-vr-20261018-000218.log` passes the new assertions: the tracked camera has no render-texture target, the app has a distinct preview camera/texture, preview XR rendering is disabled, and the floating UI layer is excluded. Native monitor seating, controller-ray checklist double-click and controller-menu exit also pass. The post-click PC capture now visibly contains the desktop using its existing `UI/Default` material. The temporary URP material comparison was removed. This supersedes the earlier suspected material failure; it does not certify headset stereo or mirror framing.
-
-The mock controller devices return zero poses unless driven. During the computer probe both hands had therefore overlapped the head. The test now supplies plausible seated grip positions while preserving native camera tracking and the probe's explicit aim ray. The updated capture no longer has the orange hands obscuring the view. This is a simulation correction, not evidence of physical controller alignment.
-
-Longer URL and repeated tests exposed an invalid harness setup: the temporary UI Toolkit panel had no theme or font. Native editing clamped its caret against the shared fallback glyph buffer, which belonged to unrelated native UI (for example 13 glyphs while the field contained one character). The corrected test assigns a real Arial font and size inherited by its fields. Character counts then match the field, including Unity's trailing zero-width glyph. The speculative edit-position cache and forced text-handle reflection were removed; ordinary native key dispatch passes with the correct setup. The keyboard retains local field references for callback safety, native selection restoration, capacity checks before printable insertion and defensive index clamping afterward.
-
-The subsequent combined runs pass all seven smoke groups on both clients with zero smoke failures. The keyboard group includes repeated frame-separated character-limit input, caret validity, selection replacement at the limit, navigation, delayed commit, a full URL with punctuation, uGUI/TMP validation, browser-disposal cleanup and a native change callback closing the keyboard during dispatch. Tab now follows native focus to the next editable field, closing the keyboard if focus leaves text fields; the test verifies the next field receives the keyboard. All three computer checks pass as well. Both `dotnet build` and Visual Studio 2026 MSBuild build all eight solution projects successfully. A separate mock lifecycle run passes camera/UI/frame-pacing/patch restoration. These results supersede the failed intermediate runs, without claiming full in-game keyboard acceptance.
-
-Remaining release gates include real headset stereo, actual controller/wrist alignment, mirror framing, physical monitor UV input, full browser/app workflows, two-account Steam transport and sustained performance. Recent shared-GPU two-client samples still have low frame rates and large spikes; this is experimental source.
-
-## mock stereo and desktop mirror verification
-
-The late mock initializer previously loaded `mock_api.dll`, whose exported setters are trampolines requiring a pre-instance hook. Without that hook they silently did nothing. It now calls the pinned `mock_runtime.dll` exports directly. Computer regression checks verify 64 mm inter-eye separation and a symmetric projection, rather than accepting the setter call as evidence. Both full eye textures are saved and visually inspected; the desktop is visible in each. These are synthetic views, not Quest hardware acceptance.
-
-The provider mirror uses a small central crop (source UV approximately 0.2/0.35/0.6/0.3). A shader-path experiment executed but direct Windows window capture revealed black output; Unity's `CaptureScreenshot` still showed its separately generated eye crop. That experiment was removed. The current `VRMirrorView` presents the existing 2D left-eye texture through IMGUI with aspect-preserving bars and D3D texture orientation correction. It does not render the scene a second time or alter stereo cameras. Direct window capture verifies upright scene output with side bars. `UI.MirrorFullView` disables this presentation when false, and unsupported array, packed-stereo or foveated sources retain provider behavior. Real SteamVR mirror layout remains to be checked.
-
-The latest combined pair passes all seven smoke groups on both clients and all five computer assertions: native seating/app click, isolated preview camera, mirror presentation exercised, verified mock stereo, and controller-menu release. This proves those tested paths only; no production-release or headset-performance claim is made.
-
-## native grip and pose-component lifecycle (October 18)
-
-Grip previously called native interact even when an item was already held, which could toggle/drop that item on grip press. It now adopts the held item and releases it when grip is released, while discarding its ownership if the native game swaps or drops the item. The native `Interactor.CmdDropHeldItem` has a fifth optional `NetworkConnectionToClient` argument. Reflection does not fill optional arguments automatically; the adapter now supplies declared defaults for omitted optional parameters and rejects missing required parameters. Parameter metadata is cached. This fixes the native drop call without bypassing authority or native input guards.
-
-The new optional loopback grip probe uses ordinary native items and scene-pickup registry commands, waits for replicated ownership, and checks adoption/release, a controller-ray pickup with grip released before server acknowledgement, and cancellation. The first quick-release attempt did not establish pickup; later runs log the actual hovered item, pending state and native replicated response. No synthetic held-item SyncVars are assigned. Tested examples include a water bottle and money stack. Throw calibration, every special item/telephone interaction and cancellation during native input blockers remain unverified.
-
-Pose networking now unregisters handlers and clears negotiation/local sample/peer state on component disable, immediately disables owned remote-pose drivers before destroying them, and registers/negotiates afresh on re-enable. Disabled components no longer accept local samples. Reused connection IDs do not inherit the previous connection object's hello throttle. The live-client regression disables the pose component, checks cleared registration/negotiation state, re-enables it and waits for the same host to accept a new handshake.
-
-Combined run `pair-vr-20261018-104708.log` passes all seven smoke groups on both clients, all five computer checks and all four grip/lifecycle checks. The solution builds with zero warnings/errors. Transport remains private loopback KCP; this is not a two-account Steam networking pass.
-
-## native world-space UI input
-
-Native world-space UI Toolkit documents are now registered separately from floating texture surfaces. Their renderer, settings, transform, scene ownership and target-texture state remain native. Controller picking calls the inspected Unity `WorldSpaceInput.Pick3D(UIDocument, Ray, out float)` API through a cached delegate. Pointer positions retain document-space depth, and captured dragging intersects the selected element's transformed plane, including nonuniform document scale. Native world panels respect intervening world colliders even when floating HUD occlusion is disabled. Texture-backed custom projectors/physical monitor meshes are still a separate unimplemented calibration/input path.
-
-The first native button test exposed a required native event step: non-flat panels do not recompute their top element from a 2D pointer position. Events now update the native panel's element-under-pointer cache from the actual ray hit, following Unity's own world-space event path. Existing flat-panel event tests still use the original dispatch entry point. The world group checks a rotated/nonuniform document and a tilted, depth-offset button, exact local pointer coordinates, click, captured off-element dragging, disabled/transparent guards and document disable. The simulated VR client also waits for normal tracking/camera readiness and automatic document discovery, drives the actual controller-pointer tick, and verifies an intervening wall blocks the ray.
-
-Pointer cancellation now sends `PointerCancelEvent` before the normal release. Both flat and native-world button tests assert cancellation does not invoke the click callback, while pooled release still clears global pressed-button state after a detached target. The shutdown assertion now requires the native-world document registry to be cleared as well.
-
-Combined run `pair-vr-20261018-110108.log` passes eight core smoke groups on each client, the additional controller/world-occlusion integration on the VR client, all five computer checks and all four grip/lifecycle checks. The subsequent separate mock stop run also passes restoration with the native-world registry included. A temporary test listened for local pointer coordinates after the button manipulator had stopped the event; its callback now runs in trickle-down before the manipulator. A workstation-app availability race is handled by refreshing the native app table and waiting for the chosen app after workstation binding; licensing remains respected.
-
-Final combined run `pair-vr-20261018-110357.log` repeats those passing checks with the native-world controller press and release separated by an actual player frame. No matching exception/test-failure entries appear in that player log. The separate stop run is `pair-vr-20261018-110214.log`.
-
-These tests use synthetic native-world controls inside the real player, plus the existing native desktop and held-item paths. They do not prove every authored game panel or headset interaction is complete. Hardware acceptance, sustained performance, remote Steam transport, arbitrary physical-monitor UV mapping and full app workflows remain release gates.
-
-## desktop camera render scheduling (October 18)
-
-The isolated desktop camera previously rendered an extra full scene every player frame whenever its native render texture was assigned. `Performance.DesktopCameraFPS` now caps only that auxiliary camera (default 15, configurable 5–60). Frames between updates retain the existing render texture. It still follows native texture assignment/unassignment, excludes floating UI and uses a mono URP camera. Photographs read the most recent preview frame, so preview-rate latency applies to them. Assigning a new texture schedules its initial render; repeated synchronization within that frame does not cancel the scheduled render. Headset rendering is not capped by this setting.
-
-The real-player regression temporarily configures 5 FPS, subscribes to URP end-camera render callbacks and restores the original config in `finally`. Run `pair-vr-20261018-111604.log` records 10 preview renders and 158 headset-camera renders over 2.019 seconds. All eight core smoke groups pass on each client, plus the VR controller/world-occlusion check, six computer checks and four grip/pose lifecycle checks. Both .NET and Visual Studio solution builds pass. Saved synthetic eye output still shows the desktop and the camera feed.
-
-An earlier combined run passed the camera cap but failed its quick-release Paper Ball pickup with no native hover target. The grip fixture now starts its ray outside the item's full collider bounds, approaches from above and requires native hover acquisition before testing quick release. The subsequent passing item was a Water Bottle; this is not proof of every pickup geometry or a confirmed root cause for the earlier Paper Ball failure. No item authority, collider or native ownership state is overwritten by this fixture adjustment.
-
-These callback counts prove fewer auxiliary scene renders at the tested cap, not a sustained GPU/FPS gain or hardware acceptance. Shared-GPU two-client logs still show large scene/capture spikes. The full production and headset release gates above remain open.
-
-## authored texture-mesh input (October 18)
-
-Texture-backed UIDocuments are now matched to existing readable static MeshRenderers by their render texture in `_BaseMap` or `_MainTex`. Ray intersection uses the selected material submesh's actual vertices, triangle UVs and texture scale/offset. This supports the native review-projector source's material/property contract, including its vertical-flip transform. These bindings add only a component, without new renderers, textures or colliders. Native renderer visibility and document ownership remain under the game. Captured dragging extrapolates from the last hit triangle outside the mesh. Physical surfaces respect world occlusion independently of the floating-menu setting. Hiding a captured presenter cancels its UI press before release without cancelling unrelated held-item grip state. Changed mesh/material/texture bindings are rejected and rediscovered.
-
-The new real-player fixture uses the native review-projector shader on a cropped-UV mesh with a vertical flip and a rotated, nonuniform transform. It verifies UV and panel coordinates, world distance, native button dispatch, keyboard document routing, off-mesh capture coordinates, disabled-renderer rejection and component removal without native object destruction. On the simulated VR client it also verifies automatic discovery, a controller click with release in the next player frame, cancellation while hiding the renderer and an intervening wall. This is a synthetic document/mesh fixture, not completion of an authored projector or computer gameplay workflow.
-
-An intermediate frame-separated click failed while the mock pose writer and scene transition were still updating. The controller probes now require the network player and read tracking/head-obstruction readiness after production LateUpdate, then inject their press at end-of-frame before releasing on the next frame. This keeps the independent mock pose writer from moving the test ray between its setup and press. Run `pair-vr-20261018-112854.log` passes all nine core groups, both VR controller integration checks and runtime stop. The stop test now inserts a borrowed native presenter into the actual VR session and asserts its mesh object, renderer, material and render texture survive session teardown.
-
-One earlier keyboard run recorded `12s` instead of `123` during repeated character-limit input. Subsequent runs pass unchanged keyboard logic; additional event-character and pre-dispatch-text diagnostics were retained. Its cause is unconfirmed, so a passing rerun is not treated as proof that every keyboard issue is resolved. Custom shader UV distortion, material property-block overrides, animated/unreadable meshes, every authored screen, headset acceptance, remote Steam transport and sustained performance remain unverified.
-
-Final combined run `pair-vr-20261018-113039.log` passes nine core groups on both clients, both additional VR controller checks, six native computer checks and all four grip/pose-lifecycle checks. No matching exception or test-failure entries appear in either player's log. Both .NET and Visual Studio solution builds succeed. This is still an experimental build with the release gates above open.
-
-## desktop placement on the native monitor (October 18)
-
-The main computer desktop previously remained on the floating UI anchor. In-player geometry inspection identified the current workstation's authored WebRTC display quad. `VRMonitorDesktop` resolves that renderer through the native singleton's active monitor, bound workspace and `ScammerWorkspaceWebRtc.monitorRenderer` reference, verifying workspace/monitor ownership before using it. The existing VR desktop surface now fits those native screen bounds with its render-texture aspect preserved and a small front offset. It updates after normal UI placement so recentering does not move the desktop away from the monitor. It does not enable, replace or alter the native streaming renderer or material.
-
-`UI.PhysicalDesktop` defaults to true. Disabling it, closing the computer or lacking supported planar display geometry restores the original floating placement. Other menus remain floating. Physical desktop rendering uses world depth testing; pointer input respects world obstacles and rejects rays through the back of the monitor, while ignoring the monitor's own interaction collider. Laptop geometry and every workstation variation remain unverified.
-
-Native computer run `pair-vr-20261018-113643.log` passes placement, center/aspect/size checks, recenter, temporary floating-mode fallback, preservation of native stream renderer ownership, a controller app click and computer close. The saved full left/right mock eye images show the desktop fitted inside the monitor bezel, with both the native app and isolated camera preview visible. These are software stereo captures, not a headset acceptance run.
-
-An intermediate combined run reached the placement check but stopped because that workstation exposed only phone, camera and dump-dial, leaving both paint and checklist unavailable through native application access. The native-click probe now prefers paint/checklist when available and otherwise selects dump-dial/phone from the game's actual available apps. It never overrides application access. Unavailable app and drawing workflows remain release gates.
-
-Run `pair-vr-20261018-114001.log` confirms native keyboard events contaminating the earlier synthetic typing probes: between the expected slash and `a`, the test receives a `KeyCode.S` down, a separate `character=115` text event and a `LeftAlt` down, inserting an extra `s`. Those key-code events are outside the VR test's printable-key dispatch (`KeyCode.None`). Their originating device/software is not identified. The temporary test document now stops key-down events outside its own dispatch calls and explicitly checks rejection of a non-test S event. This change is confined to the test document; production keyboard dispatch and native game fields still accept physical keyboard input. It does not certify all keyboard workflows.
-
-Final combined run `pair-vr-20261018-114150.log` passes all nine core groups on both clients, the two additional VR controller integrations, seven computer checks and four grip/pose checks, with no matching exception/test-failure entries in either player log. The new placement check includes depth testing and back-side rejection, and computer close releases the physical placement. .NET and Visual Studio solution builds pass. Hardware acceptance, sustained performance, laptop/every-monitor coverage, two-account Steam transport and full app workflows remain open.
-
-## rejected headset run and rig revision (October 18)
-
-The real Quest/SteamVR run `quest3-steamlink-20261018-115400.log` reached a focused SteamVR OpenXR session and detected both Oculus Touch controllers. The user nevertheless reported a missing/flickering/detached laser, broken main menu, camera inside the torso and unnatural wrist alignment. That is a failed hardware acceptance run; earlier simulated results do not supersede it.
-
-The beam was only drawn on UI hits and used a scene-depth-tested material on the default layer. It now remains visible on misses, uses the VR UI layer and overlay depth mode, anchors at the tracked grip, validates aim rotation and updates its visual pose before rendering. Menus no longer perform gameplay head collision against their decorative background. Native main-menu initialization starts a local demo host/player; that demo player could previously replace the tracking origin. Main-menu camera switching is now suspended reversibly, the headset uses the menu camera independently of the demo player, and UI placement follows real camera/menu transitions.
-
-Gameplay camera placement now follows the authored first-person eye in standing as well as chair mode, preserving tracked movement relative to calibration. Finger geometry supplies a palm frame and palm-to-wrist offset where available, with forearm roll distributed before applying hand orientation. Skeletons lacking that geometry retain the earlier fallback. Local and remote solvers share the calibration; local hands refresh before rendering. Actual hardware wrist/height acceptance remains pending.
-
-Single-client simulation `single-rig-check-20261018-120816.log` passes the nine core groups plus a new native-menu/beam check. It confirms the native menu demo cannot own the tracking origin, a miss does not hide the beam and beam origin/layer/depth settings are correct. Pose checks include palm offset and forearm rotation without moving the wrist. Both solution build routes pass. No second game client was used for this revision.
-
-The subsequent hardware launch `quest3-steamlink-20261018-120923.log` failed at OpenXR instance creation. SteamVR's server log reported no active VTE/Steam Link client session. The failed game process was closed while the user reconnects; this is not a headset pass. The camera app now prefers the native workspace webcam instead of the headset, with temporary face visibility limited to its auxiliary render. That camera change and the latest rig still need real-headset verification. See [the current priorities](ROADMAP.md) for unfinished desk controls and later optimization work.
-
-## second headset feedback and native rig measurements (October 18)
-
-Hardware run `quest3-steamlink-20261018-121341.log` reached SteamVR and detected both controllers. The user confirmed the laser and main menu work, but rejected the remaining height, twisted hands, in-game settings and some computer UI. This is partial acceptance only. Logged frame samples remained roughly 15–35 FPS with spikes, so performance also remains unacceptable for release.
-
-`MetaCursorNetDebug.Update` overwrites `SettingsUi.IsOpen` from `escapeMenuOpen` every frame. VR pause now updates both flags. Left Y provides another app-menu binding where the runtime reserves the menu button. Opening settings through either native or VR input also repositions the floating UI in front of the current view and forces discovery immediately.
-
-Measured shipped models have index-only mitten hands, or index plus thumb, rather than the previously required middle/index/pinky set. Shared local/remote calibration now supports those actual bones, includes the palm offset, and distributes forearm roll. The visible native eye renderer supplies the gameplay eye anchor where present; the authored camera marker remains the fallback. Initial floor calibration now waits for tracked height above zero, preventing an acquisition pose from becoming the standing baseline. This does not yet prove all avatars, seated postures or physical hand angles are correct.
-
-Single-client mock run `single-rig-check-20261018-162509.log` passes ten groups, including native pause open/close surviving subsequent frames, both active shipped mitten skeletons calibrating, native eye renderer discovery, and a nonzero 1.65 m mock head pose whose rendered eye stays within the IPD distance of the camera transform. The measured render delta was approximately (-0.02, 0, -0.02) m, ruling out a doubled head translation in that check. Synthetic mirrored mitten tests verify finger direction, hand normal and wrist offset under rotated controller poses. All earlier pointer/keyboard/mesh fixtures also pass. Both .NET and Visual Studio builds pass. No second game client was run. Hardware recheck, every computer app, the existing desk keyboard and grabbable mouse remain pending.
+[Back to the project](../README.md) · [How to play](HOW-TO-PLAY.md)
