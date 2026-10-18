@@ -1,0 +1,11 @@
+<Project>
+  <Import Project="$(MSBuildThisFileDirectory)Local.Build.props" Condition="Exists('$(MSBuildThisFileDirectory)Local.Build.props')" />
+  <PropertyGroup>
+    <DefaultItemExcludes>$(DefaultItemExcludes);**\bin\**;**\obj\**;work\**;.vs\**</DefaultItemExcludes>
+    <GameDir Condition="'$(GameDir)' == ''">C:\Program Files (x86)\Steam\steamapps\common\Scam With Your Friends</GameDir>
+    <GameManaged>$(GameDir)\Scam With Your Friends_Data\Managed</GameManaged>
+    <UnityManagedDir Condition="'$(UnityManagedDir)' == ''">$(GameManaged)</UnityManagedDir>
+    <BepInExDir Condition="'$(BepInExDir)' == ''">$(GameDir)\BepInEx</BepInExDir>
+    <CecilPath Condition="'$(CecilPath)' == ''">$(BepInExDir)\core\Mono.Cecil.dll</CecilPath>
+  </PropertyGroup>
+</Project>

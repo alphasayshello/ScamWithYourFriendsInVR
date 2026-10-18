@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>ScamWithYourFriendsInVR.SmokeTests</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="$(UnityManagedDir)\UnityEngine*.dll" Private="false" />
+    <Reference Include="UnityEngine.UI" HintPath="$(GameDir)\Scam With Your Friends_Data\Managed\UnityEngine.UI.dll" Private="false" />
+    <Reference Include="Unity.TextMeshPro" HintPath="$(GameDir)\Scam With Your Friends_Data\Managed\Unity.TextMeshPro.dll" Private="false" />
+    <Reference Include="BepInEx" HintPath="$(BepInExDir)\core\BepInEx.dll" Private="false" />
+    <Reference Include="Mirror" HintPath="$(GameManaged)\Mirror.dll" Private="false" />
+    <Reference Include="0Harmony" HintPath="$(BepInExDir)\core\0Harmony.dll" Private="false" />
+    <ProjectReference Include="../../Runtime/ScamWithYourFriendsInVR.Runtime.csproj" Private="false" />
+  </ItemGroup>
+</Project>

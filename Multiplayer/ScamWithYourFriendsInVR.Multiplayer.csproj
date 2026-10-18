@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <BaseOutputPath>..\bin\</BaseOutputPath>
+    <AssemblyName>ScamWithYourFriendsInVR.Multiplayer</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="$(UnityManagedDir)\UnityEngine*.dll" Private="false" />
+    <Reference Include="Mirror" HintPath="$(GameManaged)\Mirror.dll" Private="false" />
+    <Reference Include="Steamworks.NET" HintPath="$(GameManaged)\com.rlabrecque.steamworks.net.dll" Private="false" />
+    <Reference Include="BepInEx" HintPath="$(BepInExDir)\core\BepInEx.dll" Private="false" />
+    <ProjectReference Include="..\ScamWithYourFriendsInVR.csproj" Private="false" />
+  </ItemGroup>
+</Project>

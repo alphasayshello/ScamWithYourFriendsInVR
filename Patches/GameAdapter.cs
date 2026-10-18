@@ -1,0 +1,177 @@
+using System;
+using System.Collections.Generic;
+using System.Reflection;
+using HarmonyLib;
+using UnityEngine;
+
+namespace ScamWithYourFriendsInVR.Patches
+{
+    internal static class GameAdapter
+    {
+        private static readonly Dictionary<string, MemberInfo> members = new Dictionary<string, MemberInfo>();
+        private static readonly Dictionary<MethodInfo, ParameterInfo[]> methodParameters = new Dictionary<MethodInfo, ParameterInfo[]>();
+        private static readonly HashSet<string> failures = new HashSet<string>();
+        internal static Component LocalPlayer => Static("Metater.MetaPlayer", "LocalPlayerInstance") as Component;
+        internal static Component Controller => Static("Metater.MetaPlayerController", "Instance") as Component;
+        internal static Component Interactor => Static("PlayerInteractor", "LocalPlayerInstance") as Component;
+        internal static Transform Polar => Read(Controller, "polarTransform") as Transform;
+        internal static bool MonitorCaptured => Static("KolkataMonitorInputState", "IsMonitorInputCaptured") is bool value && value;
+        internal static bool InMainMenu => Static("MainMenuSingleton", "IsGameUiForceDisabled") is bool value && value;
+        internal static bool SettingsOpen => Read(Static("SettingsUi", "Instance"), "IsOpen") is bool value && value;
+
+        internal static object Static(string typeName, string name)
+        {
+            Type type = ReflectionTypes.Find(typeName);
+            return type == null ? null : Get(type, null, name);
+        }
+
+        internal static object Read(object target, string name)
+        {
+            if (target == null || target is UnityEngine.Object obj && obj == null) return null;
+            return Get(target.GetType(), target, name);
+        }
+
+        private static object Get(Type type, object target, string name)
+        {
+            string key = type.FullName + "." + name;
+            try
+            {
+                if (!members.TryGetValue(key, out MemberInfo info))
+                {
+                    for (Type current = type; current != null && info == null; current = current.BaseType)
+                    {
+                        const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
+                        info = (MemberInfo)current.GetProperty(name, flags) ?? current.GetField(name, flags);
+                    }
+                    members[key] = info;
+                }
+                if (info is PropertyInfo property) return property.GetValue(target);
+                return (info as FieldInfo)?.GetValue(target);
+            }
+            catch (Exception ex) { Report(key, ex); return null; }
+        }
+
+        internal static void Write(object target, string name, object value)
+        {
+            if (target == null) return;
+            string key = target.GetType().FullName + "." + name;
+            try
+            {
+                Get(target.GetType(), target, name);
+                if (members[key] is FieldInfo field) field.SetValue(target, value);
+                else if (members[key] is PropertyInfo property && property.CanWrite) property.SetValue(target, value);
+            }
+            catch (Exception ex) { Report(key, ex); }
+        }
+
+        internal static object Call(object target, string name, params object[] args)
+        {
+            if (target == null || target is UnityEngine.Object obj && obj == null) return null;
+            string key = target.GetType().FullName + "." + name;
+            try
+            {
+                if (!members.TryGetValue(key + "()", out MemberInfo info))
+                {
+                    info = AccessTools.Method(target.GetType(), name);
+                    members[key + "()"] = info;
+                }
+                if (!(info is MethodInfo method)) return null;
+                if (!methodParameters.TryGetValue(method, out ParameterInfo[] parameters))
+                    methodParameters[method] = parameters = method.GetParameters();
+                if (args.Length < parameters.Length)
+                {
+                    var expanded = new object[parameters.Length];
+                    Array.Copy(args, expanded, args.Length);
+                    for (int i = args.Length; i < parameters.Length; i++)
+                    {
+                        if (!parameters[i].HasDefaultValue) throw new TargetParameterCountException("Required argument missing for " + key);
+                        expanded[i] = parameters[i].DefaultValue;
+                    }
+                    args = expanded;
+                }
+                return method.Invoke(target, args);
+            }
+            catch (Exception ex) { Report(key, ex); return null; }
+        }
+
+        internal static bool Allowed(Component interactor)
+        {
+            return interactor != null && Read(interactor, "isLocalPlayer") is bool local && local
+                && Call(interactor, "IsAnyMenuOpen") is bool menu && !menu
+                && Call(interactor, "IsInputAllowed") is bool allowed && allowed;
+        }
+
+        internal static void Interact(bool pressed)
+        {
+            Component interactor = Interactor;
+            if (!pressed) { Call(interactor, "CancelCurrentInteraction"); return; }
+            if (!Allowed(interactor)) return;
+            Call(interactor, "HandleInteractionRay");
+            Call(interactor, "HandleInteractionInput");
+            Call(interactor, "UpdateTaserEnabledState");
+        }
+
+        internal static void TogglePause()
+        {
+            object settings = Static("SettingsUi", "Instance");
+            if (!(Read(settings, "IsOpen") is bool opened)) return;
+            // The native cursor controller writes this flag back to SettingsUi
+            // every Update. Both must change or the menu closes next frame.
+            object cursor = Static("MetaCursorNetDebug", "Instance");
+            Write(cursor, "escapeMenuOpen", !opened);
+            Write(settings, "IsOpen", !opened);
+        }
+
+        internal static void Back()
+        {
+            VRManager manager = VRManager.Instance;
+            if (manager?.Keyboard != null && manager.Keyboard.Visible) { manager.Keyboard.Close(); return; }
+            object players = Static("TabMenu", "Instance");
+            if (Read(players, "IsOpen") is bool playersOpen && playersOpen) { Write(players, "IsOpen", false); return; }
+            if (MonitorCaptured)
+            {
+                object desktop = Static("KolkataOsSingleton", "Instance");
+                if (desktop == null) return;
+                Call(desktop, "RequestActiveMonitorClose", false);
+                Type state = ReflectionTypes.Find("KolkataMonitorInputState");
+                AccessTools.Method(state, "ConsumeEscapeThisFrame")?.Invoke(null, null);
+                return;
+            }
+            TogglePause();
+        }
+
+        internal static void TogglePlayers()
+        {
+            if (InMainMenu || MonitorCaptured) return;
+            if (SettingsOpen) TogglePause();
+            object players = Static("TabMenu", "Instance");
+            if (Read(players, "IsOpen") is bool open) Write(players, "IsOpen", !open);
+        }
+
+        internal static void Attack(bool pressed)
+        {
+            Component player = LocalPlayer;
+            Type weaponType = ReflectionTypes.Find("RaycastWeapon");
+            if (player == null || weaponType == null || pressed && !Allowed(Interactor)) return;
+            MethodInfo input = AccessTools.Method(weaponType, "OnAttackInput", new[] { typeof(bool) });
+            foreach (Component weapon in player.GetComponents(weaponType))
+                if (weapon is Behaviour behaviour && behaviour.enabled)
+                    try { input?.Invoke(weapon, new object[] { pressed }); }
+                    catch (Exception ex) { Report("Tracked weapon input", ex); }
+        }
+
+        internal static void Drop(Component item, Vector3 velocity, Transform hand)
+        {
+            Component interactor = Interactor;
+            if (item == null || hand == null || !Allowed(interactor)
+                || !ReferenceEquals(Read(interactor, "CurrentHeldItem"), item)) return;
+            Call(interactor, "CmdDropHeldItem", hand.forward, Vector3.ClampMagnitude(velocity, 8f),
+                item.transform.position, item.transform.rotation);
+        }
+
+        internal static void Report(string key, Exception exception)
+        {
+            if (failures.Add(key)) Plugin.Log.LogWarning(key + ": " + exception.GetBaseException().Message);
+        }
+    }
+}

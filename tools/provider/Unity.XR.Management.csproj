@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <DefineConstants>UNITY_STANDALONE_WIN;UNITY_64;UNITY_2021_3_OR_NEWER;UNITY_2022_1_OR_NEWER;UNITY_6000_0_OR_NEWER</DefineConstants>
+    <NoWarn>0618</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(XRPackageRoot)/com.unity.xr.management/package/Runtime/**/*.cs" />
+    <Reference Include="$(UnityManagedDir)/UnityEngine*.dll" Private="false" />
+  </ItemGroup>
+</Project>

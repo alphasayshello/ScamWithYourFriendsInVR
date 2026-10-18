@@ -1,0 +1,25 @@
+{
+  "unityVersion": "6000.3.10f1",
+  "unityRevision": "e35f0c77bd8e",
+  "bepinex": {
+    "url": "https://github.com/BepInEx/BepInEx/releases/download/v5.4.23.5/BepInEx_win_x64_5.4.23.5.zip",
+    "sha256": "82F9878551030F54657792C0740D9D51A09500EEAE1FBA21106B0C441E6732C4"
+  },
+  "packages": [
+    {
+      "name": "com.unity.inputsystem",
+      "version": "1.19.0",
+      "sha256": "4A08D3D4AD260DA37A0DD76C4575BB860A1D85FE305CF76B7C1A0DE70496389C"
+    },
+    {
+      "name": "com.unity.xr.management",
+      "version": "4.4.0",
+      "sha256": "6A64E68385094EC9D71C4B9A237BA0138B64AB567E5E446CDF722BA2956EE350"
+    },
+    {
+      "name": "com.unity.xr.openxr",
+      "version": "1.15.1",
+      "sha256": "68B2BB2D0B67CAAE910A83BA0F7EB9478A9F83E87C9E26D1DA145541BEEF91BE"
+    }
+  ]
+}

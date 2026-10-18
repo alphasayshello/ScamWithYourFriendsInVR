@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <AssemblyVersion>1.19.0.0</AssemblyVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DefineConstants>UNITY_STANDALONE;UNITY_STANDALONE_WIN;UNITY_64;ENABLE_INPUT_SYSTEM;ENABLE_VR;UNITY_2019_3_OR_NEWER;UNITY_2020_1_OR_NEWER;UNITY_2020_2_OR_NEWER;UNITY_2020_3_OR_NEWER;UNITY_2021_1_OR_NEWER;UNITY_2021_2_OR_NEWER;UNITY_2021_3_OR_NEWER;UNITY_2022_1_OR_NEWER;UNITY_2022_2_OR_NEWER;UNITY_2022_3_OR_NEWER;UNITY_2023_1_OR_NEWER;UNITY_2023_2_OR_NEWER;UNITY_6000_0_OR_NEWER;UNITY_6000_1_OR_NEWER;UNITY_6000_2_OR_NEWER;UNITY_6000_3_OR_NEWER;UNITY_INPUT_SYSTEM_ENABLE_XR;UNITY_INPUT_SYSTEM_ENABLE_PHYSICS;UNITY_INPUT_SYSTEM_ENABLE_PHYSICS2D;UNITY_INPUT_SYSTEM_ENABLE_UI;UNITY_INPUT_SYSTEM_PLATFORM_SCROLL_DELTA;UNITY_INPUT_SYSTEM_INPUT_MODULE_SCROLL_DELTA;UNITY_INPUT_SYSTEM_INPUT_MODULE_NAVIGATION_DEVICE_TYPE;UNITY_INPUT_SYSTEM_SENDPOINTERHOVERTOPARENT;UNITY_INPUT_SYSTEM_PLATFORM_POLLING_FREQUENCY</DefineConstants>
+    <NoWarn>0618;0649;0169;0414</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(XRPackageRoot)/com.unity.inputsystem/package/InputSystem/**/*.cs"
+      Exclude="$(XRPackageRoot)/com.unity.inputsystem/package/InputSystem/Plugins/InputForUI/**/*.cs" />
+    <Reference Include="$(UnityManagedDir)/UnityEngine*.dll" Private="false" />
+    <Reference Include="UnityEngine.UI" HintPath="$(GameDir)/Scam With Your Friends_Data/Managed/UnityEngine.UI.dll" Private="false" />
+  </ItemGroup>
+</Project>

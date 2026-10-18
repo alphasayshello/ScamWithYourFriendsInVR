@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <AssemblyName>ScamWithYourFriendsInVR</AssemblyName>
+    <Version>0.1.0</Version>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>1591</NoWarn>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Plugin.cs" />
+    <Reference Include="$(UnityManagedDir)\UnityEngine*.dll" Private="false" />
+    <Reference Include="UnityEngine.UI" HintPath="$(GameManaged)\UnityEngine.UI.dll" Private="false" />
+    <Reference Include="$(GameManaged)\Unity.TextMeshPro.dll" Private="false" />
+    <Reference Include="BepInEx" HintPath="$(BepInExDir)\core\BepInEx.dll" Private="false" />
+    <Reference Include="0Harmony" HintPath="$(BepInExDir)\core\0Harmony.dll" Private="false" />
+  </ItemGroup>
+  <Target Name="ValidateDependencies" BeforeTargets="ResolveReferences">
+    <Error Condition="!Exists('$(GameManaged)\UnityEngine.CoreModule.dll')" Text="Set GameDir to the installed Mono game directory." />
+    <Error Condition="!Exists('$(BepInExDir)\core\BepInEx.dll')" Text="Install BepInEx 5 x64 or set BepInExDir to an extracted distribution." />
+    <Error Condition="Exists('$(GameDir)\GameAssembly.dll')" Text="IL2CPP is not supported by this Mono build. Do not install this DLL into BepInEx 6 IL2CPP." />
+  </Target>
+</Project>

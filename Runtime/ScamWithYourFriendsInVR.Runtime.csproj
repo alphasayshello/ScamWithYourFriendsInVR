@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AssemblyName>ScamWithYourFriendsInVR.Runtime</AssemblyName>
+    <BaseOutputPath>..\bin\</BaseOutputPath>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="OpenXRBootstrap.cs;ReflectionTypes.cs;VRPerformance.cs;VRMirrorView.cs" />
+    <Compile Include="..\VRManager.cs" Link="VRManager.cs" />
+    <Compile Include="..\Camera\*.cs" Link="Camera\%(Filename)%(Extension)" />
+    <Compile Include="..\Input\*.cs" Link="Input\%(Filename)%(Extension)" />
+    <Compile Include="..\UI\*.cs" Link="UI\%(Filename)%(Extension)" />
+    <Compile Include="..\Patches\*.cs" Link="Patches\%(Filename)%(Extension)" />
+    <Reference Include="$(UnityManagedDir)\UnityEngine*.dll" Private="false" />
+    <Reference Include="UnityEngine.UI" HintPath="$(GameDir)\Scam With Your Friends_Data\Managed\UnityEngine.UI.dll" Private="false" />
+    <Reference Include="Unity.TextMeshPro" HintPath="$(GameDir)\Scam With Your Friends_Data\Managed\Unity.TextMeshPro.dll" Private="false" />
+    <Reference Include="BepInEx" HintPath="$(BepInExDir)\core\BepInEx.dll" Private="false" />
+    <Reference Include="0Harmony" HintPath="$(BepInExDir)\core\0Harmony.dll" Private="false" />
+    <ProjectReference Include="..\ScamWithYourFriendsInVR.csproj" Private="false" />
+    <ProjectReference Include="..\Multiplayer\ScamWithYourFriendsInVR.Multiplayer.csproj" Private="false" />
+  </ItemGroup>
+</Project>

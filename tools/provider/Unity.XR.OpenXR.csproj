@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DefineConstants>UNITY_2019_3_OR_NEWER;UNITY_2020_1_OR_NEWER;UNITY_2020_2_OR_NEWER;UNITY_2020_3_OR_NEWER;UNITY_2021_1_OR_NEWER;UNITY_2021_2_OR_NEWER;UNITY_STANDALONE_WIN;UNITY_64;ENABLE_INPUT_SYSTEM;UNITY_2021_3_OR_NEWER;UNITY_2022_1_OR_NEWER;UNITY_2022_2_OR_NEWER;UNITY_2022_3_OR_NEWER;UNITY_2023_1_OR_NEWER;UNITY_2023_2_OR_NEWER;UNITY_6000_0_OR_NEWER;UNITY_6000_1_OR_NEWER;UNITY_6000_2_OR_NEWER;UNITY_6000_3_OR_NEWER;INPUT_SYSTEM_POSE_VALID;INPUT_SYSTEM_BINDING_VALIDATOR;SPACEWARP_RIGHT_HAND_NDC_SUPPORTED</DefineConstants>
+    <NoWarn>0618</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="VRSessionFocusFeature.cs" />
+    <Compile Include="$(XRPackageRoot)/com.unity.xr.openxr/package/Runtime/**/*.cs"
+      Exclude="$(XRPackageRoot)/com.unity.xr.openxr/package/Runtime/RuntimeDebugger/**/*.cs;$(XRPackageRoot)/com.unity.xr.openxr/package/Runtime/MockRuntime/**/*.cs;$(XRPackageRoot)/com.unity.xr.openxr/package/Runtime/ConformanceAutomation/**/*.cs;$(XRPackageRoot)/com.unity.xr.openxr/package/Runtime/MetaQuest/**/*.cs;$(XRPackageRoot)/com.unity.xr.openxr/package/Runtime/OculusQuest/**/*.cs" />
+    <Reference Include="$(UnityManagedDir)/UnityEngine*.dll" Private="false" />
+    <ProjectReference Include="Unity.InputSystem.csproj" />
+    <ProjectReference Include="Unity.XR.Management.csproj" />
+  </ItemGroup>
+</Project>
