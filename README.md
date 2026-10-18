@@ -1,4 +1,4 @@
-# ScamWithYourFriendsInVR
+# Scam With Your Friends In VR
 
 ![Scam With Your Friends in VR](docs/images/banner.png)
 
