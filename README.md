@@ -2,8 +2,6 @@
 
 ![Scam With Your Friends in VR](docs/images/banner.png)
 
-**Your headset. Your hands. Your extremely questionable day job.**
-
 An open-source VR conversion for **Scam With Your Friends**, built with BepInEx and OpenXR.
 
 [Quick start](docs/GETTING-STARTED.md) · [How to play](docs/HOW-TO-PLAY.md) · [Build](docs/BUILD.md) · [Troubleshooting](docs/TROUBLESHOOTING.md) · [Project status](docs/VALIDATION.md)
