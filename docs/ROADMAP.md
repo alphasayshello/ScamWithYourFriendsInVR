@@ -9,7 +9,7 @@ This remains a development preview. The user's latest headset run accepted the g
 - Separate body yaw from tracking-origin yaw so turning the model does not turn the view twice.
 - Follow physical steps with the native collision body, consume only actual movement, and keep a small leaning allowance.
 - Track the local avatar head and remote voice mouth; restore owned poses on timeout/disable.
-- Provide an honest, usable source repository with setup, controls, build instructions, troubleshooting and artwork placeholders.
+- Provide an honest, usable source repository with setup, controls, build instructions, troubleshooting and a project banner.
 
 ## Still required
 

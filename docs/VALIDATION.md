@@ -30,7 +30,6 @@
 - Consistently smooth performance, especially in busy scenes.
 - Ragdoll, spectating, tracking loss and every seated/standing transition.
 - Headset/controller compatibility beyond the setup already tried.
-- Final artwork and screenshots; placeholders are ready for them.
 
 ## Not included right now
 

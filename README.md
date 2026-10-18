@@ -1,12 +1,12 @@
 # ScamWithYourFriendsInVR
 
+![Scam With Your Friends in VR](docs/images/banner.png)
+
 **Your headset. Your hands. Your extremely questionable day job.**
 
 An open-source VR conversion for **Scam With Your Friends**, built with BepInEx and OpenXR.
 
 [Quick start](docs/GETTING-STARTED.md) · [How to play](docs/HOW-TO-PLAY.md) · [Build](docs/BUILD.md) · [Troubleshooting](docs/TROUBLESHOOTING.md) · [Project status](docs/VALIDATION.md)
-
-> **Banner artwork goes here.** See [artwork slots](docs/images/README.md) for the images you can add later.
 
 ## What you get
 
@@ -47,8 +47,6 @@ This is a PC VR mod, not a standalone Quest app. The stock game strips required 
 | Left grip + left X | Fart |
 
 [Full controls and computer instructions →](docs/HOW-TO-PLAY.md)
-
-> **Gameplay screenshot goes here.** Suggested image: `docs/images/gameplay.png`.
 
 ## PC and VR together
 

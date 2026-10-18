@@ -39,5 +39,3 @@ Left grip + left trigger holds the native pee action; release to stop. Left grip
 ## Play with friends
 
 The host must have the mod to relay poses. Modded PC players use `Mode = PC`; VR players use `Mode = VR`. Both are in `BepInEx/config/com.swyf.vr.cfg`, under `[General]`. Restart after changing mode. Use the game's normal lobby/invite flow. [Read multiplayer details](MULTIPLAYER.md).
-
-> Controller guide artwork goes here: `docs/images/controls.png`.

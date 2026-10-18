@@ -6,4 +6,4 @@ For a change, describe the problem, resulting behaviour, supported game/runtime 
 
 Use the existing C# style and conditional reflection/Harmony integration. Update player-facing controls and setup docs when defaults change. Keep diagnostics and optional test plugins out of normal gameplay flows.
 
-Artwork slots are listed in [docs/images](docs/images/README.md). Original contributions use the repository's [MIT license](LICENSE); third-party material retains its own terms.
+Original contributions use the repository's [MIT license](LICENSE); third-party material retains its own terms.
