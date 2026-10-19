@@ -415,6 +415,9 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 yield return new WaitForSecondsRealtime(0.5f);
                 if (singleComputer)
                 {
+                    var browserChecks = TestNativeBrowserScroll(os);
+                    try { while (browserChecks.MoveNext()) yield return browserChecks.Current; }
+                    finally { (browserChecks as IDisposable)?.Dispose(); }
                     var appChecks = TestAllAppWindows(os, surface);
                     try { while (appChecks.MoveNext()) yield return appChecks.Current; }
                     finally { (appChecks as IDisposable)?.Dispose(); }

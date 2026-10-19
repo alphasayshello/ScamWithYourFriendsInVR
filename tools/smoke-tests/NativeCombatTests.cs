@@ -91,7 +91,10 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     aim.SetPositionAndRotation(manager.Rig.Head.transform.position + Vector3.up * 1000, Quaternion.LookRotation(Vector3.up, Vector3.forward));
                     Input("Trigger", true); Input("TriggerDown", true); Input("TriggerUp", false); Input("Grip", true);
                     pointerTick.Invoke(manager.Pointer, null);
-                    Require(Member(combatWeapon, "isAttackHeld") is bool held && held, "Controller combo did not start native attack hold");
+                    Require(Member(combatWeapon, "isAttackHeld") is bool held && held, "Controller combo did not start native attack hold; interactive=" + manager.Interactive
+                        + "; headBlocked=" + manager.Rig.HeadObstructed + "; rightTracked=" + manager.Rig.Right.IsTracked
+                        + "; panel=" + manager.Pointer.HasPanelHit + "; pointerAttack=" + pointerAttacking.GetValue(manager.Pointer)
+                        + "; leftGrip=" + manager.Input.LeftGrip + "; settings=" + AccessTools.Property(adapter, "SettingsOpen").GetValue(null));
                     Input("TriggerDown", false); Input("Grip", false); pointerTick.Invoke(manager.Pointer, null);
                 }
                 finally { aim.SetPositionAndRotation(savedAim, savedAimRotation); }

@@ -40,6 +40,7 @@ namespace ScamWithYourFriendsInVR.UI
         private float lastClickTime;
         private int clickCount;
         private readonly VRGripInteractor grab = new VRGripInteractor();
+        private readonly VRBrowserScroll browserScroll = new VRBrowserScroll();
         private readonly VRPointerAim aimFilter = new VRPointerAim();
         private readonly List<BaseInputModule> moduleBuffer = new List<BaseInputModule>();
         private Quaternion visualRotation, sampledRotation;
@@ -417,9 +418,10 @@ namespace ScamWithYourFriendsInVR.UI
             else if (evt is PointerUpEvent) releasePointer?.Invoke(null, new object[] { ToolkitPointerId, button });
         }
 
-        private static void Scroll(VisualElement target, Vector2 position, float amount)
+        private void Scroll(VisualElement target, Vector2 position, float amount)
         {
             if (target?.panel == null) return;
+            if (browserScroll.TryScroll(target, position, amount)) return;
             Event source = new Event { type = EventType.ScrollWheel, mousePosition = position, delta = new Vector2(0, amount) };
             using (WheelEvent evt = WheelEvent.GetPooled(source)) { evt.target = target; target.SendEvent(evt); }
         }
@@ -498,6 +500,7 @@ namespace ScamWithYourFriendsInVR.UI
 
         public void Cancel()
         {
+            browserScroll.Reset();
             ResetAim(); showUntil = 0;
             releasePointers?.Invoke(null, new object[] { ToolkitPointerId });
 

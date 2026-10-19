@@ -63,6 +63,21 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             try { TestSharedPanel(document, otherDocument); Logger.LogInfo("SMOKE PASS: shared-panel keyboard document routing"); }
             catch (Exception ex) { Logger.LogError("SMOKE FAIL: shared panel: " + ex.GetBaseException()); }
             IEnumerator worldTest = TestWorldPanel();
+            IEnumerator browserTest = TestBrowserScroll(document);
+            bool browserPassed = true;
+            try
+            {
+                while (true)
+                {
+                    bool more;
+                    try { more = browserTest.MoveNext(); }
+                    catch (Exception ex) { browserPassed = false; Logger.LogError("SMOKE FAIL: browser scroll: " + ex.GetBaseException()); break; }
+                    if (!more) break;
+                    yield return browserTest.Current;
+                }
+            }
+            finally { (browserTest as IDisposable)?.Dispose(); }
+            if (browserPassed) Logger.LogInfo("SMOKE PASS: browser pixel scroll mapping, native direction, readiness, fine input, rebind and detached/chrome guards");
             bool worldPassed = true;
             while (true)
             {

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Forward controller scrolling over the embedded browser to native pixel scrolling at the laser position, preserving fine input across frames and ordinary scrolling in other controls.
 - Added an isolated-copy installer with stage/engine verification and portable PC/VR launchers.
 - Desktop attachment follows monitor movement and replaced stream renderers while preserving the game's hidden local presenter.
 - Send VR jump edges to native struggle/hiding-escape input and add a captured left-grip + right-A give-up hold.

@@ -28,6 +28,8 @@ The laser stays visible in menus and computers. During normal play it appears fo
 4. Use your physical PC keyboard for text entry. The VR keyboard is disabled by default. No desk mouse grabbing or touch typing is required.
 5. Press left Y / menu to leave the computer.
 
+Point inside a browser webpage and use the stick to scroll that page. Browser toolbar controls and other apps retain ordinary UI scrolling. Native browser privacy approval and availability still apply.
+
 `[UI] PhysicalDesktop = true` keeps the UI attached to the original monitor by default. In settings → General → VR options, change COMPUTER SCREEN to FLOATING if you prefer a closer desktop. App licences, sign-in and game progression still follow the native game; opening a window does not guarantee that every workflow has passed VR testing.
 
 ## Interact and fight
