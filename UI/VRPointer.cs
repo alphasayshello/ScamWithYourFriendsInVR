@@ -146,7 +146,9 @@ namespace ScamWithYourFriendsInVR.UI
                 Cancel(); Hide(); return;
             }
             EnsureModule();
-            if (toolkitDown && pressedWorldDocument == null && (pressedPanel == null || !pressedPanel.CanInteract)) CancelToolkit();
+            if (toolkitDown && (!ToolkitPressVisible() || (pressedWorldDocument != null
+                ? !pressedWorldDocument.isActiveAndEnabled
+                : pressedPanel == null || !pressedPanel.CanInteract))) CancelToolkit();
             bool context = GameAdapter.InMainMenu || GameAdapter.SettingsOpen || GameAdapter.MonitorCaptured || manager.Keyboard.Visible
                 || GameAdapter.Read(GameAdapter.Static("TabMenu", "Instance"), "IsOpen") is bool playersOpen && playersOpen;
             sampledRotation = manager.Rig.Right.Aim.rotation;
@@ -355,6 +357,14 @@ namespace ScamWithYourFriendsInVR.UI
             Vector3 endpoint = origin + direction * visualDistance;
             line.SetPosition(0, origin); line.SetPosition(1, endpoint);
             if (visualHit && dot != null) dot.transform.position = endpoint;
+        }
+
+        private bool ToolkitPressVisible()
+        {
+            if (pressedElement?.panel == null || !pressedElement.enabledInHierarchy) return false;
+            for (VisualElement element = pressedElement; element != null; element = element.parent)
+                if (!element.visible || element.resolvedStyle.display == DisplayStyle.None) return false;
+            return true;
         }
 
         private VisualElement CapturedOrPressed()

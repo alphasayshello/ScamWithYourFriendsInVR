@@ -169,6 +169,19 @@ document.onmousedown=()=>{s.downs++;report()};document.onmouseup=()=>{s.ups++;s.
                 wait = Await(s => s.contexts == 1, "Controller secondary button did not reach webpage context input");
                 while (wait.MoveNext()) yield return wait.Current;
                 Logger.LogInfo("RENDERED BROWSER PASS: controller secondary button reaches real webpage context click");
+
+                PagePoint(370, 75); Trigger(true);
+                wait = Await(s => s.dragging, "Close-during-drag fixture did not begin dragging");
+                while (wait.MoveNext()) yield return wait.Current;
+                var closingImage = Member(host, "browserImage") as VisualElement;
+                AccessTools.Method(os.GetType(), "CloseApp").Invoke(os, new[] { app });
+                yield return null; yield return new WaitForEndOfFrame();
+                tick.Invoke(manager.Pointer, null);
+                Require(!(bool)Member(manager.Pointer, "toolkitDown")
+                    && (closingImage?.panel == null || !closingImage.HasPointerCapture(VRPointer.ToolkitPointerId)),
+                    "Closing the browser retained controller press/capture ownership");
+                holdInjectedTrigger = false; Set("Trigger", false); Set("TriggerDown", false); Set("TriggerUp", false);
+                Logger.LogInfo("RENDERED BROWSER PASS: closing the real browser during a controller drag clears press/capture ownership");
             }
             finally
             {

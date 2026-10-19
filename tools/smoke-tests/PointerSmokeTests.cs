@@ -103,6 +103,21 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             }
             finally { (textureTest as IDisposable)?.Dispose(); }
             if (texturePassed) Logger.LogInfo("SMOKE PASS: authored mesh UV/flip mapping, native button, off-mesh drag and renderer/texture ownership");
+            IEnumerator cornerTest = TestCornerLifecycle(document);
+            bool cornersPassed = true;
+            try
+            {
+                while (true)
+                {
+                    bool more;
+                    try { more = cornerTest.MoveNext(); }
+                    catch (Exception ex) { cornersPassed = false; Logger.LogError("SMOKE FAIL: UI corner lifecycle: " + ex.GetBaseException()); break; }
+                    if (!more) break;
+                    yield return cornerTest.Current;
+                }
+            }
+            finally { (cornerTest as IDisposable)?.Dispose(); }
+            if (cornersPassed) Logger.LogInfo("SMOKE PASS: repeated UI tree detach releases corner snapshots, reattach repairs and shutdown restores native styles");
             IEnumerator keyboardTest = TestKeyboard(document);
             bool keyboardPassed = true;
             bool savedKeyboard = Plugin.VirtualKeyboard.Value;

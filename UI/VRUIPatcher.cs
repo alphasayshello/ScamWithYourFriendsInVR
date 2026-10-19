@@ -469,10 +469,25 @@ namespace ScamWithYourFriendsInVR.UI
                 texturedCorners[element] = new Corners { TopLeft = element.style.borderTopLeftRadius,
                     TopRight = element.style.borderTopRightRadius, BottomLeft = element.style.borderBottomLeftRadius,
                     BottomRight = element.style.borderBottomRightRadius };
+                element.RegisterCallback<DetachFromPanelEvent>(RestoreDetachedCorners);
                 element.style.borderTopLeftRadius = 0; element.style.borderTopRightRadius = 0;
                 element.style.borderBottomLeftRadius = 0; element.style.borderBottomRightRadius = 0;
             }
             foreach (VisualElement child in element.Children()) RepairTexturedCorners(child);
+        }
+
+        private void RestoreDetachedCorners(DetachFromPanelEvent evt)
+        {
+            if (!(evt.target is VisualElement element) || !texturedCorners.TryGetValue(element, out Corners corners)) return;
+            RestoreCorners(element, corners);
+            texturedCorners.Remove(element);
+        }
+
+        private void RestoreCorners(VisualElement element, Corners corners)
+        {
+            element.UnregisterCallback<DetachFromPanelEvent>(RestoreDetachedCorners);
+            element.style.borderTopLeftRadius = corners.TopLeft; element.style.borderTopRightRadius = corners.TopRight;
+            element.style.borderBottomLeftRadius = corners.BottomLeft; element.style.borderBottomRightRadius = corners.BottomRight;
         }
 
         public VisualElement Pick(Vector2 uv)
@@ -532,8 +547,7 @@ namespace ScamWithYourFriendsInVR.UI
         {
             foreach (var entry in texturedCorners)
             {
-                entry.Key.style.borderTopLeftRadius = entry.Value.TopLeft; entry.Key.style.borderTopRightRadius = entry.Value.TopRight;
-                entry.Key.style.borderBottomLeftRadius = entry.Value.BottomLeft; entry.Key.style.borderBottomRightRadius = entry.Value.BottomRight;
+                RestoreCorners(entry.Key, entry.Value);
             }
             texturedCorners.Clear();
             if (NativePresenter) { nativeMapping = null; Texture = null; Settings = null; return; }
