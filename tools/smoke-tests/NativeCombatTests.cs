@@ -44,9 +44,15 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             var attack = AccessTools.Method(adapter, "Attack");
             var toggle = AccessTools.Method(adapter, "TogglePause");
             Type weaponType = Find("RaycastWeapon");
-            combatWeapon = Mirror.NetworkClient.localPlayer.GetComponents(weaponType).Cast<Component>()
-                .FirstOrDefault(w => w is Behaviour enabled && enabled.enabled && Member(w, "IsUnarmedWeapon") is bool unarmed && unarmed
-                    && Member(w, "HasUsableWeapon") is bool usable && usable);
+            float equipmentDeadline = Time.realtimeSinceStartup + 5;
+            do
+            {
+                combatWeapon = Mirror.NetworkClient.localPlayer.GetComponents(weaponType).Cast<Component>()
+                    .FirstOrDefault(w => w is Behaviour enabled && enabled.enabled && Member(w, "IsUnarmedWeapon") is bool unarmed && unarmed
+                        && Member(w, "HasUsableWeapon") is bool usable && usable);
+                if (combatWeapon != null) break;
+                yield return null;
+            } while (Time.realtimeSinceStartup < equipmentDeadline);
             Require(combatWeapon != null, "No native empty-hand weapon available");
             var nextFire = AccessTools.Method(weaponType, "GetCurrentNextFireTime");
             var pointerTick = AccessTools.Method(manager.Pointer.GetType(), "LateUpdate");

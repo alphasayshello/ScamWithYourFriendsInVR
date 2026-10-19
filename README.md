@@ -45,7 +45,9 @@ This is a PC VR mod, not a standalone Quest app. The stock game strips required 
 | Left Y / controller menu | Back / settings |
 | Hold left stick click | Recenter |
 | Left grip + left trigger | Pee |
-| Left grip + left X | Fart |
+| Left grip + left X | Fart / eligible native cone boost |
+| Left grip + right B | Agent hand/hip slot swap |
+| Left grip + right trigger | Extra held-item action |
 
 [Full controls and computer instructions →](docs/HOW-TO-PLAY.md)
 

@@ -60,3 +60,10 @@ The single private mock host now checks the real native unarmed weapon: VR attac
 ## native held-item and food use
 
 The single private host creates a native curry prefab as an owned test fixture, picks it up through its normal command and drives primary/secondary buttons through the actual VR pointer. Trigger use without grip must reach the held-item event; secondary press/release must reach the native alternate-action event. Settings must prevent consumption. Left trigger must retain native world interaction while holding food, without consuming it or firing under the pee modifier. The test waits for native network-spawned poop and the local gassy state, then requires normal effect expiry. It cleans up its fixture/effects even on failure. This does not validate every food, jump/cone boosts, cross-account replication or headset feel. These fixtures are only in the optional test plugin; normal play has no test-food spawning command.
+
+
+## native boost activation
+
+The curry fixture holds the VR jump input until the actual native `onJumped` event fires, then checks the native boost envelope and cooldown. Its observation callback clears that new envelope before physics applies the boost, so this verifies activation, not trajectory or comfort.
+
+A separate owned traffic-cone fixture temporarily uses the native agent role, drives controller hip swap and reverse swap, and requires the actual cone callback to add a boost envelope, synchronize one use and network-spawn its effect. Repeated input must obey the native cooldown, and settings must suppress activation. The fixture clears its impulse before physics, restores the original role/position and removes only the effects observed inside its own cone spawn call. Final cone use, its ragdoll transition, boost trajectories and headset acceptance remain unverified.

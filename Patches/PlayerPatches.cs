@@ -70,7 +70,7 @@ namespace ScamWithYourFriendsInVR.Patches
         }
         private static void AfterPressedInput(string __0, string __1, ref bool __result)
         {
-            if (__0 == "Shortcuts" && __1 == "ManualFart" && GameplayInput) __result |= VRManager.Instance.Input.FartDown;
+            if (__0 == "Shortcuts" && __1 == "ManualFart" && GameplayInput && VRManager.Instance.Input.FartDown && !GameAdapter.HasConeBoost) __result = true;
         }
 
         private static void AfterHudHints(object __instance)
@@ -117,6 +117,7 @@ namespace ScamWithYourFriendsInVR.Patches
                 }
             }
             GameAdapter.Write(__instance, "movementVector", move);
+            if (GameplayInput && !manager.Keyboard.Visible && manager.Input.FartDown) GameAdapter.FartBoost();
             bool jump = GameplayInput && !manager.Keyboard.Visible && !manager.Pointer.HasPanelHit && manager.Input.Jump;
             if (GameAdapter.Read(__instance, "isJumping") is bool previous && previous != jump)
             {

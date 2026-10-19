@@ -17,7 +17,7 @@
 
 - Temporary controller capsules (the bean shapes) are removed. The laser now hides during idle gameplay and uses steadier UI aiming, a smaller distance-scaled reticle and more forgiving double clicks. Its feel still needs a headset check.
 - Punch input now stops when grip is released, even if trigger stays down. Native unarmed firing, controller aim, cooldown rejection and nonlethal NPC damage have been checked. Knockback now uses controller direction too; PvP, knockouts and other weapons still need checking.
-- Left trigger provides world interaction while holding items, separate from the pee modifier. Held-item trigger and secondary actions now use native callbacks, covering food/tool use that weapon-only input skipped. Curry consumption, networked poop/gassy effects and normal expiry work in simulation; other foods and boost interactions still need checking.
+- Left trigger provides world interaction while holding items, separate from the pee modifier. Held-item trigger and secondary actions now use native callbacks, covering food/tool use that weapon-only input skipped. Curry consumption, networked poop/gassy effects and normal expiry work in simulation. Native jump-driven curry boost activation, agent hip swap, extra item-action release and nonfinal cone activation/cooldown also pass simulated checks; trajectories, final cone use and other foods still need checking.
 - Ordinary item pickup, release, quick-release pickup and cancellation work in the simulated host. Every item type and throwing feel still need checking.
 - Tracking reads and UI scans do less repeated work, and destroyed menu graphics release their owned material entries. Smooth performance in busy scenes still needs more work.
 
@@ -32,7 +32,7 @@
 ## Not finished
 
 - Every computer app and every action inside those apps.
-- Combat damage against players, charged/ranged weapons, other food variants, jump/cone boosts and all held-item variants in VR.
+- Combat damage against players, charged/ranged weapons, other food variants, boost trajectories/final cone use and all held-item variants in VR.
 - Complete multiplayer checks across separate Steam accounts, including reconnecting and joining late.
 - Consistently smooth performance, especially in busy scenes.
 - Ragdoll, spectating, tracking loss and every seated/standing transition.

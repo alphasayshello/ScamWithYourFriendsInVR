@@ -158,6 +158,19 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     }
                 }
                 finally { (foodTest as IDisposable)?.Dispose(); }
+                IEnumerator boostTest = TestNativeBoost();
+                try
+                {
+                    while (true)
+                    {
+                        bool more;
+                        try { more = boostTest.MoveNext(); }
+                        catch (Exception ex) { Logger.LogError("BOOST FAIL: " + ex.GetBaseException()); break; }
+                        if (!more) break;
+                        yield return boostTest.Current;
+                    }
+                }
+                finally { (boostTest as IDisposable)?.Dispose(); }
                 IEnumerator combatTest = TestNativeCombat();
                 try
                 {

@@ -30,6 +30,7 @@ namespace ScamWithYourFriendsInVR.UI
         private Vector3 lastPanelPosition;
         private bool toolkitDown, worldDown, leftWorldDown, attacking;
         private bool attackRequiresGrip = true, secondaryHeld;
+        private bool primaryTertiary, secondaryHipSwap;
         private VisualElement clickRoot, clickTarget;
         private UnityEngine.UIElements.Button clickButton;
         private bool observedClick, observedButton;
@@ -284,23 +285,22 @@ namespace ScamWithYourFriendsInVR.UI
                 manager.Keyboard.TryOpen(elementHit, worldDocumentHit ?? panelHit.DocumentFor(elementHit));
             }
 
-            if (attacking && (attackRequiresGrip && !manager.Input.Grip || !manager.Input.Trigger || HasPanelHit || context))
-            {
-                GameAdapter.Attack(false); attacking = false;
-            }
+            if (attacking && (attackRequiresGrip && !manager.Input.Grip || primaryTertiary && !manager.Input.LeftGrip
+                || !manager.Input.Trigger || HasPanelHit || context)) StopAttack();
             if (manager.Input.TriggerDown && !HasPanelHit && !context)
             {
-                if (manager.Input.Grip || GameAdapter.Read(GameAdapter.Interactor, "CurrentHeldItem") is Component heldItem && heldItem != null)
+                if (manager.Input.LeftGrip || manager.Input.Grip || GameAdapter.Read(GameAdapter.Interactor, "CurrentHeldItem") is Component heldItem && heldItem != null)
                 {
                     attackRequiresGrip = manager.Input.Grip;
-                    GameAdapter.Attack(true); attacking = true;
+                    primaryTertiary = manager.Input.LeftGrip; attacking = true;
+                    if (primaryTertiary) GameAdapter.TertiaryUse(true); else GameAdapter.Attack(true);
                 }
                 else { if (!leftWorldDown) GameAdapter.Interact(true); worldDown = true; }
             }
             if (manager.Input.TriggerUp)
             {
                 ReleaseToolkit();
-                if (attacking) { GameAdapter.Attack(false); attacking = false; }
+                StopAttack();
                 if (worldDown) { worldDown = false; if (!leftWorldDown) GameAdapter.Interact(false); }
             }
             if (leftWorldDown && (!manager.Input.LeftTrigger || manager.Input.LeftGrip || HasPanelHit || context))
@@ -313,10 +313,12 @@ namespace ScamWithYourFriendsInVR.UI
                 Send3D(elementHit, EventType.MouseDown, lastPanelPosition, 1, true);
                 Send3D(elementHit, EventType.MouseUp, lastPanelPosition, 1, false);
             }
-            if (secondaryHeld && (!manager.Input.Secondary || HasPanelHit || context))
-            { GameAdapter.SecondaryUse(false); secondaryHeld = false; }
+            if (secondaryHeld && (!manager.Input.Secondary || secondaryHipSwap && !manager.Input.LeftGrip || HasPanelHit || context)) StopSecondary();
             if (manager.Input.SecondaryDown && !HasPanelHit && !context)
-            { GameAdapter.SecondaryUse(true); secondaryHeld = true; }
+            {
+                secondaryHipSwap = manager.Input.LeftGrip; secondaryHeld = true;
+                if (secondaryHipSwap) GameAdapter.SwapHip(true); else GameAdapter.SecondaryUse(true);
+            }
             if (manager.Input.TriggerUp && graphic.gameObject != null) manager.Keyboard.TryOpen(graphic.gameObject);
             visualHit = HasPanelHit || toolkitDown;
             visualDistance = visualHit ? Vector3.Distance(ray.origin, endpoint) : Mathf.Min(nearest, 2);
@@ -481,13 +483,25 @@ namespace ScamWithYourFriendsInVR.UI
             ReleaseToolkit();
         }
 
+        private void StopAttack()
+        {
+            if (!attacking) return;
+            if (primaryTertiary) GameAdapter.TertiaryUse(false); else GameAdapter.Attack(false);
+            attacking = primaryTertiary = false;
+        }
+        private void StopSecondary()
+        {
+            if (!secondaryHeld) return;
+            if (secondaryHipSwap) GameAdapter.SwapHip(false); else GameAdapter.SecondaryUse(false);
+            secondaryHeld = secondaryHipSwap = false;
+        }
+
         public void Cancel()
         {
             ResetAim(); showUntil = 0;
             releasePointers?.Invoke(null, new object[] { ToolkitPointerId });
 
-            if (attacking) { GameAdapter.Attack(false); attacking = false; }
-            if (secondaryHeld) { GameAdapter.SecondaryUse(false); secondaryHeld = false; }
+            StopAttack(); StopSecondary();
             CancelToolkit();
             grab.Cancel();
             module?.Cancel();

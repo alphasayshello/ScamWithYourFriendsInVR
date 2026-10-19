@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Map agent hip swap and extra held-item actions to left-grip modifiers with right B / right trigger.
+- Route the fart chord to the native cone boost callback when eligible, retaining native cooldowns, role checks and menu suppression. Avoid injecting the ordinary fart shortcut during eligible cone use.
+- Check actual native jump/curry boost activation, authoritative cone effects, hip swap/reverse and modified-action release.
+
 - Route controller primary/secondary use through native PlayerInteractor callbacks, preserving held-item use events, weapon selection and native gameplay gates.
 - Add left-trigger world interaction while holding items, with separate left-grip/pee modifier handling.
 - Let trigger use a held item without grip; keep grip + trigger for empty-hand combat. Deliver held secondary press/release with right B away from UI.

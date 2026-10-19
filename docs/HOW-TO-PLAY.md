@@ -36,7 +36,7 @@ Use right grip for native pickup/hold interactions, then release to drop. While 
 
 Left trigger interacts with the world under your right-hand aim, so you can open a computer while holding an item. Like the native interact key, it can drop your held item when aimed at empty space. Left grip + left trigger is reserved for pee and does not also interact. Release either grip or trigger to end attack input. Opening a menu or pointing onto UI also cancels it. Right A jumps. Cooldowns, stamina, ownership and server rules still apply.
 
-Left grip + left trigger holds the native pee action; release to stop. Left grip + left X requests a fart. Food-related poop effects retain the game's existing rules and jump triggers; no debug/cheat poop shortcut is enabled. Curry consumption and its timed poop/gassy effect pass simulated checks. Other food variants, jump/cone boosts and full combat acceptance are still outstanding.
+Left grip + left trigger holds the native pee action; release to stop. Left grip + left X requests a fart, or the native cone boost when an eligible agent has a traffic cone in the hip slot. Left grip + right B swaps the agent hand/hip slots. Left grip + right trigger sends the native extra held-item action; releasing its modifier ends that action. Food-related poop effects retain the game's existing rules and jump triggers; no debug/cheat poop shortcut is enabled. Curry consumption and its timed poop/gassy effect pass simulated checks. VR jump now reaches the native jump event and activates the curry boost. Hip swap, nonfinal cone boost activation, cooldowns and effect spawning pass simulated checks. Full boost trajectories, final cone use/ragdoll, other foods and full combat acceptance are still outstanding.
 
 ## Play with friends
 

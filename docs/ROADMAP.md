@@ -15,7 +15,7 @@ This remains a development preview. The user's latest headset run accepted the g
 
 - Headset acceptance of the revised body/room movement, native chairs, stairs, recenter and tracking recovery.
 - Controller interaction inside every relevant computer workflow, not just opening/closing windows.
-- Punch damage/cooldowns, food/poop behaviour, held-item variants, ragdoll and spectating.
+- PvP/other weapons, other food and held-item variants, boost trajectories/final cone use, ragdoll and spectating.
 - Two-account Steam host/client acceptance, reconnect and voice spatialization.
 - Sustained frame-time profiling and supported headset/runtime acceptance.
 - Finish headset acceptance of the newer Steam target using Unity 6000.3.26f1 and Input System 1.20.0.

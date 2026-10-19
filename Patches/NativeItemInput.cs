@@ -18,12 +18,15 @@ namespace ScamWithYourFriendsInVR.Patches
         internal static void Install(Harmony harmony)
         {
             callbacks.Clear();
-            Type owner = ReflectionTypes.Find("PlayerInteractor"), input = ReflectionTypes.Find("UnityEngine.InputSystem.InputValue");
+            Type input = ReflectionTypes.Find("UnityEngine.InputSystem.InputValue");
             pressedGetter = input == null ? null : AccessTools.PropertyGetter(input, "isPressed");
-            if (owner == null || pressedGetter == null) { Plugin.Log.LogWarning("Native held-item callbacks unavailable."); return; }
-            foreach (string name in new[] { "OnAttack", "OnBlock" })
+            if (pressedGetter == null) { Plugin.Log.LogWarning("Native input callbacks unavailable."); return; }
+            foreach (var binding in new[] { ("PlayerInteractor", "OnAttack"), ("PlayerInteractor", "OnBlock"),
+                ("PlayerInteractor", "OnTertiaryInteract"), ("PlayerInteractor", "OnSecondaryInteract"), ("PlayerFartManager", "OnFart") })
             {
-                MethodInfo method = AccessTools.Method(owner, name, new[] { input });
+                Type owner = ReflectionTypes.Find(binding.Item1);
+                string name = binding.Item2;
+                MethodInfo method = owner == null ? null : AccessTools.Method(owner, name, new[] { input });
                 if (method == null) { Plugin.Log.LogWarning("Native item callback missing: " + name); continue; }
                 try
                 {
@@ -37,8 +40,10 @@ namespace ScamWithYourFriendsInVR.Patches
         internal static void Clear() => callbacks.Clear();
 
         internal static void Send(Component target, bool secondary, bool value)
+            => SendNamed(target, secondary ? "OnBlock" : "OnAttack", value);
+
+        internal static void SendNamed(Component target, string name, bool value)
         {
-            string name = secondary ? "OnBlock" : "OnAttack";
             if (target == null || !callbacks.TryGetValue(name, out MethodInfo method)) return;
             object previousReceiver = receiver;
             string previousAction = action;

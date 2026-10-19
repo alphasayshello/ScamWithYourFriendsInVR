@@ -179,6 +179,30 @@ namespace ScamWithYourFriendsInVR.Patches
             NativeItemInput.Send(Interactor, true, pressed);
         }
 
+        internal static void TertiaryUse(bool pressed)
+        {
+            if (pressed && (VRManager.Instance?.Interactive != true || InMainMenu)) return;
+            NativeItemInput.SendNamed(Interactor, "OnTertiaryInteract", pressed);
+        }
+
+        internal static void SwapHip(bool pressed)
+        {
+            if (pressed && (VRManager.Instance?.Interactive != true || InMainMenu)) return;
+            NativeItemInput.SendNamed(Interactor, "OnSecondaryInteract", pressed);
+        }
+
+        private static Component FartManager
+        {
+            get
+            {
+                Type type = ReflectionTypes.Find("PlayerFartManager");
+                Component player = LocalPlayer;
+                return player != null && type != null ? player.GetComponent(type) : null;
+            }
+        }
+        internal static bool HasConeBoost => Call(FartManager, "HasConeHipItem") is bool cone && cone;
+        internal static void FartBoost() => NativeItemInput.SendNamed(FartManager, "OnFart", true);
+
         internal static void Drop(Component item, Vector3 velocity, Transform hand)
         {
             Component interactor = Interactor;
