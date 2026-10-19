@@ -170,7 +170,8 @@ namespace ScamWithYourFriendsInVR.Patches
         {
             Component player = LocalPlayer;
             Type weaponType = ReflectionTypes.Find("RaycastWeapon");
-            if (player == null || weaponType == null || pressed && !Allowed(Interactor)) return;
+            if (player == null || weaponType == null || pressed && (VRManager.Instance?.Interactive != true
+                || InMainMenu || AvatarUnavailable(player) || !Allowed(Interactor))) return;
             MethodInfo input = AccessTools.Method(weaponType, "OnAttackInput", new[] { typeof(bool) });
             foreach (Component weapon in player.GetComponents(weaponType))
                 if (weapon is Behaviour behaviour && behaviour.enabled)

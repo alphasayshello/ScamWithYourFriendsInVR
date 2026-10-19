@@ -283,7 +283,11 @@ namespace ScamWithYourFriendsInVR.UI
                 manager.Keyboard.TryOpen(elementHit, worldDocumentHit ?? panelHit.DocumentFor(elementHit));
             }
 
-            if (manager.Input.TriggerDown && !HasPanelHit)
+            if (attacking && (!manager.Input.Grip || !manager.Input.Trigger || HasPanelHit || context))
+            {
+                GameAdapter.Attack(false); attacking = false;
+            }
+            if (manager.Input.TriggerDown && !HasPanelHit && !context)
             {
                 if (manager.Input.Grip) { GameAdapter.Attack(true); attacking = true; }
                 else { GameAdapter.Interact(true); worldDown = true; }
@@ -294,7 +298,7 @@ namespace ScamWithYourFriendsInVR.UI
                 if (attacking) { GameAdapter.Attack(false); attacking = false; }
                 if (worldDown) { GameAdapter.Interact(false); worldDown = false; }
             }
-            grab.Tick(HasPanelHit);
+            grab.Tick(HasPanelHit || context);
             if (manager.Input.SecondaryDown && elementHit != null)
             {
                 Send3D(elementHit, EventType.MouseDown, lastPanelPosition, 1, true);

@@ -48,3 +48,10 @@ The world-panel group creates a native world-space UIDocument with a real font, 
 ## authored texture presenter regression
 
 The texture group uses a real texture-backed UIDocument and the native review-projector shader on a rotated, nonuniform mesh with cropped UVs and a vertical texture flip. It checks world hit distance, UV/panel coordinates, native button dispatch, keyboard document routing, captured off-mesh drag, disabled-renderer input rejection and preservation of native renderer/texture ownership during component removal. The VR client also waits for automatic mesh discovery, clicks through the production controller pointer with a frame-separated release, checks cancellation when the renderer is hidden during a press and verifies world occlusion. This fixture does not validate an entire authored projector/monitor gameplay workflow or arbitrary shaders.
+
+
+## native combat and single-host grip checks
+
+The single private mock host now checks the real native unarmed weapon: VR attack input reaches its firing routine, the ray matches the controller, and repeat input cannot bypass the native cooldown. Releasing grip while trigger stays held must clear the native attack hold; settings must reject a new attack hold. This does not prove target damage, charged/ranged weapons, PvP rules or headset feel.
+
+`outputs/Run-Single-VR-Checks.ps1 -Computer -Grip` also runs the existing native held-item replication and pose-component lifecycle checks in that same single host. The workspace launcher is local tooling outside this source export; the equivalent game flags are `--swyf-single-computer-tests --swyf-pair-grip-tests --swyf-pair-ready="C:\tests\ready.txt"` with a parent folder that exists and the pinned mock OpenXR runtime selected only for that child process. Never pass test flags for normal play.

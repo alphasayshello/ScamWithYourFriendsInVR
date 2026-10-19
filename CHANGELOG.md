@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Release attack input when grip is released or the pointer enters UI/menu context, even if trigger remains held.
+- Prevent world clicks and new grip pickups through menu backdrops; reject VR attacks without interactive tracking or during unavailable avatar states.
+- Check native unarmed controller rays/cooldowns and grip-release cancellation in a single private mock host.
+
 - Remove temporary capsule controller visuals; use native tracked avatar hands in gameplay.
 - Add contextual laser visibility, adaptive UI aim smoothing, a smaller distance-scaled reticle and adjustable double-click timing.
 - Ignore decorative uGUI graphics during pointer selection and keep capture visible during UI dragging.

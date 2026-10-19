@@ -32,7 +32,7 @@ The laser stays visible in menus and computers. During normal play it appears fo
 
 ## Interact and fight
 
-Use right grip for native pickup/hold interactions, then release to drop. Away from UI, right grip + trigger sends native punch/weapon input. Right A jumps. Cooldowns, stamina, ownership and server rules still apply.
+Use right grip for native pickup/hold interactions, then release to drop. Away from UI, right grip + trigger sends native punch/weapon input. Release either grip or trigger to end attack input. Opening a menu or pointing onto UI also cancels it. Right A jumps. Cooldowns, stamina, ownership and server rules still apply.
 
 Left grip + left trigger holds the native pee action; release to stop. Left grip + left X requests a fart. Food-related poop effects retain the game's existing rules and jump triggers; no debug/cheat poop shortcut is enabled. Full combat and food-effect acceptance is still outstanding.
 

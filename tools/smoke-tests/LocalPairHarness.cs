@@ -105,7 +105,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     yield return test.Current;
                 }
             }
-            if (client && queued && Environment.GetCommandLineArgs().Contains("--swyf-pair-grip-tests"))
+            if ((client || singleComputer) && queued && Environment.GetCommandLineArgs().Contains("--swyf-pair-grip-tests"))
             {
                 IEnumerator test = TestGrip();
                 while (true)
@@ -145,6 +145,19 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     }
                 }
                 finally { (gameplayTest as IDisposable)?.Dispose(); }
+                IEnumerator combatTest = TestNativeCombat();
+                try
+                {
+                    while (true)
+                    {
+                        bool more;
+                        try { more = combatTest.MoveNext(); }
+                        catch (Exception ex) { Logger.LogError("COMBAT FAIL: " + ex.GetBaseException()); break; }
+                        if (!more) break;
+                        yield return combatTest.Current;
+                    }
+                }
+                finally { (combatTest as IDisposable)?.Dispose(); }
                 IEnumerator rigTest = TestNativeRigMotion();
                 try
                 {

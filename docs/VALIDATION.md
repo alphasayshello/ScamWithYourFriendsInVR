@@ -14,6 +14,8 @@
 ## Changed, needs another headset check
 
 - Temporary controller capsules (the bean shapes) are removed. The laser now hides during idle gameplay and uses steadier UI aiming, a smaller distance-scaled reticle and more forgiving double clicks. Its feel still needs a headset check.
+- Punch input now stops when grip is released, even if trigger stays down. Native unarmed firing, controller aim and cooldown rejection have been checked; actual target damage still needs checking.
+- Ordinary item pickup, release, quick-release pickup and cancellation work in the simulated host. Every item type and throwing feel still need checking.
 - Tracking reads and UI scans do less repeated work, and destroyed menu graphics release their owned material entries. Smooth performance in busy scenes still needs more work.
 
 - Computer screens now stay attached to their desk monitors and use the controller pointer. An optional floating desktop is available. Clicking, dragging, scrolling and window controls have been checked, but the revised computer experience still needs headset testing.
@@ -27,7 +29,7 @@
 ## Not finished
 
 - Every computer app and every action inside those apps.
-- Full combat, punch damage/cooldowns, food/poop effects and all held-item interactions in VR.
+- Combat damage against players, charged/ranged weapons, food/poop effects and all held-item variants in VR.
 - Complete multiplayer checks across separate Steam accounts, including reconnecting and joining late.
 - Consistently smooth performance, especially in busy scenes.
 - Ragdoll, spectating, tracking loss and every seated/standing transition.
