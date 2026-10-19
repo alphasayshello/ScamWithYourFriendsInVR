@@ -109,6 +109,7 @@ namespace ScamWithYourFriendsInVR.UI
             foreach (UIDocument document in FindObjectsByType<UIDocument>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             {
                 if (!document.isActiveAndEnabled || document.rootVisualElement?.panel == null) continue;
+                manager.Settings?.Track(document);
                 PanelSettings settings = document.panelSettings;
                 if (settings == null) continue;
                 if (Patches.GameAdapter.Read(settings, "renderMode")?.ToString() == "WorldSpace")

@@ -50,7 +50,7 @@ namespace ScamWithYourFriendsInVR
             PanelWidth = Config.Bind("UI", "PanelWidth", 1.6f, new ConfigDescription("Meters", new AcceptableValueRange<float>(0.4f, 3f)));
             OccludeFloatingUI = Config.Bind("UI", "OccludeFloatingUI", false, "Let world geometry block floating menu rays. Off keeps floating menus usable when near a desk or wall.");
             MirrorFullView = Config.Bind("UI", "MirrorFullView", true, "Fit the full left eye image in the PC window when the XR provider exposes a 2D eye texture. Unsupported array/foveated/packed mirrors retain provider behavior.");
-            PhysicalDesktop = Config.Bind("UI", "PhysicalDesktop", false, "Optional: keep computer UI on the desk monitor. Off opens a readable floating controller-pointer desktop.");
+            PhysicalDesktop = Config.Bind("UI", "PhysicalDesktop", true, "Keep computer UI on its desk monitor with controller-pointer input. Off opens an optional floating desktop.");
             VirtualKeyboard = Config.Bind("UI", "VirtualKeyboard", false, "Experimental floating text keyboard. Disabled by default; computer interaction uses the controller pointer and text entry uses your PC keyboard.");
             AlwaysShowPointer = Config.Bind("UI", "AlwaysShowPointer", false, "Keep the laser visible during ordinary gameplay. Off shows it for menus, computers and usable targets.");
             PointerSmoothing = Config.Bind("UI", "PointerSmoothing", .025f, new ConfigDescription("Seconds of adaptive aim smoothing for UI; 0 disables it. Hand tracking stays direct.", new AcceptableValueRange<float>(0, .1f)));

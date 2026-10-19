@@ -238,7 +238,6 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     yield return null;
                 }
                 manager.UI.Place();
-                if (singleComputer) { Plugin.PhysicalDesktop.Value = false; placement.Invoke(surface, null); }
                 yield return null;
                 Logger.LogInfo("COMPUTER view: head=" + manager.Rig.Head.transform.position + "; authoredEye=" + ((Member(controller, "cameraTransform") as Transform)?.position.ToString() ?? "missing")
                     + "; firstPersonEye=" + ((Member(controller, "defaultCamTransform") as Transform)?.position.ToString() ?? "missing")

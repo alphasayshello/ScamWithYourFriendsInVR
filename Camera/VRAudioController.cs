@@ -16,6 +16,7 @@ namespace ScamWithYourFriendsInVR.Camera
             VRManager manager = VRManager.Instance;
             if (manager == null || !manager.Ready || manager.Rig.Head == null) return;
             Component local = GameAdapter.LocalPlayer;
+            if (GameAdapter.Read(local, "isSpectating") is bool spectating && spectating) { Restore(); return; }
             if (local != player || mouth == null)
             {
                 Restore();

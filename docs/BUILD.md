@@ -34,6 +34,14 @@ Staging assembles the required engine/BCL restoration, providers, BepInEx and mo
 
 The source archive contains no game DLLs or game assets. The locally staged runtime contains third-party libraries; review their licences before redistributing it. MIT applies to this project's own code, not those dependencies.
 
+## Setup checker regression checks
+
+```powershell
+./tools/tests/Setup.Tests.ps1 -GameDir 'D:\Games\SWYF-VR'
+```
+
+Use a compatible game copy. These checks create a temporary fixture using its UnityPlayer version resource and verify missing/corrupted files, manifest path containment and runtime selection without launching a game.
+
 ## Tests and source export
 
 Optional in-game checks live in [tools/smoke-tests](../tools/smoke-tests/README.md). Mock checks are not hardware or production certification. Remove the optional smoke-test plugin before normal headset runs.

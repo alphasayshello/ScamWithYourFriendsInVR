@@ -20,6 +20,8 @@ namespace ScamWithYourFriendsInVR.SmokeTests
         {
             if (!Environment.GetCommandLineArgs().Contains("--swyf-vr-smoke-tests")) yield break;
             yield return null;
+            try { TestPoseContext(); Logger.LogInfo("SMOKE PASS: spectator subject selection, ragdoll/hiding ownership and valid cleared pose packets"); }
+            catch (Exception ex) { Logger.LogError("SMOKE FAIL: pose context: " + ex.GetBaseException()); }
             try { TestGameAdapterCache(); Logger.LogInfo("SMOKE PASS: cached game fields, properties, owner types, inherited methods and optional arguments"); }
             catch (Exception ex) { Logger.LogError("SMOKE FAIL: game adapter cache: " + ex.GetBaseException()); }
             try { TestPointerAim(); Logger.LogInfo("SMOKE PASS: adaptive aim stability, direct fast turns, reset and contextual pointer visibility"); }

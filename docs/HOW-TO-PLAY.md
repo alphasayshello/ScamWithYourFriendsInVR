@@ -23,12 +23,12 @@ The laser stays visible in menus and computers. During normal play it appears fo
 ## Computers
 
 1. Point at the computer's native interaction target and press the right trigger to enter it.
-2. Use the right-controller laser on the floating desktop. Press trigger to click; use two quick presses for double-click actions.
+2. Use the right-controller laser on the desk monitor. Press trigger to click; use two quick presses for double-click actions.
 3. Hold trigger and move the laser to drag windows or controls. Use the stick to scroll. Right B sends a context click.
 4. Use your physical PC keyboard for text entry. The VR keyboard is disabled by default. No desk mouse grabbing or touch typing is required.
 5. Press left Y / menu to leave the computer.
 
-`[UI] PhysicalDesktop = true` optionally places the UI on the original monitor. The default is **false** for easier pointer access. App licences, sign-in and game progression still follow the native game; opening a window does not guarantee that every workflow has passed VR testing.
+`[UI] PhysicalDesktop = true` keeps the UI attached to the original monitor by default. In settings → General → VR options, change COMPUTER SCREEN to FLOATING if you prefer a closer desktop. App licences, sign-in and game progression still follow the native game; opening a window does not guarantee that every workflow has passed VR testing.
 
 ## Interact and fight
 

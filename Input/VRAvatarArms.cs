@@ -43,6 +43,10 @@ namespace ScamWithYourFriendsInVR.Input
             var manager = VRManager.Instance;
             if (manager == null || !manager.Ready) return;
             if (GameAdapter.InMainMenu) { if (player != null) Restore(); return; }
+            if (GameAdapter.AvatarUnavailable(GameAdapter.LocalPlayer))
+            {
+                Multiplayer.PoseNetwork.ClearLocalPose(); if (player != null) Restore(); return;
+            }
             if (player != GameAdapter.LocalPlayer) { Restore(); player = GameAdapter.LocalPlayer; nextScan = 0; }
             if (player == null) return;
             if (Time.unscaledTime >= nextScan)

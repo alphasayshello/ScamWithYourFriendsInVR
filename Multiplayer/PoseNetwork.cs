@@ -32,6 +32,12 @@ namespace ScamWithYourFriendsInVR.Multiplayer
         private void OnEnable() { Instance = this; }
 
         // Called only by the VR runtime. PC clients never load the XR runtime assembly.
+        public static void ClearLocalPose()
+        {
+            if (Instance == null) return;
+            Instance.local = new PoseFrame { HeadRotation = Quaternion.identity, LeftRotation = Quaternion.identity, RightRotation = Quaternion.identity };
+            Instance.localUpdated = Time.unscaledTime;
+        }
         public static void SetLocalPose(Transform root, Transform head, Transform left, Transform right, byte tracked)
         {
             if (Instance == null || !Instance.isActiveAndEnabled || root == null || head == null || left == null || right == null) return;

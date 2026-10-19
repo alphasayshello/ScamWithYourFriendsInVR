@@ -24,6 +24,13 @@ namespace ScamWithYourFriendsInVR.Patches
         private static readonly HashSet<string> failures = new HashSet<string>();
         internal static Component LocalPlayer => Static("Metater.MetaPlayer", "LocalPlayerInstance") as Component;
         internal static Component Controller => Static("Metater.MetaPlayerController", "Instance") as Component;
+        internal static Component ResolveViewPlayer(Component local)
+            => Read(local, "isSpectating") is bool spectating && spectating
+                ? Read(local, "LocalSpectatedPlayer") as Component ?? local : local;
+        internal static bool AvatarUnavailable(Component local)
+            => Read(local, "isSpectating") is bool spectating && spectating
+                || Read(Read(local, "RagdollManager"), "IsRagdollActive") is bool ragdolled && ragdolled
+                || Read(Read(local, "RagdollManager"), "IsHiding") is bool hiding && hiding;
         internal static Component Interactor => Static("PlayerInteractor", "LocalPlayerInstance") as Component;
         internal static Transform Polar => Read(Controller, "polarTransform") as Transform;
         internal static bool MonitorCaptured => Static("KolkataMonitorInputState", "IsMonitorInputCaptured") is bool value && value;

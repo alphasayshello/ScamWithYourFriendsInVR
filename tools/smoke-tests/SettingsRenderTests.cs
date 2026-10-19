@@ -58,6 +58,25 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                             Require(doc.rootVisualElement.Q(tab.Item2 + "-screen").ClassListContains("settings-screen--active"), "Controller did not open settings tab: " + tab.Item1);
                         }
                         Logger.LogInfo("SETTINGS PASS: controller clicks switch all native settings tabs and return to general");
+                        yield return new WaitForSecondsRealtime(.6f);
+                        var vrOptions = doc.rootVisualElement.Q("swyf-vr-options");
+                        Require(vrOptions != null && doc.rootVisualElement.Query<VisualElement>("swyf-vr-options").ToList().Count == 1,
+                            "VR options missing or duplicated in native General settings");
+                        bool originalDesktop = Plugin.PhysicalDesktop.Value;
+                        float originalDistance = Plugin.PanelDistance.Value;
+                        try
+                        {
+                            foreach (string id in new[] { "swyf-vr-desktop", "swyf-vr-desktop", "swyf-vr-ui-distance" })
+                            {
+                                var change = ClickAppControl(panelSurface, vrOptions.Q<Button>(id));
+                                try { while (change.MoveNext()) yield return change.Current; }
+                                finally { (change as IDisposable)?.Dispose(); }
+                            }
+                            Require(Plugin.PhysicalDesktop.Value == originalDesktop && Mathf.Abs(Plugin.PanelDistance.Value - originalDistance) > .01f,
+                                "VR settings buttons did not change and restore native configuration");
+                            Logger.LogInfo("SETTINGS PASS: VR options controller clicks change desktop placement and menu distance without config editing");
+                        }
+                        finally { Plugin.PhysicalDesktop.Value = originalDesktop; Plugin.PanelDistance.Value = originalDistance; manager.UI.Place(); }
                         Transform head = manager.Rig.Head.transform;
                         Vector3 headPosition = head.position;
                         Quaternion headRotation = head.rotation;

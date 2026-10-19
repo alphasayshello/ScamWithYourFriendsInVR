@@ -16,8 +16,10 @@
 - Temporary controller capsules (the bean shapes) are removed. The laser now hides during idle gameplay and uses steadier UI aiming, a smaller distance-scaled reticle and more forgiving double clicks. Its feel still needs a headset check.
 - Tracking reads and UI scans do less repeated work, and destroyed menu graphics release their owned material entries. Smooth performance in busy scenes still needs more work.
 
-- Computers now use a floating desktop and controller pointer. Clicking, dragging, scrolling and window controls have been checked, but the revised computer experience still needs headset testing.
+- Computer screens now stay attached to their desk monitors and use the controller pointer. An optional floating desktop is available. Clicking, dragging, scrolling and window controls have been checked, but the revised computer experience still needs headset testing.
 - Head turns now drive the local model, with body turning kept separate from view rotation.
+- VR options inside General settings provide larger controls for recentering, desktop placement, seated comfort, menu distance, aiming, laser visibility, turning and scene resolution.
+- Camera ownership now follows the spectated player; tracked arms release control during ragdoll, hiding and spectating. These transitions still need full gameplay checking.
 - Moving around your room now moves the collision body while keeping the headset aligned. Leaning, walls, stairs and in-game chairs need more checking.
 - The computer camera app uses a separate webcam view instead of taking over the headset camera.
 - Remote voice position follows the tracked head, but how that sounds to other players still needs checking.
@@ -30,6 +32,7 @@
 - Consistently smooth performance, especially in busy scenes.
 - Ragdoll, spectating, tracking loss and every seated/standing transition.
 - Headset/controller compatibility beyond the setup already tried.
+- The updated Steam game using Unity 6000.3.26f1. This preview requires 6000.3.10f1; setup refuses mismatched versions.
 
 ## Not included right now
 

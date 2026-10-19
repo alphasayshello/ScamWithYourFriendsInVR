@@ -12,8 +12,8 @@ An open-source VR conversion for **Scam With Your Friends**, built with BepInEx 
 
 - Tracked headset and controller hands, movement and snap turning.
 - A controller laser for menus and computer apps, with click, drag, scroll and context-click support.
-- Readable floating menus and a HUD that follows your view.
-- A floating computer desktop by default. No physical mouse grabbing or touch-keyboard setup.
+- Readable floating menus, a HUD that follows your view, and VR options inside General settings.
+- Computer apps stay on their desk monitor and use the controller laser. An optional floating desktop is available.
 - Native pickup, jump, weapon/punch, pee and fart input integration.
 - Modded PC/VR lobbies with tracked avatar poses and a PC mode that skips XR startup.
 - A Visual Studio solution, dependency preparation, reversible runtime hooks and optional in-game tests.
@@ -25,7 +25,7 @@ An open-source VR conversion for **Scam With Your Friends**, built with BepInEx 
 1. Use the supported **Windows x64 Mono** game build: Unity **6000.3.10f1**.
 2. [Build and stage the runtime](docs/BUILD.md), then install into a separate game copy using the [setup guide](docs/GETTING-STARTED.md).
 3. Connect your headset and choose your active PC OpenXR runtime. Quest 3 through Steam Link uses SteamVR.
-4. Start one game client with `-force-d3d11` and select VR mode in the BepInEx config.
+4. Use `tools/Launch-Game.ps1 -GameDir 'D:\Games\SWYF-VR' -Mode VR` to verify the installation, select VR mode and launch.
 
 This is a PC VR mod, not a standalone Quest app. The stock game strips required XR APIs, so copying only the plugin DLL will not enable VR.
 

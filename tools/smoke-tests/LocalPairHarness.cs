@@ -145,6 +145,19 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     }
                 }
                 finally { (gameplayTest as IDisposable)?.Dispose(); }
+                IEnumerator rigTest = TestNativeRigMotion();
+                try
+                {
+                    while (true)
+                    {
+                        bool more;
+                        try { more = rigTest.MoveNext(); }
+                        catch (Exception ex) { Logger.LogError("RIG MOTION FAIL: " + ex.GetBaseException()); break; }
+                        if (!more) break;
+                        yield return rigTest.Current;
+                    }
+                }
+                finally { (rigTest as IDisposable)?.Dispose(); }
             }
         }
 

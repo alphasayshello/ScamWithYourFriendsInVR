@@ -20,6 +20,7 @@ namespace ScamWithYourFriendsInVR
         public VRPointer Pointer { get; private set; }
         public VRUIPatcher UI { get; private set; }
         public VRVirtualKeyboard Keyboard { get; private set; }
+        public VRSettingsPanel Settings { get; private set; }
         public bool Ready { get; private set; }
         public bool Interactive => Ready && Input != null && Input.HasInputFocus && Input.HeadTracked;
         private readonly List<XRDisplaySubsystem> displays = new List<XRDisplaySubsystem>();
@@ -55,6 +56,7 @@ namespace ScamWithYourFriendsInVR
                 session.AddComponent<VRAvatarArms>();
                 session.AddComponent<VRPerformance>();
                 UI = session.AddComponent<VRUIPatcher>();
+                Settings = session.AddComponent<VRSettingsPanel>();
                 Keyboard = session.AddComponent<VRVirtualKeyboard>();
                 Pointer = session.AddComponent<VRPointer>();
                 harmony = new Harmony("com.swyf.vr.runtime");

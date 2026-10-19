@@ -17,6 +17,17 @@ namespace ScamWithYourFriendsInVR.SmokeTests
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate void SetViewPose(int type, int index, Vector3 position, Quaternion rotation, Vector4 fov);
         private bool mockPoseInitialized;
+        private SetReferenceSpace setMockSpace;
+        private SetViewPose setMockView;
+
+        private void SetMockHeadPose(Vector3 position, Quaternion rotation)
+        {
+            if (setMockSpace == null || setMockView == null) throw new InvalidOperationException("Mock tracking is not initialized");
+            setMockSpace(1, position, rotation, 15);
+            var fov = new Vector4(-.785f, .785f, .785f, -.785f);
+            setMockView(2, 0, position + rotation * new Vector3(-.032f, 0, 0), rotation, fov);
+            setMockView(2, 1, position + rotation * new Vector3(.032f, 0, 0), rotation, fov);
+        }
 
         private void InitializeMockPose()
         {
@@ -40,14 +51,10 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 IntPtr spaceFunction = GetProcAddress(library, "MockRuntime_SetReferenceSpace");
                 IntPtr viewFunction = GetProcAddress(library, "MockRuntime_SetView");
                 if (spaceFunction == IntPtr.Zero || viewFunction == IntPtr.Zero) throw new MissingMethodException("Mock pose exports missing");
-                var setSpace = Marshal.GetDelegateForFunctionPointer<SetReferenceSpace>(spaceFunction);
-                var setView = Marshal.GetDelegateForFunctionPointer<SetViewPose>(viewFunction);
+                setMockSpace = Marshal.GetDelegateForFunctionPointer<SetReferenceSpace>(spaceFunction);
+                setMockView = Marshal.GetDelegateForFunctionPointer<SetViewPose>(viewFunction);
                 // XrReferenceSpaceType.View=1; all four valid/tracked location bits.
-                setSpace(1, new Vector3(0, 1.65f, 0), Quaternion.identity, 15);
-                var fov = new Vector4(-0.785f, 0.785f, 0.785f, -0.785f);
-                // XrViewConfigurationType.PrimaryStereo=2. Native OpenXR coordinates.
-                setView(2, 0, new Vector3(-0.032f, 1.65f, 0), Quaternion.identity, fov);
-                setView(2, 1, new Vector3(0.032f, 1.65f, 0), Quaternion.identity, fov);
+                SetMockHeadPose(new Vector3(0, 1.65f, 0), Quaternion.identity);
                 VRManager.Instance.Rig.Recenter();
                 Logger.LogInfo("PAIR: mock headset reference and stereo views initialized at standing eye height");
             }

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System;
 using UnityEngine;
 using UnityEngine.XR;
 using ScamWithYourFriendsInVR.Input;
@@ -37,6 +38,7 @@ namespace ScamWithYourFriendsInVR.Camera
         private Vector3 eyeOffset, lastTrackedPosition;
         private bool hasEyeOffset;
         private float anchorSettlesUntil;
+        private bool hadPoseContext, lastAgent, lastRagdolled;
         public Vector3 AuthoredEye { get; private set; }
         private readonly VRAvatarEyeAnchor avatarEyes = new VRAvatarEyeAnchor();
         private readonly RaycastHit[] obstructionHits = new RaycastHit[64];
@@ -145,8 +147,26 @@ namespace ScamWithYourFriendsInVR.Camera
                 Restore();
                 return;
             }
-            Transform nextPlayer = inMenu ? null : GameAdapter.LocalPlayer?.transform;
+            if (Head.transform.parent != savedParent)
+            {
+                savedParent = Head.transform.parent; savedPosition = Head.transform.localPosition; savedRotation = Head.transform.localRotation;
+                Recenter();
+            }
+            Component localPlayer = GameAdapter.LocalPlayer;
+            Component subject = GameAdapter.ResolveViewPlayer(localPlayer);
+            Component viewController = GameAdapter.Read(subject, "controller") as Component ?? GameAdapter.Controller;
+            Transform nextPlayer = inMenu ? null : subject?.transform;
             if (nextPlayer != player) { player = nextPlayer; Recenter(); }
+            object ragdoll = GameAdapter.Read(subject, "RagdollManager");
+            bool ragdolled = GameAdapter.Read(ragdoll, "IsRagdollActive") is bool down && down
+                || GameAdapter.Read(ragdoll, "IsHiding") is bool hiding && hiding;
+            Type modeType = ReflectionTypes.Find("PlayerModeManager");
+            Component mode = subject != null && modeType != null ? subject.GetComponent(modeType) : null;
+            bool agent = GameAdapter.Read(mode, "isAgent") is bool police && police;
+            if (!hadPoseContext || lastAgent != agent || lastRagdolled != ragdolled)
+            {
+                hadPoseContext = true; lastAgent = agent; lastRagdolled = ragdolled; Recenter();
+            }
             bool sitting = GameAdapter.Read(GameAdapter.Interactor, "isSitting") is bool seated && seated;
             if (sitting != wasSitting) { wasSitting = sitting; Recenter(); }
             if (manager.Input.RecenterDown) Recenter();
@@ -166,17 +186,17 @@ namespace ScamWithYourFriendsInVR.Camera
             if (player != null)
             {
                 body = player.GetComponent<CharacterController>();
-                if (body == null && GameAdapter.Controller != null) body = GameAdapter.Controller.GetComponent<CharacterController>();
+                if (body == null && viewController != null) body = viewController.GetComponent<CharacterController>();
                 anchor = player.position;
                 if (body != null && body.enabled) anchor.y = body.bounds.min.y;
-                yaw = (GameAdapter.Polar ?? player).eulerAngles.y;
+                yaw = (GameAdapter.Read(viewController, "polarTransform") as Transform ?? player).eulerAngles.y;
             }
             else anchor.y -= !Plugin.Seated.Value && floorOrigin ? center.y : Plugin.SeatedHeight.Value;
             float heightOffset = Plugin.Seated.Value || !floorOrigin ? Plugin.SeatedHeight.Value - center.y : 0;
             // A native chair moves the authored eye marker independently of the
             // standing capsule. Keep room-scale offsets relative to that marker.
-            Transform nativeEye = player != null ? (GameAdapter.Read(GameAdapter.Controller, "defaultCamTransform") as Transform
-                ?? GameAdapter.Read(GameAdapter.Controller, "cameraTransform") as Transform) : null;
+            Transform nativeEye = player != null ? (ragdolled ? GameAdapter.Call(ragdoll, "GetCurrentRagdollCameraTransform") as Transform
+                : GameAdapter.Read(viewController, "defaultCamTransform") as Transform ?? GameAdapter.Read(viewController, "cameraTransform") as Transform) : null;
             if (nativeEye != null)
             {
                 // The game's authored first-person eye can sit above a literal
@@ -184,8 +204,8 @@ namespace ScamWithYourFriendsInVR.Camera
                 // Avoid feeding an already tracked camera back into its origin.
                 anchor = nativeEye == Head.transform || nativeEye.IsChildOf(Head.transform)
                     ? (savedParent != null ? savedParent.TransformPoint(savedPosition) : savedPosition) : nativeEye.position;
-                if (avatarEyes.TryPosition(player, out Vector3 eyePosition)) anchor = eyePosition;
-                if (!hasEyeOffset || Time.unscaledTime < anchorSettlesUntil) { eyeOffset = anchor - player.position; hasEyeOffset = true; }
+                if (!ragdolled && avatarEyes.TryPosition(player, out Vector3 eyePosition)) anchor = eyePosition;
+                if (!hasEyeOffset || ragdolled || Time.unscaledTime < anchorSettlesUntil) { eyeOffset = anchor - player.position; hasEyeOffset = true; }
                 // Native eye meshes follow animation and the tracked head bone.
                 // Reusing their new position each frame feeds tracking back into itself.
                 anchor = player.position + eyeOffset;
@@ -196,7 +216,8 @@ namespace ScamWithYourFriendsInVR.Camera
             else if (player != null) trackingYaw += Mathf.DeltaAngle(lastBodyYaw, yaw);
             lastBodyYaw = yaw;
             Quaternion yawRotation = Quaternion.Euler(0, trackingYaw, 0);
-            bool bodyInput = player != null && !sitting && manager.Interactive && GameAdapter.Allowed(GameAdapter.Interactor);
+            bool bodyInput = player != null && subject == localPlayer && !GameAdapter.AvatarUnavailable(localPlayer)
+                && !sitting && manager.Interactive && GameAdapter.Allowed(GameAdapter.Interactor);
             if (bodyInput)
             {
                 Vector3 moved = VRRoomScaleBody.Follow(body, yawRotation, position - center);
