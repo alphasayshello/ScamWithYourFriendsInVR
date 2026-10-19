@@ -46,6 +46,8 @@ $compatProject = Join-Path $PSScriptRoot 'engine-compat\EngineCompat.csproj'
 if ($LASTEXITCODE -ne 0) { throw 'Engine compatibility tool build failed.' }
 $compat = Join-Path $PSScriptRoot 'engine-compat\bin\Release\net10.0\EngineCompat.dll'
 $stockManaged = Join-Path $values.GameDir ($data + '\Managed')
+& dotnet $compat --validate-stock $stockManaged
+if ($LASTEXITCODE -ne 0) { throw 'GameDir must contain unmodified, matching game libraries; discard this incomplete stage.' }
 & dotnet $compat --tree $stockManaged $values.UnityBclDir (Join-Path $Destination $managed)
 if ($LASTEXITCODE -ne 0) { throw 'Base library contract restoration failed; discard this incomplete stage.' }
 & dotnet $compat --tree $stockManaged $values.UnityManagedDir (Join-Path $Destination $managed)

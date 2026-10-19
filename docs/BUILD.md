@@ -5,7 +5,7 @@
 ## Tools
 
 - Windows x64, PowerShell 7 and the .NET 10 SDK.
-- The supported Mono game installed locally.
+- An unmodified copy of the supported Mono game installed locally. Do not prepare or stage against an already modified VR copy.
 - The exact **Unity 6000.3.10f1 (e35f0c77bd8e)** editor with Windows Mono player support. An extracted editor works. A newer engine is not a substitute.
 - Visual Studio 2026 with .NET desktop development, if using the IDE.
 

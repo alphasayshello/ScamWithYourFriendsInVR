@@ -5,7 +5,14 @@ using System.Collections.Generic;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
-if (args.Length == 4 && args[0] == "--tree")
+if (args.Length == 2 && args[0] == "--validate-stock")
+{
+    using var xr = ModuleDefinition.ReadModule(Path.Combine(args[1], "UnityEngine.XRModule.dll"));
+    var devices = xr.Types.FirstOrDefault(t => t.FullName == "UnityEngine.XR.InputDevices");
+    if (devices != null && devices.Methods.Any(m => m.Name == "GetDeviceAtXRNode"))
+        throw new InvalidOperationException("GameDir already contains restored XR libraries. Stage against an unmodified, matching game copy so stripped interface contracts can be recovered correctly.");
+}
+else if (args.Length == 4 && args[0] == "--tree")
 {
     foreach (string source in Directory.EnumerateFiles(args[2], "*.dll"))
         Restore(Path.Combine(args[1], Path.GetFileName(source)), source, Path.Combine(args[3], Path.GetFileName(source)));

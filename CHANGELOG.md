@@ -20,5 +20,6 @@
 - Add large VR controls inside General settings, saved automatically.
 - Respect native camera parent changes and spectated-player anchors; release tracked bone/voice ownership during incompatible native states.
 - Add a setup checker for staged hashes, game version and OpenXR selection, plus a mode-selecting launcher.
+- Reject updated game versions and already restored input libraries during staging so engine interface restoration uses original game contracts.
 
 See [validation](docs/VALIDATION.md) for the exact evidence and remaining gates. These entries describe source changes, not universal production or hardware certification.
