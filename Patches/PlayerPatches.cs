@@ -24,9 +24,9 @@ namespace ScamWithYourFriendsInVR.Patches
             Patch(harmony, "GameInputBindings", "Pressed", null, new[] { typeof(string), typeof(string) }, nameof(AfterPressedInput));
             Type weaponType = ReflectionTypes.Find("RaycastWeapon");
             if (weaponType != null)
-                foreach (string method in new[] { "FireRay", "FireShotgun", "IsAttackLayerRaycastHitting", "SpawnProjectile" })
+                foreach (string method in new[] { "FireRay", "FireRayFromRay", "FireShotgun", "IsAttackLayerRaycastHitting", "SpawnProjectile" })
                 {
-                    MethodInfo weaponMethod = AccessTools.Method(weaponType, method, Type.EmptyTypes);
+                    MethodInfo weaponMethod = AccessTools.Method(weaponType, method);
                     if (weaponMethod != null)
                         try { harmony.Patch(weaponMethod, transpiler: new HarmonyMethod(typeof(PlayerPatches), nameof(WeaponRays))); }
                         catch (Exception ex) { GameAdapter.Report("Weapon ray " + method, ex); }
@@ -174,9 +174,11 @@ namespace ScamWithYourFriendsInVR.Patches
         private static IEnumerable<CodeInstruction> WeaponRays(IEnumerable<CodeInstruction> instructions)
         {
             MethodInfo original = AccessTools.Method(typeof(UnityEngine.Camera), "ScreenPointToRay", new[] { typeof(Vector3) });
+            MethodInfo forward = AccessTools.PropertyGetter(typeof(Transform), "forward");
             foreach (CodeInstruction instruction in instructions)
             {
                 if (instruction.Calls(original)) { instruction.opcode = OpCodes.Call; instruction.operand = AccessTools.Method(typeof(PlayerPatches), nameof(WeaponRay)); }
+                else if (instruction.Calls(forward)) { instruction.opcode = OpCodes.Call; instruction.operand = AccessTools.Method(typeof(PlayerPatches), nameof(RayForward)); }
                 yield return instruction;
             }
         }

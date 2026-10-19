@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Redirect native punch knockback camera-forward reads to the controller, matching hit detection.
+- Verify a nonlethal controller punch reaches a real NPC through the native authority command and reduces native health; restore target health after the check.
+
 - Release attack input when grip is released or the pointer enters UI/menu context, even if trigger remains held.
 - Prevent world clicks and new grip pickups through menu backdrops; reject VR attacks without interactive tracking or during unavailable avatar states.
 - Check native unarmed controller rays/cooldowns and grip-release cancellation in a single private mock host.

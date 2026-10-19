@@ -12,6 +12,22 @@ namespace ScamWithYourFriendsInVR.SmokeTests
         private static Component combatWeapon;
         private static int combatRays;
         private static float combatOriginError, combatDirectionError;
+        private static Collider combatTargetCollider;
+        private static Mirror.NetworkIdentity combatVictim;
+        private static float combatImpulseError;
+        private static int combatDamageCommands;
+        private static void AimCombatTarget(object __instance)
+        {
+            if (!ReferenceEquals(__instance, combatWeapon) || combatTargetCollider == null) return;
+            Bounds bounds = combatTargetCollider.bounds;
+            VRManager.Instance.Rig.Right.Aim.SetPositionAndRotation(bounds.center - Vector3.right * (bounds.extents.x + .25f), Quaternion.LookRotation(Vector3.right));
+        }
+        private static void ObserveDamageCommand(object __instance, Mirror.NetworkIdentity __0, Vector3 __1)
+        {
+            if (!ReferenceEquals(__instance, combatWeapon) || __0 != combatVictim) return;
+            combatDamageCommands++;
+            combatImpulseError = Mathf.Max(combatImpulseError, Vector3.Angle(__1, VRManager.Instance.Rig.Right.Aim.forward));
+        }
         private static void ObserveCombatRay(object __instance, Ray __0)
         {
             if (!ReferenceEquals(__instance, combatWeapon)) return;
@@ -38,6 +54,8 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             var rayMethod = AccessTools.Method(weaponType, "FireRayFromRay");
             var probe = new Harmony("com.swyf.vr.combatprobe");
             probe.Patch(rayMethod, prefix: new HarmonyMethod(typeof(LocalPairHarness), nameof(ObserveCombatRay)));
+            probe.Patch(AccessTools.Method(weaponType, "FireRay"), prefix: new HarmonyMethod(typeof(LocalPairHarness), nameof(AimCombatTarget)));
+            probe.Patch(AccessTools.Method(weaponType, "CmdRagdollTarget"), prefix: new HarmonyMethod(typeof(LocalPairHarness), nameof(ObserveDamageCommand)));
             combatRays = 0; combatOriginError = combatDirectionError = 0;
             bool paused = false;
             void Input(string key, bool value) => manager.Input.GetType().GetProperty(key).SetValue(manager.Input, value);
@@ -71,6 +89,52 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 attack.Invoke(null, new object[] { true });
                 Require(Member(combatWeapon, "isAttackHeld") is bool blocked && !blocked, "Settings accepted a VR attack hold");
                 Logger.LogInfo("COMBAT PASS: grip release cancels native attack while trigger stays held; settings reject attack input");
+                toggle.Invoke(null, null); paused = false;
+
+                Type npcType = Find("NpcRagdollManager");
+                Component npc = FindObjectsByType(npcType, FindObjectsSortMode.None).Cast<Component>().FirstOrDefault(candidate =>
+                    candidate.gameObject.activeInHierarchy && !(Member(candidate, "IsRagdolled") is bool down && down)
+                    && Member(candidate, "Health") is Component health && Convert.ToSingle(Member(health, "CurrentHealth")) > 80
+                    && !(Member(health, "IsDamageBlocked") is bool blockedHealth && blockedHealth)
+                    && candidate.GetComponent(Find("MainMenuSecurityNpc")) == null
+                    && candidate.GetComponentsInChildren<Collider>().Any(c => c.enabled && !c.isTrigger));
+                Require(npc != null, "No healthy native NPC available for nonlethal punch integration");
+                Component npcHealth = Member(npc, "Health") as Component;
+                float healthBefore = Convert.ToSingle(Member(npcHealth, "CurrentHealth"));
+                object controller = Instance("Metater.MetaPlayerController");
+                var teleport = AccessTools.Method(controller.GetType(), "Teleport");
+                Transform localBody = Mirror.NetworkClient.localPlayer.transform;
+                Vector3 originalPosition = localBody.position;
+                try
+                {
+                    combatTargetCollider = npc.GetComponentsInChildren<Collider>().First(c => c.enabled && !c.isTrigger
+                        && ((1 << c.gameObject.layer) & ((LayerMask)Member(combatWeapon, "layerMask")).value) != 0);
+                    combatVictim = npc.GetComponent<Mirror.NetworkIdentity>();
+                    Require(combatVictim != null && combatVictim.netId != 0, "Punch victim is not natively network spawned");
+                    combatImpulseError = 0; combatDamageCommands = 0;
+                    teleport.Invoke(controller, new object[] { npc.transform.position - Vector3.right * 1.5f, true });
+                    manager.Rig.Recenter();
+                    yield return new WaitForSecondsRealtime(.8f);
+                    deadline = Time.realtimeSinceStartup + 10;
+                    while (Mirror.NetworkTime.time < Convert.ToDouble(nextFire.Invoke(combatWeapon, null)))
+                    { Require(Time.realtimeSinceStartup < deadline, "Punch cooldown did not expire before target test"); yield return null; }
+                    attack.Invoke(null, new object[] { true });
+                    deadline = Time.realtimeSinceStartup + 8;
+                    while (Convert.ToSingle(Member(npcHealth, "CurrentHealth")) >= healthBefore)
+                    { Require(Time.realtimeSinceStartup < deadline, "Controller punch did not damage native NPC through the server command"); yield return null; }
+                    attack.Invoke(null, new object[] { false });
+                    float after = Convert.ToSingle(Member(npcHealth, "CurrentHealth"));
+                    Require(after > 0 && combatDamageCommands > 0 && combatImpulseError < .01f,
+                        "NPC damage bypassed the native controller-directed punch command: direction error=" + combatImpulseError);
+                    Logger.LogInfo("COMBAT PASS: controller punch reaches native NPC through authority command, reduces health " + healthBefore + " -> " + after
+                        + " and uses controller knockback direction; PvP/knockout not covered");
+                }
+                finally
+                {
+                    combatTargetCollider = null; combatVictim = null;
+                    AccessTools.Method(npcHealth.GetType(), "ServerSetHealth").Invoke(npcHealth, new object[] { healthBefore });
+                    teleport.Invoke(controller, new object[] { originalPosition, true }); manager.Rig.Recenter();
+                }
             }
             finally
             {
