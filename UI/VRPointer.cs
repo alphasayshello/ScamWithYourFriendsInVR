@@ -29,6 +29,7 @@ namespace ScamWithYourFriendsInVR.UI
         private VisualElement pressedElement, hoverElement;
         private Vector3 lastPanelPosition;
         private bool toolkitDown, worldDown, leftWorldDown, attacking;
+        private int toolkitButton;
         private bool attackRequiresGrip = true, secondaryHeld;
         private bool primaryTertiary, secondaryHipSwap;
         private VisualElement clickRoot, clickTarget;
@@ -39,6 +40,7 @@ namespace ScamWithYourFriendsInVR.UI
         private VisualElement lastClicked;
         private float lastClickTime;
         private int clickCount;
+        private int lastClickButton = -1;
         private readonly VRGripInteractor grab = new VRGripInteractor();
         private readonly VRBrowserScroll browserScroll = new VRBrowserScroll();
         private readonly VRPointerAim aimFilter = new VRPointerAim();
@@ -254,10 +256,10 @@ namespace ScamWithYourFriendsInVR.UI
             else if (graphic.gameObject != null) NormalizedPanelPosition = new Vector2(graphicPosition.x / Screen.width, graphicPosition.y / Screen.height);
             if (hoverElement != elementHit)
             {
-                Send3D(hoverElement, EventType.MouseLeaveWindow, lastPanelPosition, 0, toolkitDown);
+                Send3D(hoverElement, EventType.MouseLeaveWindow, lastPanelPosition, toolkitButton, toolkitDown);
                 hoverElement = elementHit;
-                if (panelHit != null) Send3D(hoverElement, EventType.MouseEnterWindow, panelHit.PanelPosition(uvHit), 0, toolkitDown);
-                else if (worldDocumentHit != null) Send3D(hoverElement, EventType.MouseEnterWindow, worldPanelPosition, 0, toolkitDown);
+                if (panelHit != null) Send3D(hoverElement, EventType.MouseEnterWindow, panelHit.PanelPosition(uvHit), toolkitButton, toolkitDown);
+                else if (worldDocumentHit != null) Send3D(hoverElement, EventType.MouseEnterWindow, worldPanelPosition, toolkitButton, toolkitDown);
             }
             if (panelHit != null) lastPanelPosition = panelHit.PanelPosition(uvHit);
             else if (worldDocumentHit != null) lastPanelPosition = worldPanelPosition;
@@ -269,26 +271,27 @@ namespace ScamWithYourFriendsInVR.UI
             if (toolkitDown && pressedWorldDocument != null && VRWorldPanelPicker.TryDrag(pressedWorldDocument, CapturedOrPressed(), ray, out Vector3 nativeDrag))
                 lastPanelPosition = nativeDrag;
             VisualElement recipient = toolkitDown ? CapturedOrPressed() : elementHit;
-            Send3D(recipient, EventType.MouseMove, lastPanelPosition, 0, toolkitDown);
+            Send3D(recipient, EventType.MouseMove, lastPanelPosition, toolkitButton, toolkitDown);
             float scrollAxis = Mathf.Abs(manager.Input.Move.y) > .01f ? manager.Input.Move.y : manager.Input.Turn.y;
             float scroll = -scrollAxis * 18f * Time.unscaledDeltaTime;
             bool toolkitHit = panelHit != null || worldDocumentHit != null;
             if (toolkitHit && Mathf.Abs(scroll) > 0.01f) Scroll(elementHit, lastPanelPosition, scroll);
             if (module.TryDragPosition(ray, out Vector2 dragPosition)) graphicPosition = dragPosition;
-            module.Tick(graphic, graphicPosition, manager.Input.TriggerDown && !toolkitHit,
+            module.Tick(graphic, graphicPosition, manager.Input.TriggerDown && !toolkitHit && !toolkitDown,
                 manager.Input.TriggerUp || toolkitDown, !toolkitHit ? scroll : 0);
-            if (manager.Input.TriggerDown && toolkitHit)
+            if (!toolkitDown && !module.IsPressed && toolkitHit && (manager.Input.TriggerDown || manager.Input.SecondaryDown))
             {
                 pressedPanel = panelHit; pressedElement = elementHit; toolkitDown = true;
+                toolkitButton = manager.Input.TriggerDown ? 0 : 1;
                 pressedWorldDocument = worldDocumentHit;
-                BeginClickWatch(elementHit);
-                Send3D(elementHit, EventType.MouseDown, lastPanelPosition, 0, true);
-                manager.Keyboard.TryOpen(elementHit, worldDocumentHit ?? panelHit.DocumentFor(elementHit));
+                if (toolkitButton == 0) BeginClickWatch(elementHit); else EndClickWatch();
+                Send3D(elementHit, EventType.MouseDown, lastPanelPosition, toolkitButton, true);
+                if (toolkitButton == 0) manager.Keyboard.TryOpen(elementHit, worldDocumentHit ?? panelHit.DocumentFor(elementHit));
             }
 
             if (attacking && (attackRequiresGrip && !manager.Input.Grip || primaryTertiary && !manager.Input.LeftGrip
                 || !manager.Input.Trigger || HasPanelHit || context)) StopAttack();
-            if (manager.Input.TriggerDown && !HasPanelHit && !context)
+            if (manager.Input.TriggerDown && !HasPanelHit && !context && !toolkitDown)
             {
                 if (manager.Input.LeftGrip || manager.Input.Grip || GameAdapter.Read(GameAdapter.Interactor, "CurrentHeldItem") is Component heldItem && heldItem != null)
                 {
@@ -300,27 +303,23 @@ namespace ScamWithYourFriendsInVR.UI
             }
             if (manager.Input.TriggerUp)
             {
-                ReleaseToolkit();
+                if (toolkitButton == 0) ReleaseToolkit();
                 StopAttack();
                 if (worldDown) { worldDown = false; if (!leftWorldDown) GameAdapter.Interact(false); }
             }
+            if (toolkitDown && toolkitButton == 1 && !manager.Input.Secondary) ReleaseToolkit();
             if (leftWorldDown && (!manager.Input.LeftTrigger || manager.Input.LeftGrip || HasPanelHit || context))
             { leftWorldDown = false; if (!worldDown) GameAdapter.Interact(false); }
-            if (manager.Input.LeftTriggerDown && !manager.Input.LeftGrip && !HasPanelHit && !context)
+            if (manager.Input.LeftTriggerDown && !manager.Input.LeftGrip && !HasPanelHit && !context && !toolkitDown)
             { if (!worldDown) GameAdapter.Interact(true); leftWorldDown = true; }
-            grab.Tick(HasPanelHit || context);
-            if (manager.Input.SecondaryDown && elementHit != null)
-            {
-                Send3D(elementHit, EventType.MouseDown, lastPanelPosition, 1, true);
-                Send3D(elementHit, EventType.MouseUp, lastPanelPosition, 1, false);
-            }
+            grab.Tick(HasPanelHit || context || toolkitDown);
             if (secondaryHeld && (!manager.Input.Secondary || secondaryHipSwap && !manager.Input.LeftGrip || HasPanelHit || context)) StopSecondary();
-            if (manager.Input.SecondaryDown && !HasPanelHit && !context)
+            if (manager.Input.SecondaryDown && !HasPanelHit && !context && !toolkitDown)
             {
                 secondaryHipSwap = manager.Input.LeftGrip; secondaryHeld = true;
                 if (secondaryHipSwap) GameAdapter.SwapHip(true); else GameAdapter.SecondaryUse(true);
             }
-            if (manager.Input.TriggerUp && graphic.gameObject != null) manager.Keyboard.TryOpen(graphic.gameObject);
+            if (manager.Input.TriggerUp && !toolkitDown && graphic.gameObject != null) manager.Keyboard.TryOpen(graphic.gameObject);
             visualHit = HasPanelHit || toolkitDown;
             visualDistance = visualHit ? Vector3.Distance(ray.origin, endpoint) : Mathf.Min(nearest, 2);
             object nativeTarget = GameAdapter.Read(GameAdapter.Interactor, "currentInteractable") ?? GameAdapter.Read(GameAdapter.Interactor, "currentScenePickup");
@@ -376,8 +375,8 @@ namespace ScamWithYourFriendsInVR.UI
             if (type == EventType.MouseDown)
             {
                 VisualElement clickElement = target as UnityEngine.UIElements.Button ?? target?.GetFirstAncestorOfType<UnityEngine.UIElements.Button>() ?? target;
-                clickCount = lastClicked == clickElement && Time.unscaledTime - lastClickTime < Plugin.DoubleClickWindow.Value ? clickCount + 1 : 1;
-                lastClicked = clickElement; lastClickTime = Time.unscaledTime;
+                clickCount = lastClicked == clickElement && lastClickButton == button && Time.unscaledTime - lastClickTime < Plugin.DoubleClickWindow.Value ? clickCount + 1 : 1;
+                lastClicked = clickElement; lastClickTime = Time.unscaledTime; lastClickButton = button;
             }
             Event source = new Event { type = type, mousePosition = position, button = button, clickCount = Mathf.Max(1, clickCount),
                 delta = position - previousEventPosition };
@@ -432,8 +431,8 @@ namespace ScamWithYourFriendsInVR.UI
             VisualElement recipient = CapturedOrPressed();
             bool releaseInside = clickTarget != null && hoverElement != null && (clickTarget == hoverElement || clickTarget.Contains(hoverElement));
             float threshold = pressedWorldDocument != null ? .02f : 10;
-            bool eligible = releaseInside && Vector3.Distance(lastPanelPosition, pressPosition) <= threshold;
-            Send3D(recipient, EventType.MouseUp, lastPanelPosition, 0, false);
+            bool eligible = toolkitButton == 0 && releaseInside && Vector3.Distance(lastPanelPosition, pressPosition) <= threshold;
+            Send3D(recipient, EventType.MouseUp, lastPanelPosition, toolkitButton, false);
             if (eligible && clickTarget?.panel != null)
             {
                 Event source = new Event { type = EventType.MouseUp, mousePosition = lastPanelPosition, button = 0, clickCount = Mathf.Max(1, clickCount) };
@@ -447,7 +446,7 @@ namespace ScamWithYourFriendsInVR.UI
             }
             EndClickWatch();
             if (recipient?.panel != null && recipient.HasPointerCapture(ToolkitPointerId)) recipient.ReleasePointer(ToolkitPointerId);
-            toolkitDown = false; pressedPanel = null; pressedWorldDocument = null; pressedElement = null;
+            toolkitDown = false; toolkitButton = 0; pressedPanel = null; pressedWorldDocument = null; pressedElement = null;
         }
 
         private void BeginClickWatch(VisualElement element)

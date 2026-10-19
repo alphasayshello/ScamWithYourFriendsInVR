@@ -26,21 +26,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             AccessTools.Field(__instance.GetType(), "localStorage").SetValue(__instance, false);
             AccessTools.Field(__instance.GetType(), "cachePath").SetValue(__instance, new FileInfo(renderedBrowserProfile));
         }
-        private static VRPanelSurface renderedBrowserSurface;
-        private static Vector2 renderedBrowserPoint;
         private static float renderedBrowserScroll;
-        private static bool renderedBrowserAim;
-        private static void AimRenderedBrowser()
-        {
-            if (!renderedBrowserAim || renderedBrowserSurface?.Panel == null) return;
-            var pointer = VRManager.Instance.Pointer;
-            Rect bounds = renderedBrowserSurface.Panel.visualTree.layout;
-            Vector2 uv = new Vector2(renderedBrowserPoint.x / bounds.width, 1 - renderedBrowserPoint.y / bounds.height);
-            Transform surface = renderedBrowserSurface.transform;
-            Vector3 point = surface.TransformPoint(new Vector3(uv.x - .5f, uv.y - .5f, 0));
-            VRManager.Instance.Rig.Right.Aim.SetPositionAndRotation(point - surface.forward * .35f, surface.rotation);
-            AccessTools.Method(typeof(VRPointer), "ResetAim").Invoke(pointer, null);
-        }
 
         private IEnumerator TestRenderedBrowser(object os, VRPanelSurface surface)
         {
@@ -89,7 +75,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 var image = Member(host, "browserImage") as VisualElement;
                 Require(image?.panel != null, "Rendered browser image detached");
                 int width = Convert.ToInt32(Member(host, "browserPixelWidth")), height = Convert.ToInt32(Member(host, "browserPixelHeight"));
-                renderedBrowserPoint = image.LocalToWorld(new Vector2(x / width * image.contentRect.width, y / height * image.contentRect.height));
+                appFixturePoint = image.LocalToWorld(new Vector2(x / width * image.contentRect.width, y / height * image.contentRect.height));
             }
             void Trigger(bool pressed)
             {
@@ -136,8 +122,8 @@ document.onmousedown=()=>{s.downs++;report()};document.onmouseup=()=>{s.ups++;s.
                 Color pixel = texture.GetPixel(texture.width / 2, texture.height / 2);
                 Require(Vector3.Distance(new Vector3(pixel.r, pixel.g, pixel.b), new Vector3(18 / 255f, 52 / 255f, 86 / 255f)) < .12f,
                     "CEF page texture did not render its local background: " + pixel);
-                probe.Patch(tick, prefix: new HarmonyMethod(typeof(LocalPairHarness), nameof(AimRenderedBrowser)));
-                renderedBrowserSurface = surface; renderedBrowserAim = true;
+                probe.Patch(tick, prefix: new HarmonyMethod(typeof(LocalPairHarness), nameof(AimAppFixture)));
+                appFixtureSurface = surface; appFixtureAim = true;
                 yield return new WaitForEndOfFrame();
                 PagePoint(120, 75); Trigger(true);
                 Require(manager.Pointer.HasPanelHit, "Controller ray missed rendered browser");
@@ -178,14 +164,15 @@ document.onmousedown=()=>{s.downs++;report()};document.onmouseup=()=>{s.ups++;s.
                 Require(!(bool)Member(manager.Pointer, "toolkitDown"), "Controller focus loss retained UI press ownership");
                 Logger.LogInfo("RENDERED BROWSER PASS: controller focus cancellation releases the actual DOM drag");
 
-                PagePoint(600, 250); Set("SecondaryDown", true); tick.Invoke(manager.Pointer, null); Set("SecondaryDown", false);
+                PagePoint(600, 250); Set("Secondary", true); Set("SecondaryDown", true); tick.Invoke(manager.Pointer, null); Set("SecondaryDown", false);
+                Set("Secondary", false); tick.Invoke(manager.Pointer, null);
                 wait = Await(s => s.contexts == 1, "Controller secondary button did not reach webpage context input");
                 while (wait.MoveNext()) yield return wait.Current;
                 Logger.LogInfo("RENDERED BROWSER PASS: controller secondary button reaches real webpage context click");
             }
             finally
             {
-                renderedBrowserAim = false; renderedBrowserScroll = 0; renderedBrowserSurface = null; holdInjectedTrigger = false;
+                appFixtureAim = false; renderedBrowserScroll = 0; appFixtureSurface = null; holdInjectedTrigger = false;
                 Set("Trigger", false); Set("TriggerDown", false); Set("TriggerUp", false);
                 Set("HasInputFocus", true); Set("SecondaryDown", false);
                 manager.Input.GetType().GetProperty("Move").SetValue(manager.Input, Vector2.zero); manager.Pointer.Cancel();

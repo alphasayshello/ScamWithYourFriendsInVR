@@ -24,11 +24,13 @@ The laser stays visible in menus and computers. During normal play it appears fo
 
 1. Point at the computer's native interaction target and press the right trigger to enter it.
 2. Use the right-controller laser on the desk monitor. Press trigger to click; use two quick presses for double-click actions.
-3. Hold trigger and move the laser to drag windows or controls. Use the stick to scroll. Right B sends a context click.
+3. Hold trigger and move the laser to drag windows or controls. Use the stick to scroll. Press right B for a context click, or hold it while moving the laser for right-mouse drags such as paint brush resizing.
 4. Use your physical PC keyboard for text entry. The VR keyboard is disabled by default. No desk mouse grabbing or touch typing is required.
 5. Press left Y / menu to leave the computer.
 
 Point inside a browser webpage and use the stick to scroll that page. Browser toolbar controls and other apps retain ordinary UI scrolling. Native browser privacy approval and availability still apply.
+
+In Paint, hold trigger over the canvas to draw. Use its Undo and Redo buttons to change a stroke, or hold right B and move sideways over the canvas to change brush size. Painting keeps the game's normal save behaviour. A physical PC keyboard is still needed for text and shortcuts.
 
 `[UI] PhysicalDesktop = true` keeps the UI attached to the original monitor by default. In settings → General → VR options, change COMPUTER SCREEN to FLOATING if you prefer a closer desktop. App licences, sign-in and game progression still follow the native game; opening a window does not guarantee that every workflow has passed VR testing.
 

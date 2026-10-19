@@ -204,6 +204,16 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             Send(EventType.MouseDown, true); Send(EventType.MouseMove, true); Send(EventType.MouseUp, false); Send(EventType.MouseMove, false);
             Check(string.Join(",", events) == "down:1,move:1,up:0,move:0", "Toolkit state: " + string.Join(",", events));
             events.Clear();
+            var buttonTarget = new VisualElement(); document.rootVisualElement.Add(buttonTarget);
+            var counts = new List<int>();
+            buttonTarget.RegisterCallback<PointerDownEvent>(evt => counts.Add(evt.clickCount));
+            foreach (int button in new[] { 0, 0, 1, 0 })
+            {
+                send.Invoke(pointer, new object[] { buttonTarget, EventType.MouseDown, new Vector2(10, 10), button, true });
+                send.Invoke(pointer, new object[] { buttonTarget, EventType.MouseUp, new Vector2(10, 10), button, false });
+            }
+            Check(string.Join(",", counts) == "1,2,1,1", "Double click count crossed mouse buttons: " + string.Join(",", counts));
+            buttonTarget.RemoveFromHierarchy();
             Send(EventType.MouseDown, true);
             typeof(VRPointer).GetField("toolkitDown", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(pointer, true);
             typeof(VRPointer).GetField("pressedElement", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(pointer, element);

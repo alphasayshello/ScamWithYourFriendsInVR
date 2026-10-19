@@ -4,6 +4,7 @@ using System.Linq;
 using System.Collections.Generic;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
+using ScamWithYourFriendsInVR.Build;
 
 if (args.Length == 2 && args[0] == "--validate-stock")
 {
@@ -29,7 +30,7 @@ string Signature(MethodDefinition method) => method.ReturnType.FullName + " " + 
 void Restore(string stockPath, string sourcePath, string destination)
 {
     Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(destination))!);
-    if (!File.Exists(stockPath)) { File.Copy(sourcePath, destination, true); return; }
+    if (!File.Exists(stockPath)) { AtomicOutput.Write(destination, temp => File.Copy(sourcePath, temp)); return; }
     using var resolver = new DefaultAssemblyResolver();
     string sourceFolder = Path.GetDirectoryName(Path.GetFullPath(sourcePath))!;
     resolver.AddSearchDirectory(sourceFolder);
@@ -62,10 +63,10 @@ void Restore(string stockPath, string sourcePath, string destination)
             changed++;
         }
     }
-    if (changed == 0) File.Copy(sourcePath, destination, true);
+    if (changed == 0) AtomicOutput.Write(destination, temp => File.Copy(sourcePath, temp));
     else
     {
-        full.Write(destination);
+        AtomicOutput.Write(destination, full.Write);
         Console.WriteLine(Path.GetFileName(sourcePath) + ": made " + changed + " restored interface members optional; unavailable calls fail explicitly.");
     }
 }

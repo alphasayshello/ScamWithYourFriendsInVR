@@ -47,6 +47,8 @@ Use a compatible game copy. The setup checks verify missing/corrupted files, man
 
 Optional in-game checks live in [tools/smoke-tests](../tools/smoke-tests/README.md). Mock checks are not hardware or production certification. Remove the optional smoke-test plugin before normal headset runs.
 
+Run `./tools/tests/AtomicOutput.Tests.ps1` on Windows with PowerShell 7 to check staging output replacement. Temporary sharing locks retry briefly; a failed writer or persistent lock preserves the previous file and cleans up its temporary output.
+
 ```powershell
 ./tools/Export-Source.ps1 -Destination 'D:\exports\ScamWithYourFriendsInVR-source.zip'
 ```

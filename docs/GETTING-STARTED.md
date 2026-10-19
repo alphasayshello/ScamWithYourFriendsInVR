@@ -1,6 +1,6 @@
 # Getting started
 
-[Back to the project](../README.md) Â· [Controls](HOW-TO-PLAY.md)
+[Back to the project](../README.md) · [Controls](HOW-TO-PLAY.md)
 
 ## Supported target
 
@@ -61,6 +61,6 @@ Press left Y / menu, choose **General**, then use the **VR OPTIONS** controls at
 | `Performance / SceneRenderScale` | `0.85` | VR scene render scale |
 | `Performance / DesktopCameraFPS` | `15` | In-game webcam preview cap |
 
-Old `PhysicalMouse` / `MouseTravel` keys are obsolete and ignored. After updating an existing config, set `PhysicalDesktop = true` to keep the desktop on its monitor, or change it in General settings â†’ VR options. Text entry uses a physical PC keyboard unless the experimental VR keyboard is enabled.
+Old `PhysicalMouse` / `MouseTravel` keys are obsolete and ignored. After updating an existing config, set `PhysicalDesktop = true` to keep the desktop on its monitor, or change it in General settings → VR options. Text entry uses a physical PC keyboard unless the experimental VR keyboard is enabled.
 
-If anything fails, include the relevant player log and `BepInEx/LogOutput.log`. [Troubleshooting â†’](TROUBLESHOOTING.md)
+If anything fails, include the relevant player log and `BepInEx/LogOutput.log`. [Troubleshooting →](TROUBLESHOOTING.md)

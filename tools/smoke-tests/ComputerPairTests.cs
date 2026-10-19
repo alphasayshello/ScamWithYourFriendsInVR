@@ -83,11 +83,18 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 Plugin.PhysicalDesktop.Value = true;
                 var interactor = NetworkClient.localPlayer.GetComponent(Find("PlayerInteractor"));
                 var type = Find("MonitorInteractable");
+                var workspaceType = Find("ScammerWorkspace");
+                var sameFloor = AccessTools.Method(workspaceType, "IsOnSameFloor");
+                var floorMonitors = UnityEngine.Object.FindObjectsByType(workspaceType, FindObjectsSortMode.None).Cast<Component>()
+                    .Where(workspace => sameFloor.Invoke(workspace, new object[] { interactor.transform.position }) is bool same && same)
+                    .Select(workspace => Member(Member(workspace, "callStateScreen"), "MonitorInteractable") as Component).Where(m => m != null).ToArray();
                 Component monitor = UnityEngine.Object.FindObjectsByType(type, FindObjectsSortMode.None).Cast<Component>()
-                    .FirstOrDefault(candidate => Member(candidate, "UsesLaptopDesktop") is bool laptop && !laptop
+                    .Where(candidate => Member(candidate, "UsesLaptopDesktop") is bool laptop && !laptop
                         && Member(candidate, "chairInteractable") is object chair
                         && Member(chair, "Networksitter") == null
-                        && AccessTools.Method(type, "CanInteract").Invoke(candidate, new object[] { interactor }) is bool allowed && allowed);
+                        && floorMonitors.Contains(candidate)
+                        && AccessTools.Method(type, "CanInteract").Invoke(candidate, new object[] { interactor }) is bool allowed && allowed)
+                    .OrderBy(candidate => (candidate.transform.position - interactor.transform.position).sqrMagnitude).FirstOrDefault();
                 Require(monitor != null, "No free, usable monitor found");
                 var controller = Instance("Metater.MetaPlayerController");
                 AccessTools.Method(controller.GetType(), "Teleport").Invoke(controller, new object[] { monitor.transform.position - monitor.transform.forward, true });
@@ -270,7 +277,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     yield return null;
                 }
                 if (appId != "jw-paint") Logger.LogInfo("COMPUTER INFO: paint is gated by the game's application license; testing the available native "
-                    + appId + " window. Paint drawing and unavailable app workflows remain unverified.");
+                    + appId + " window. The separate paint fixture checks drawing without changing saved licences.");
                 var button = Member(paint, "DesktopButton") as Button;
                 Require(button != null && button.panel != null, "Native " + appId + " desktop button missing");
                 deadline = Time.realtimeSinceStartup + 15;
@@ -421,6 +428,9 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     var renderedBrowser = TestRenderedBrowser(os, surface);
                     try { while (renderedBrowser.MoveNext()) yield return renderedBrowser.Current; }
                     finally { (renderedBrowser as IDisposable)?.Dispose(); }
+                    var paintChecks = TestNativePaint(os, surface);
+                    try { while (paintChecks.MoveNext()) yield return paintChecks.Current; }
+                    finally { (paintChecks as IDisposable)?.Dispose(); }
                     var appChecks = TestAllAppWindows(os, surface);
                     try { while (appChecks.MoveNext()) yield return appChecks.Current; }
                     finally { (appChecks as IDisposable)?.Dispose(); }

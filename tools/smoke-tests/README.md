@@ -81,6 +81,10 @@ The native browser fixture also sends controller down/up through its actual view
 
 The separate rendered-browser fixture starts the real bundled CEF engine at `about:blank`, using a fresh temporary incognito profile. It loads self-contained HTML with no external resources, checks the actual page texture and drives a DOM button, drag target, off-page release, page scrolling, focus cancellation and context click through the controller ray. DOM state returns through native browser title events; transport calls are not intercepted. It checks the production startup allowance, preserves saved privacy settings and restores native URL/history fields. Window-only checks suppress browser startup so they do not open saved sessions in the background. External websites, text entry, browser detach/close during a drag and real-headset usability remain separate requirements.
 
+## native paint controls
+
+The private computer fixture temporarily unlocks native app runtimes within its owned lobby and constructs an isolated native Paint instance. Controller rays draw actual canvas pixels, verify the matching saved PNG, operate Undo/Redo, hold right B to resize the brush and cancel a stroke on focus loss. An unrelated trigger release must not cancel a B drag. The fixture restores the original paint instance and lobby access flag, and confines artwork to a temporary directory. It does not purchase licences or modify saved artwork. Printing, galleries, clipboard operations, text input and headset acceptance remain outstanding.
+
 ## combat transition diagnostics
 
 `outputs/Run-Single-VR-Checks.ps1 -Combat` starts a focused private mock host and repeats twenty native role changes and teleports. Each cycle checks actual punch input, cooldown, grip-release cancellation and settings suppression. It excludes the NPC damage portion and restores role/position on exit. This helps investigate an intermittent hold-input failure in the larger suite; passing these cycles does not explain that failure or establish PvP reliability.

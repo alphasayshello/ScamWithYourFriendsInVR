@@ -26,6 +26,8 @@
 - Computer screens now stay attached to their desk monitors and follow screen movement and renderer rebinding. An optional floating desktop is available. Clicking, dragging, scrolling and window controls have been checked, but the revised computer experience still needs headset testing.
 - A locally rendered browser page passes controller clicking, dragging, off-page release, thumbstick scrolling, focus cancellation and context-click checks. Live websites, text entry, closing a browser during a drag and headset usability still need testing.
 - The browser gets more startup time under VR load. New game-copy installs start with a fresh browser cache.
+- Paint passes simulated controller drawing, saved-image, undo/redo, held right-B brush resizing and focus-cancellation checks. Printing, artwork browsing, clipboard actions, text entry and headset usability still need checking.
+- Right-B UI drags now stay held until B is released, and switching between trigger and B no longer creates accidental double clicks.
 - Head turns now drive the local model, with body turning kept separate from view rotation.
 - VR options inside General settings provide larger controls for recentering, desktop placement, seated comfort, menu distance, aiming, laser visibility, turning and scene resolution.
 - Camera ownership now follows the spectated player; tracked arms release control during ragdoll, hiding and spectating. These transitions still need full gameplay checking.

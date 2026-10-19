@@ -14,8 +14,27 @@ namespace ScamWithYourFriendsInVR.SmokeTests
     public sealed partial class LocalPairHarness
     {
         private static bool holdInjectedTrigger;
+        private static bool holdInjectedSecondary;
+        private static VRPanelSurface appFixtureSurface;
+        private static Vector2 appFixturePoint;
+        private static bool appFixtureAim;
+        private static void AimAppFixture()
+        {
+            if (!appFixtureAim || appFixtureSurface?.Panel == null) return;
+            Rect bounds = appFixtureSurface.Panel.visualTree.layout;
+            Vector2 uv = new Vector2(appFixturePoint.x / bounds.width, 1 - appFixturePoint.y / bounds.height);
+            Transform surface = appFixtureSurface.transform;
+            Vector3 point = surface.TransformPoint(new Vector3(uv.x - .5f, uv.y - .5f, 0));
+            VRManager.Instance.Rig.Right.Aim.SetPositionAndRotation(point - surface.forward * .35f, surface.rotation);
+            AccessTools.Method(typeof(VRPointer), "ResetAim").Invoke(VRManager.Instance.Pointer, null);
+        }
         private static void KeepTestTriggerHeld(object __instance)
         {
+            if (holdInjectedSecondary)
+            {
+                __instance.GetType().GetProperty("Secondary").SetValue(__instance, true);
+                __instance.GetType().GetProperty("SecondaryDown").SetValue(__instance, false);
+            }
             if (renderedBrowserScroll != 0) __instance.GetType().GetProperty("Move").SetValue(__instance, new Vector2(0, renderedBrowserScroll));
             if (injectFoodJump) __instance.GetType().GetProperty("Jump").SetValue(__instance, true);
             if (injectGiveUp)
