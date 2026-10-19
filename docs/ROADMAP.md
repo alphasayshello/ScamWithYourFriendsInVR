@@ -18,7 +18,7 @@ This remains a development preview. The user's latest headset run accepted the g
 - Punch damage/cooldowns, food/poop behaviour, held-item variants, ragdoll and spectating.
 - Two-account Steam host/client acceptance, reconnect and voice spatialization.
 - Sustained frame-time profiling and supported headset/runtime acceptance.
-- Port and validate the newer Steam game build using Unity 6000.3.26f1.
+- Finish headset acceptance of the newer Steam target using Unity 6000.3.26f1 and Input System 1.20.0.
 - Review staged third-party redistribution terms before publishing runtime packages.
 
 Use one VR client during headset testing. After the VR conversion is complete, begin the separate general optimization mod; it is not part of an already-finished release.

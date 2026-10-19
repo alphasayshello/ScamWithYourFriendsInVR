@@ -1,6 +1,6 @@
 # runtime integration
 
-The inspected installation is a Windows x64 Mono player, Unity 6000.3.10f1, with Input System 1.19.0. The stock engine XR assembly contains `InputDevice` but omits `GetDeviceAtXRNode`, `InputFeatureUsage<T>` and related APIs. Native OpenXR binaries and subsystem manifests are absent. The base class library also omits reflection methods required by BepInEx.
+The supported Windows x64 Mono targets are Unity 6000.3.26f1 with Input System 1.20.0, and legacy Unity 6000.3.10f1 with Input System 1.19.0. Build each target against its matching editor libraries and dependency lock. A mismatched Input System can crash native startup asset loading before BepInEx initializes; preparation, staging and setup checks reject that mismatch. The stock engine XR assembly contains `InputDevice` but omits `GetDeviceAtXRNode`, `InputFeatureUsage<T>` and related APIs. Native OpenXR binaries and subsystem manifests are absent. The base class library also omits reflection methods required by BepInEx.
 
 XR support needs three distinct layers:
 

@@ -11,7 +11,8 @@ $relativeFiles = @('Scam With Your Friends.exe', 'UnityPlayer.dll', 'winhttp.dll
     'BepInEx\plugins\ScamWithYourFriendsInVR\ScamWithYourFriendsInVR.Multiplayer.dll',
     'Scam With Your Friends_Data\Managed\UnityEngine.XRModule.dll',
     'Scam With Your Friends_Data\Plugins\x86_64\UnityOpenXR.dll',
-    'Scam With Your Friends_Data\UnitySubsystems\UnityOpenXR\UnitySubsystemsManifest.json')
+    'Scam With Your Friends_Data\UnitySubsystems\UnityOpenXR\UnitySubsystemsManifest.json',
+    'Scam With Your Friends_Data\Managed\Unity.InputSystem.dll')
 function Expect-Failure([scriptblock]$Action, [string]$Message) {
     $caught = $null
     try { & $Action | Out-Null } catch { $caught = $_.Exception.Message }
@@ -27,6 +28,8 @@ try {
         [IO.File]::WriteAllText($target, 'fixture')
     }
     Copy-Item -LiteralPath (Join-Path $GameDir 'UnityPlayer.dll') -Destination (Join-Path $fixture 'UnityPlayer.dll') -Force
+    Copy-Item -LiteralPath (Join-Path $GameDir $relativeFiles[-1]) -Destination (Join-Path $fixture $relativeFiles[-1]) -Force
+    Expect-Failure { & (Join-Path $tools 'Assert-InputVersion.ps1') -GameDir $fixture -ExpectedVersion '99.0.0' } 'Input System version mismatch'
     $entries = @($relativeFiles | Select-Object -Skip 2 | ForEach-Object { [pscustomobject]@{path=$_;sha256=(Get-FileHash -LiteralPath (Join-Path $fixture $_)).Hash} })
     $entries | ConvertTo-Json | Set-Content -LiteralPath $manifest
     $result = & (Join-Path $tools 'Check-Setup.ps1') -GameDir $fixture -Mode PC

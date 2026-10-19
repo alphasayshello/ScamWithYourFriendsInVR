@@ -4,7 +4,7 @@
 
 ## Supported target
 
-This implementation targets the Windows x64 **Mono** game, Unity **6000.3.10f1**. It rejects IL2CPP installations containing `GameAssembly.dll`. It is a development preview, not a universal installer or standalone Quest APK.
+This implementation targets the Windows x64 **Mono** game, Unity **6000.3.26f1** or **6000.3.10f1**. It rejects IL2CPP installations containing `GameAssembly.dll`. It is a development preview, not a universal installer or standalone Quest APK.
 
 ## Install the staged runtime
 
@@ -30,7 +30,7 @@ Quest Link/Air Link can use the Meta PC OpenXR runtime. Index/Vive use a suitabl
 
 This reads the installed files without changing them. It checks the staged manifest and OpenXR library; it cannot tell whether a headset is connected. Close other clients and remove the optional smoke-test plugin before normal play.
 
-The currently updated Steam install uses Unity **6000.3.26f1**, which this preview has not been ported to. Keep a compatible **6000.3.10f1** copy for testing; do not copy the older runtime over an updated game.
+Setup selects a pinned dependency profile for the game: **6000.3.26f1 + Input System 1.20.0**, or legacy **6000.3.10f1 + Input System 1.19.0**. Build and stage separately for each target. Do not copy an older staged runtime over an updated game. The newer target passes simulated checks; headset acceptance is still outstanding.
 
 ## In-game VR options
 

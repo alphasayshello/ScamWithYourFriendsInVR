@@ -22,7 +22,7 @@ An open-source VR conversion for **Scam With Your Friends**, built with BepInEx 
 
 ## Get started
 
-1. Use the supported **Windows x64 Mono** game build: Unity **6000.3.10f1**.
+1. Use the supported **Windows x64 Mono** game build: Unity **6000.3.26f1** (current) or **6000.3.10f1** (legacy).
 2. [Build and stage the runtime](docs/BUILD.md), then install into a separate game copy using the [setup guide](docs/GETTING-STARTED.md).
 3. Connect your headset and choose your active PC OpenXR runtime. Quest 3 through Steam Link uses SteamVR.
 4. Use `tools/Launch-Game.ps1 -GameDir 'D:\Games\SWYF-VR' -Mode VR` to verify the installation, select VR mode and launch.

@@ -6,7 +6,7 @@
 
 - Windows x64, PowerShell 7 and the .NET 10 SDK.
 - An unmodified copy of the supported Mono game installed locally. Do not prepare or stage against an already modified VR copy.
-- The exact **Unity 6000.3.10f1 (e35f0c77bd8e)** editor with Windows Mono player support. An extracted editor works. A newer engine is not a substitute.
+- An editor matching the target game exactly, with Windows Mono player support. An extracted editor works. Supported pairs are **6000.3.26f1 (de8167e7440c)** with Input System **1.20.0**, and legacy **6000.3.10f1 (e35f0c77bd8e)** with Input System **1.19.0**.
 - Visual Studio 2026 with .NET desktop development, if using the IDE.
 
 ## Prepare and build
@@ -14,13 +14,13 @@
 From the repository root:
 
 ```powershell
-./tools/Prepare-Dependencies.ps1 -UnityEditorDir 'C:\Program Files\Unity\Hub\Editor\6000.3.10f1'
+./tools/Prepare-Dependencies.ps1 -UnityEditorDir 'C:\Program Files\Unity\Hub\Editor\6000.3.26f1'
 dotnet build ScamWithYourFriendsInVR.sln -c Release
 ```
 
-For another Steam library, pass `-GameDir 'D:\SteamLibrary\steamapps\common\Scam With Your Friends'` to preparation. It verifies pinned hashes and prepares BepInEx 5.4.23.5, Input System 1.19.0, XR Management 4.4.0 and OpenXR 1.15.1. `Local.Build.props` contains machine-specific paths and is ignored by Git.
+For another Steam library, pass `-GameDir 'D:\SteamLibrary\steamapps\common\Scam With Your Friends'` to preparation. It selects the matching dependency lock, verifies the native Input System version and pinned hashes, and prepares BepInEx 5.4.23.5, the matching Input System, XR Management 4.4.0 and OpenXR 1.15.1. Default caches are separate for each engine version. When overriding `-CacheDir`, use a different folder per target. `Local.Build.props` contains machine-specific paths and is ignored by Git.
 
-Open `ScamWithYourFriendsInVR.sln` in Visual Studio, select **Release | Any CPU**, then **Build Solution**. Runtime files appear in `bin/Release/netstandard2.1`. F5 does not launch a standalone game.
+Open `ScamWithYourFriendsInVR.sln` in Visual Studio, select **Release | Any CPU**, then **Build Solution**. Runtime files appear in `bin/Release/netstandard2.1` for the currently prepared target. Re-run preparation and rebuild when switching game versions. F5 does not launch a standalone game.
 
 ## Stage
 

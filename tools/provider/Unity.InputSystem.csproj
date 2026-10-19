@@ -2,7 +2,6 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <LangVersion>latest</LangVersion>
-    <AssemblyVersion>1.19.0.0</AssemblyVersion>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -11,7 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(XRPackageRoot)/com.unity.inputsystem/package/InputSystem/**/*.cs"
-      Exclude="$(XRPackageRoot)/com.unity.inputsystem/package/InputSystem/Plugins/InputForUI/**/*.cs" />
+      Exclude="$(XRPackageRoot)/com.unity.inputsystem/package/InputSystem/Plugins/InputForUI/**/*.cs;$(XRPackageRoot)/com.unity.inputsystem/package/InputSystem/Runtime/Plugins/InputForUI/**/*.cs" />
     <Reference Include="$(UnityManagedDir)/UnityEngine*.dll" Private="false" />
     <Reference Include="UnityEngine.UI" HintPath="$(GameDir)/Scam With Your Friends_Data/Managed/UnityEngine.UI.dll" Private="false" />
   </ItemGroup>

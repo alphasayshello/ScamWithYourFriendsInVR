@@ -6,14 +6,15 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path $PSScriptRoot -Parent
-if (!$CacheDir) { $CacheDir = Join-Path $repo 'work\dependencies' }
+$lock = & (Join-Path $PSScriptRoot 'Resolve-Dependencies.ps1') -GameDir $GameDir
+if (!$CacheDir) { $CacheDir = Join-Path $repo ('work\dependencies\' + $lock.unityVersion) }
 $CacheDir = [IO.Path]::GetFullPath($CacheDir)
-$lock = Get-Content -Raw (Join-Path $PSScriptRoot 'dependencies.lock.json') | ConvertFrom-Json
 $editorData = Join-Path $UnityEditorDir 'Editor\Data'
 $player = Join-Path $GameDir 'UnityPlayer.dll'
 if (!(Test-Path -LiteralPath $player)) { throw 'GameDir does not contain UnityPlayer.dll.' }
 $gameVersion = (Get-Item -LiteralPath $player).VersionInfo.ProductVersion
 if ($gameVersion -notmatch ('^' + [regex]::Escape($lock.unityVersion) + '([_\s]|$)')) { throw "Expected Unity $($lock.unityVersion); found $gameVersion" }
+& (Join-Path $PSScriptRoot 'Assert-InputVersion.ps1') -GameDir $GameDir -ExpectedVersion ($lock.packages | Where-Object name -eq 'com.unity.inputsystem').version
 $unityExe = Join-Path $UnityEditorDir 'Editor\Unity.exe'
 if (!(Test-Path -LiteralPath $unityExe)) { throw 'UnityEditorDir must contain Editor\Unity.exe.' }
 $editorVersion = (Get-Item -LiteralPath $unityExe).VersionInfo.ProductVersion

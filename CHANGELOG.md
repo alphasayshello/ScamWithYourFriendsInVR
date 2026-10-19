@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Add a separate pinned dependency profile for Unity 6000.3.26f1 and Input System 1.20.0, retaining the 6000.3.10f1 / 1.19.0 target.
+- Select dependencies from the actual game version, isolate default caches by engine, and reject incompatible Input System assemblies before staging or launching.
+- Account for the moved InputForUI source directory in newer Input System packages.
+
 - Redirect native punch knockback camera-forward reads to the controller, matching hit detection.
 - Verify a nonlethal controller punch reaches a real NPC through the native authority command and reduces native health; restore target health after the check.
 

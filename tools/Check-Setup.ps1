@@ -12,14 +12,16 @@ $required = @('Scam With Your Friends.exe', 'UnityPlayer.dll', 'winhttp.dll',
     'BepInEx\plugins\ScamWithYourFriendsInVR\ScamWithYourFriendsInVR.Multiplayer.dll',
     'Scam With Your Friends_Data\Managed\UnityEngine.XRModule.dll',
     'Scam With Your Friends_Data\Plugins\x86_64\UnityOpenXR.dll',
-    'Scam With Your Friends_Data\UnitySubsystems\UnityOpenXR\UnitySubsystemsManifest.json')
+    'Scam With Your Friends_Data\UnitySubsystems\UnityOpenXR\UnitySubsystemsManifest.json',
+    'Scam With Your Friends_Data\Managed\Unity.InputSystem.dll')
 foreach ($relative in $required) {
     if (!(Test-Path -LiteralPath (Join-Path $GameDir $relative) -PathType Leaf)) { throw "Missing $relative. Install the complete staged runtime; a plugin-only install is insufficient." }
 }
 if (Test-Path -LiteralPath (Join-Path $GameDir 'GameAssembly.dll')) { throw 'IL2CPP is unsupported. Use the Windows x64 Mono game.' }
-$lock = Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot 'dependencies.lock.json') | ConvertFrom-Json
+$lock = & (Join-Path $PSScriptRoot 'Resolve-Dependencies.ps1') -GameDir $GameDir
 $version = (Get-Item -LiteralPath (Join-Path $GameDir 'UnityPlayer.dll')).VersionInfo.ProductVersion
 if ($version -notmatch ('^' + [regex]::Escape($lock.unityVersion) + '([_\s]|$)')) { throw "Expected Unity $($lock.unityVersion); found $version." }
+& (Join-Path $PSScriptRoot 'Assert-InputVersion.ps1') -GameDir $GameDir -ExpectedVersion ($lock.packages | Where-Object name -eq 'com.unity.inputsystem').version
 $manifest = Join-Path $GameDir 'swyf-vr-manifest.json'
 if (!(Test-Path -LiteralPath $manifest -PathType Leaf)) { throw 'Missing swyf-vr-manifest.json. Reinstall a complete stage with its manifest.' }
 $entries = @(Get-Content -Raw -LiteralPath $manifest | ConvertFrom-Json)

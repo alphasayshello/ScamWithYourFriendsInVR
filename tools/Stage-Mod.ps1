@@ -7,7 +7,7 @@ if (!(Test-Path -LiteralPath $propsFile)) { throw 'Run Prepare-Dependencies.ps1 
 [xml]$props = Get-Content -Raw -LiteralPath $propsFile
 $values = @{}
 foreach ($node in $props.Project.PropertyGroup.ChildNodes) { $values[$node.Name] = $node.InnerText }
-$lock = Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot 'dependencies.lock.json') | ConvertFrom-Json
+$lock = & (Join-Path $PSScriptRoot 'Resolve-Dependencies.ps1') -GameDir $values.GameDir
 $playerPath = Join-Path $values.GameDir 'UnityPlayer.dll'
 if (!(Test-Path -LiteralPath $playerPath)) { throw 'Configured GameDir no longer contains UnityPlayer.dll. Run dependency preparation again.' }
 $gameVersion = (Get-Item -LiteralPath $playerPath).VersionInfo.ProductVersion
@@ -15,6 +15,7 @@ if ($gameVersion -notmatch ('^' + [regex]::Escape($lock.unityVersion) + '([_\s]|
     throw "Configured game updated: expected Unity $($lock.unityVersion), found $gameVersion. Prepare against a compatible game copy before staging."
 }
 if (Test-Path -LiteralPath (Join-Path $values.GameDir 'GameAssembly.dll')) { throw 'IL2CPP staging is unsupported.' }
+& (Join-Path $PSScriptRoot 'Assert-InputVersion.ps1') -GameDir $values.GameDir -ExpectedVersion ($lock.packages | Where-Object name -eq 'com.unity.inputsystem').version
 $Destination = [IO.Path]::GetFullPath($Destination)
 if (Test-Path -LiteralPath $Destination) { throw 'Use a new, empty staging destination.' }
 $build = Join-Path $repo 'bin\Release\netstandard2.1'

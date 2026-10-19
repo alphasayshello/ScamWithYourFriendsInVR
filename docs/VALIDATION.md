@@ -13,6 +13,8 @@
 
 ## Changed, needs another headset check
 
+- The updated Steam game now passes simulated startup, pointer, computer/settings, grip, native NPC damage and rig checks with matching dependencies. Older game copies keep their separate dependency profile.
+
 - Temporary controller capsules (the bean shapes) are removed. The laser now hides during idle gameplay and uses steadier UI aiming, a smaller distance-scaled reticle and more forgiving double clicks. Its feel still needs a headset check.
 - Punch input now stops when grip is released, even if trigger stays down. Native unarmed firing, controller aim, cooldown rejection and nonlethal NPC damage have been checked. Knockback now uses controller direction too; PvP, knockouts and other weapons still need checking.
 - Ordinary item pickup, release, quick-release pickup and cancellation work in the simulated host. Every item type and throwing feel still need checking.
@@ -34,7 +36,7 @@
 - Consistently smooth performance, especially in busy scenes.
 - Ragdoll, spectating, tracking loss and every seated/standing transition.
 - Headset/controller compatibility beyond the setup already tried.
-- The updated Steam game using Unity 6000.3.26f1. This preview requires 6000.3.10f1; setup refuses mismatched versions.
+- Headset acceptance of the updated Steam game using Unity 6000.3.26f1 and Input System 1.20.0.
 
 ## Not included right now
 
