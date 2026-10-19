@@ -37,7 +37,37 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             combatDirectionError = Mathf.Max(combatDirectionError, Vector3.Angle(__0.direction, aim.forward));
         }
 
-        private IEnumerator TestNativeCombat()
+        private IEnumerator TestCombatTransitions()
+        {
+            Component player = Mirror.NetworkClient.localPlayer;
+            Component mode = player.GetComponent(Find("PlayerModeManager"));
+            bool originalRole = (bool)Member(mode, "isAgent");
+            Vector3 originalPosition = player.transform.position;
+            object controller = Instance("Metater.MetaPlayerController");
+            MethodInfo setRole = AccessTools.Method(mode.GetType(), "ServerSetIsAgent");
+            MethodInfo teleport = AccessTools.Method(controller.GetType(), "Teleport");
+            try
+            {
+                for (int iteration = 0; iteration < 20; iteration++)
+                {
+                    setRole.Invoke(mode, new object[] { !originalRole });
+                    yield return new WaitForSecondsRealtime(.8f);
+                    setRole.Invoke(mode, new object[] { originalRole });
+                    teleport.Invoke(controller, new object[] { originalPosition, true }); VRManager.Instance.Rig.Recenter();
+                    IEnumerator test = TestNativeCombat(true);
+                    try { while (test.MoveNext()) yield return test.Current; }
+                    finally { (test as IDisposable)?.Dispose(); }
+                    Logger.LogInfo("COMBAT TRANSITION PASS: native role/teleport cycle " + (iteration + 1));
+                }
+            }
+            finally
+            {
+                setRole.Invoke(mode, new object[] { originalRole });
+                teleport.Invoke(controller, new object[] { originalPosition, true }); VRManager.Instance.Rig.Recenter();
+            }
+        }
+
+        private IEnumerator TestNativeCombat(bool inputOnly = false)
         {
             var manager = VRManager.Instance;
             Type adapter = typeof(VRManager).Assembly.GetType("ScamWithYourFriendsInVR.Patches.GameAdapter");
@@ -106,6 +136,8 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 attack.Invoke(null, new object[] { false });
                 Logger.LogInfo("COMBAT PASS: grip release cancels native attack while trigger stays held; settings reject attack input");
                 toggle.Invoke(null, null); paused = false;
+
+                if (inputOnly) yield break;
 
                 Type npcType = Find("NpcRagdollManager");
                 Component npc = FindObjectsByType(npcType, FindObjectsSortMode.None).Cast<Component>().FirstOrDefault(candidate =>

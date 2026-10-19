@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Clamp captured controller releases to the browser image boundary so dragging off the page still delivers the native mouse-up, preserving normal mouse behaviour.
 - Forward controller scrolling over the embedded browser to native pixel scrolling at the laser position, preserving fine input across frames and ordinary scrolling in other controls.
 - Added an isolated-copy installer with stage/engine verification and portable PC/VR launchers.
 - Desktop attachment follows monitor movement and replaced stream renderers while preserving the game's hidden local presenter.

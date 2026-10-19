@@ -15,7 +15,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
     [DefaultExecutionOrder(30550)]
     public sealed partial class LocalPairHarness : BaseUnityPlugin
     {
-        private bool host, client, active, queued, placed, singleComputer, singleRagdoll;
+        private bool host, client, active, queued, placed, singleComputer, singleRagdoll, singleCombat;
         private string readyFile;
         private Harmony patches;
         private float nextReport, placedAt, connectedAt;
@@ -41,7 +41,8 @@ namespace ScamWithYourFriendsInVR.SmokeTests
         {
             string[] args = Environment.GetCommandLineArgs();
             singleRagdoll = args.Contains("--swyf-single-ragdoll-tests");
-            singleComputer = args.Contains("--swyf-single-computer-tests") || singleRagdoll;
+            singleCombat = args.Contains("--swyf-single-combat-tests");
+            singleComputer = args.Contains("--swyf-single-computer-tests") || singleRagdoll || singleCombat;
             host = args.Contains("--swyf-pair-host") || singleComputer; client = args.Contains("--swyf-pair-client");
             active = host || client;
             if (!active) return;
@@ -94,20 +95,20 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 : AccessTools.Method(initializer.GetType(), "EnqueueClient").Invoke(initializer, new object[] { "127.0.0.1", "", Port, false });
             queued = result is bool accepted && accepted;
             Logger.LogInfo("PAIR: automatic " + (host ? "host" : "join") + " queued=" + queued);
-            if (singleRagdoll && queued)
+            if ((singleRagdoll || singleCombat) && queued)
             {
                 float readyDeadline = Time.realtimeSinceStartup + 90;
                 while (!NetworkClient.ready || NetworkClient.localPlayer == null || VRManager.Instance?.Rig?.Head == null)
-                { Require(Time.realtimeSinceStartup < readyDeadline, "Ragdoll-only host did not become ready"); yield return null; }
+                { Require(Time.realtimeSinceStartup < readyDeadline, "Focused test host did not become ready"); yield return null; }
                 yield return new WaitForSecondsRealtime(1.5f);
-                IEnumerator test = TestNativeRagdoll();
+                IEnumerator test = singleCombat ? TestCombatTransitions() : TestNativeRagdoll();
                 try
                 {
                     while (true)
                     {
                         bool more;
                         try { more = test.MoveNext(); }
-                        catch (Exception ex) { Logger.LogError("RAGDOLL FAIL: " + ex.GetBaseException()); break; }
+                        catch (Exception ex) { Logger.LogError((singleCombat ? "COMBAT TRANSITION FAIL: " : "RAGDOLL FAIL: ") + ex.GetBaseException()); break; }
                         if (!more) break;
                         yield return test.Current;
                     }

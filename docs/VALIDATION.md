@@ -25,6 +25,7 @@
 
 - Computer screens now stay attached to their desk monitors and follow screen movement and renderer rebinding. An optional floating desktop is available. Clicking, dragging, scrolling and window controls have been checked, but the revised computer experience still needs headset testing.
 - Browser thumbstick scrolling now reaches the native pixel-scroll path at the laser position. Fine-input and coordinate checks pass; actual webpages and headset usability still need testing.
+- Releasing a controller drag outside the browser page now delivers the native mouse-up at the page boundary. Rendered-page dragging and closing a browser during a drag still need checking.
 - Head turns now drive the local model, with body turning kept separate from view rotation.
 - VR options inside General settings provide larger controls for recentering, desktop placement, seated comfort, menu distance, aiming, laser visibility, turning and scene resolution.
 - Camera ownership now follows the spectated player; tracked arms release control during ragdoll, hiding and spectating. These transitions still need full gameplay checking.

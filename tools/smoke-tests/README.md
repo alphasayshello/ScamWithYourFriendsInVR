@@ -76,3 +76,9 @@ A separate owned traffic-cone fixture temporarily uses the native agent role, dr
 ## browser scrolling
 
 The core group uses a real panel with an offset browser image and a transport probe to check page coordinates, direction, fractional pixels, host changes and detached/chrome/readiness guards. The private computer host also resolves the real browser host and viewport through the production pointer router, intercepting only the native transport call. That probe requires no live CEF connection and does not change the game's browser privacy setting. Actual webpage rendering, click/drag behaviour and external-service workflows remain separate requirements.
+
+The native browser fixture also sends controller down/up through its actual viewport callbacks, releases outside the image and requires exactly one transport release plus cleared pointer capture. It checks an ordinary in-page click and verifies that the correction leaves physical-mouse behaviour unchanged. The transport is intercepted; this is not an end-to-end rendered webpage or browser-detach check.
+
+## combat transition diagnostics
+
+`outputs/Run-Single-VR-Checks.ps1 -Combat` starts a focused private mock host and repeats twenty native role changes and teleports. Each cycle checks actual punch input, cooldown, grip-release cancellation and settings suppression. It excludes the NPC damage portion and restores role/position on exit. This helps investigate an intermittent hold-input failure in the larger suite; passing these cycles does not explain that failure or establish PvP reliability.

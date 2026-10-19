@@ -10,6 +10,14 @@ namespace ScamWithYourFriendsInVR.Patches
         {
             try
             {
+                Type browser = ReflectionTypes.Find("Kolkata.UI.KolkataOsBrowserHost");
+                var up = browser == null ? null : AccessTools.Method(browser, "HandlePointerUp");
+                if (up != null) harmony.Patch(up, prefix: new HarmonyMethod(typeof(DesktopUIPatches), nameof(BeforeBrowserPointerUp)));
+                else Plugin.Log.LogWarning("Native browser release method unavailable; controller drag release compatibility unverified.");
+            }
+            catch (Exception ex) { GameAdapter.Report("Browser controller release patch", ex); }
+            try
+            {
                 Type cameraApp = ReflectionTypes.Find("Kolkata.UI.KolkataOsCameraApp");
                 var assign = cameraApp == null ? null : AccessTools.Method(cameraApp, "AssignRenderTexture", Type.EmptyTypes);
                 if (assign != null) harmony.Patch(assign, prefix: new HarmonyMethod(typeof(DesktopUIPatches), nameof(BeforeCameraPreview)));
@@ -24,6 +32,24 @@ namespace ScamWithYourFriendsInVR.Patches
                 harmony.Patch(method, prefix: new HarmonyMethod(typeof(DesktopUIPatches), nameof(BeforeNormalizedMouse)));
             }
             catch (Exception ex) { GameAdapter.Report("Monitor cursor patch", ex); }
+        }
+
+        private static void BeforeBrowserPointerUp(object __instance, UnityEngine.UIElements.PointerUpEvent evt)
+        {
+            if (VRManager.Instance == null || !VRManager.Instance.Ready || evt == null || evt.pointerId != UI.VRPointer.ToolkitPointerId) return;
+            var viewport = GameAdapter.Read(__instance, "viewport") as UnityEngine.UIElements.VisualElement;
+            var image = GameAdapter.Read(__instance, "browserImage") as UnityEngine.UIElements.VisualElement;
+            var content = image ?? viewport;
+            if (viewport == null || content == null) return;
+            float width = content.resolvedStyle.width, height = content.resolvedStyle.height;
+            if (!(width > 0) || !(height > 0)) return;
+            Vector2 offset = image != null ? image.layout.position : Vector2.zero;
+            Vector3 position = evt.localPosition;
+            // The native browser rejects mouse positions outside its image,
+            // including release. Captured controller drags must still end.
+            position.x = Mathf.Clamp(position.x, offset.x, offset.x + width);
+            position.y = Mathf.Clamp(position.y, offset.y, offset.y + height);
+            GameAdapter.Write(evt, "localPosition", position);
         }
 
         private static bool BeforeCameraPreview(object __instance)
