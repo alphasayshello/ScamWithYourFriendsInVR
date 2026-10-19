@@ -9,10 +9,18 @@ This implementation targets the Windows x64 **Mono** game, Unity **6000.3.26f1**
 ## Install the staged runtime
 
 1. [Prepare dependencies, build and stage](BUILD.md).
-2. Make a separate game copy and close it before installing. Back up every existing destination listed in `swyf-vr-manifest.json` outside that folder.
-3. Copy the staged folder's contents into that copy, alongside the game executable. Review any existing mod loader/config before replacing it.
-4. From this source folder, run `./tools/Launch-Game.ps1 -GameDir 'D:\Games\SWYF-VR' -Mode VR`, using your actual game-copy path. It checks staged-file hashes and the active OpenXR runtime, selects the mode and starts one client with DirectX 11.
-5. For flat-screen play with tracked-avatar support, use the same command with `-Mode PC`. It skips the headset-runtime check. Existing config settings are preserved, with a backup made before the mode changes.
+2. Close the game, then run the command below from this source folder. Choose an unmodified source game, your completed stage and a **new destination** with enough room for another full game copy.
+3. Open **Play VR.cmd** in the new folder after connecting your headset, or **Play PC.cmd** for flat-screen play with tracked-avatar support. The launchers check the installation, preserve your config and select the mode automatically.
+
+```powershell
+./tools/Install-GameCopy.ps1 -SourceGameDir 'C:\Program Files (x86)\Steam\steamapps\common\Scam With Your Friends' -StageDir 'D:\staging\ScamWithYourFriendsInVR' -Destination 'D:\Games\SWYF-VR'
+```
+
+The installer checks the stage hashes and exact engine identity before copying, leaves your original game untouched, and refuses existing destinations or a running game. The copy has its own launch tools, so moving the source repository does not break its PC/VR launchers. PowerShell 7 is required. It does not launch the game during setup.
+
+Keep Steam running when playing the copied game. To uninstall an isolated copy, close it and remove that copy; your original installation is unchanged. Your game may share saves/settings between copies.
+
+For an existing manually managed copy, back up every destination named in `swyf-vr-manifest.json` outside that folder before copying the stage contents over it. Use `./tools/Launch-Game.ps1 -GameDir 'D:\Games\SWYF-VR' -Mode VR` or `-Mode PC` from this source folder.
 
 The restored engine and base libraries are essential. A plugin-only install or uninstall is insufficient. To uninstall, restore backed-up files and remove newly added manifest files. Steam verification can restore stock files, but does not remove mod-added files.
 

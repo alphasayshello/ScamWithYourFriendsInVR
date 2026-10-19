@@ -30,7 +30,7 @@ Choose a destination that does not exist:
 ./tools/Stage-Mod.ps1 -Destination 'D:\staging\ScamWithYourFriendsInVR'
 ```
 
-Staging assembles the required engine/BCL restoration, providers, BepInEx and mod plugins, and writes a file-hash manifest. Test in an isolated game copy. See [installation](GETTING-STARTED.md) and [runtime architecture](XR-RUNTIME.md).
+Staging assembles the required engine/BCL restoration, providers, BepInEx and mod plugins, and writes a file-hash manifest and exact engine identity. It rejects a provider built against the wrong Input System version. Use `tools/Install-GameCopy.ps1` to create an isolated game copy with PC/VR launchers. See [installation](GETTING-STARTED.md) and [runtime architecture](XR-RUNTIME.md).
 
 The source archive contains no game DLLs or game assets. The locally staged runtime contains third-party libraries; review their licences before redistributing it. MIT applies to this project's own code, not those dependencies.
 
@@ -38,9 +38,10 @@ The source archive contains no game DLLs or game assets. The locally staged runt
 
 ```powershell
 ./tools/tests/Setup.Tests.ps1 -GameDir 'D:\Games\SWYF-VR'
+./tools/tests/Install.Tests.ps1 -GameDir 'C:\Program Files (x86)\Steam\steamapps\common\Scam With Your Friends' -StageDir 'D:\staging\ScamWithYourFriendsInVR'
 ```
 
-Use a compatible game copy. These checks create a temporary fixture using its UnityPlayer version resource and verify missing/corrupted files, manifest path containment and runtime selection without launching a game.
+Use a compatible game copy. The setup checks verify missing/corrupted files, manifest containment and runtime selection. The installation checks use a tiny game fixture and the full stage to verify copy isolation, engine matching, generated launchers and invalid inputs. Both clean their temporary fixtures without launching a game.
 
 ## Tests and source export
 

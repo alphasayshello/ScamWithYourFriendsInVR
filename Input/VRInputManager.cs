@@ -21,6 +21,9 @@ namespace ScamWithYourFriendsInVR.Input
         public bool LeftTrigger { get; private set; }
         public bool LeftTriggerDown { get; private set; }
         public bool Jump { get; private set; }
+        public bool JumpDown { get; private set; }
+        public bool GiveUp { get; private set; }
+        public bool GiveUpDown { get; private set; }
         public bool Pee { get; private set; }
         public bool FartDown { get; private set; }
         public bool RecenterDown { get; private set; }
@@ -34,6 +37,7 @@ namespace ScamWithYourFriendsInVR.Input
         private bool recenterHeld;
         private float recenterStarted;
         private bool turnLatched;
+        private bool rightPrimaryHeld, giveUpChord, giveUpCanceled;
 
         private void Update()
         {
@@ -71,7 +75,8 @@ namespace ScamWithYourFriendsInVR.Input
             menu = nextMenu;
             LeftGrip = active && Tracked(left) && (Button(left, CommonUsages.gripButton)
                 || left.TryGetFeatureValue(CommonUsages.grip, out float leftGrip) && leftGrip > .6f);
-            Jump = active && RightTracked && Button(right, CommonUsages.primaryButton);
+            bool rightPrimary = active && RightTracked && Button(right, CommonUsages.primaryButton);
+            UpdateBodyPrimary(rightPrimary);
             bool nextLeftTrigger = active && Tracked(left) && (Button(left, CommonUsages.triggerButton)
                 || left.TryGetFeatureValue(CommonUsages.trigger, out float leftTrigger) && leftTrigger > (LeftTrigger ? .45f : .6f));
             LeftTriggerDown = nextLeftTrigger && !LeftTrigger;
@@ -91,6 +96,20 @@ namespace ScamWithYourFriendsInVR.Input
             SecondaryDown = nextSecondary && !secondary;
             Secondary = nextSecondary;
             secondary = nextSecondary;
+        }
+
+        private void UpdateBodyPrimary(bool rightPrimary)
+        {
+            bool down = rightPrimary && !rightPrimaryHeld;
+            if (down) { giveUpChord = LeftGrip; giveUpCanceled = false; }
+            if (!rightPrimary) { giveUpChord = false; giveUpCanceled = false; }
+            if (giveUpChord && !LeftGrip) giveUpCanceled = true;
+            bool nextGiveUp = rightPrimary && giveUpChord && !giveUpCanceled;
+            GiveUpDown = nextGiveUp && !GiveUp;
+            GiveUp = nextGiveUp;
+            JumpDown = down && !giveUpChord;
+            Jump = rightPrimary && !giveUpChord;
+            rightPrimaryHeld = rightPrimary;
         }
 
         public float ConsumeSnap()

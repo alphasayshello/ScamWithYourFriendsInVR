@@ -197,12 +197,24 @@ namespace ScamWithYourFriendsInVR.Camera
             // standing capsule. Keep room-scale offsets relative to that marker.
             Transform nativeEye = player != null ? (ragdolled ? GameAdapter.Call(ragdoll, "GetCurrentRagdollCameraTransform") as Transform
                 : GameAdapter.Read(viewController, "defaultCamTransform") as Transform ?? GameAdapter.Read(viewController, "cameraTransform") as Transform) : null;
-            if (nativeEye != null)
+            bool fallbackEye = false;
+            Vector3 fallbackPosition = default;
+            if (player != null && ragdolled && nativeEye == null)
+            {
+                fallbackEye = avatarEyes.TryHeadPosition(player, out fallbackPosition);
+                if (!fallbackEye)
+                {
+                    Transform chest = GameAdapter.Call(ragdoll, "GetCurrentChestTransform") as Transform
+                        ?? GameAdapter.Call(ragdoll, "GetCurrentHipsTransform") as Transform;
+                    if (chest != null) { fallbackEye = true; fallbackPosition = chest.position + Vector3.up * .25f; }
+                }
+            }
+            if (nativeEye != null || fallbackEye)
             {
                 // The game's authored first-person eye can sit above a literal
                 // metre-scale capsule. Use it for standing as well as chairs.
                 // Avoid feeding an already tracked camera back into its origin.
-                anchor = nativeEye == Head.transform || nativeEye.IsChildOf(Head.transform)
+                anchor = fallbackEye ? fallbackPosition : nativeEye == Head.transform || nativeEye.IsChildOf(Head.transform)
                     ? (savedParent != null ? savedParent.TransformPoint(savedPosition) : savedPosition) : nativeEye.position;
                 if (!ragdolled && avatarEyes.TryPosition(player, out Vector3 eyePosition)) anchor = eyePosition;
                 if (!hasEyeOffset || ragdolled || Time.unscaledTime < anchorSettlesUntil) { eyeOffset = anchor - player.position; hasEyeOffset = true; }

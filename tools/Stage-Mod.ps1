@@ -54,6 +54,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Base library contract restoration failed; disc
 & dotnet $compat --tree $stockManaged $values.UnityManagedDir (Join-Path $Destination $managed)
 if ($LASTEXITCODE -ne 0) { throw 'Engine contract restoration failed; discard this incomplete stage.' }
 Stage (Join-Path $provider 'Unity.InputSystem.dll') (Join-Path $managed 'Unity.InputSystem.dll')
+& (Join-Path $PSScriptRoot 'Assert-InputVersion.ps1') -GameDir $Destination -ExpectedVersion ($lock.packages | Where-Object name -eq 'com.unity.inputsystem').version
 $plugin = 'BepInEx\plugins\ScamWithYourFriendsInVR'
 foreach ($name in @('ScamWithYourFriendsInVR.dll','ScamWithYourFriendsInVR.Runtime.dll','ScamWithYourFriendsInVR.Multiplayer.dll')) { Stage (Join-Path $build $name) (Join-Path $plugin $name) }
 foreach ($name in @('Unity.XR.Management.dll','Unity.XR.OpenXR.dll')) { Stage (Join-Path $provider $name) (Join-Path $plugin $name) }
@@ -62,6 +63,12 @@ Stage (Join-Path $openxr 'UnitySubsystemsManifest.json') (Join-Path $data 'Unity
 Stage (Join-Path $openxr 'windows\x64\UnityOpenXR.dll') (Join-Path $data 'Plugins\x86_64\UnityOpenXR.dll')
 Stage (Join-Path (Split-Path $openxr -Parent) 'RuntimeLoaders\windows\x64\openxr_loader.dll') (Join-Path $data 'Plugins\x86_64\openxr_loader.dll')
 Stage (Join-Path (Split-Path $openxr -Parent) 'RuntimeLoaders\windows\x64\openxr_loader.dll') 'openxr_loader.dll'
+[ordered]@{
+    schemaVersion = 1
+    unityVersion = $lock.unityVersion
+    inputSystemVersion = ($lock.packages | Where-Object name -eq 'com.unity.inputsystem').version
+    unityPlayerSha256 = (Get-FileHash -LiteralPath (Join-Path $values.GameDir 'UnityPlayer.dll') -Algorithm SHA256).Hash
+} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $Destination 'swyf-vr-build.json')
 $entries.Clear()
 foreach ($file in Get-ChildItem -LiteralPath $Destination -Recurse -File) {
     $relative = [IO.Path]::GetRelativePath($Destination, $file.FullName)

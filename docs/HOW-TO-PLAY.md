@@ -38,6 +38,12 @@ Left trigger interacts with the world under your right-hand aim, so you can open
 
 Left grip + left trigger holds the native pee action; release to stop. Left grip + left X requests a fart, or the native cone boost when an eligible agent has a traffic cone in the hip slot. Left grip + right B swaps the agent hand/hip slots. Left grip + right trigger sends the native extra held-item action; releasing its modifier ends that action. Food-related poop effects retain the game's existing rules and jump triggers; no debug/cheat poop shortcut is enabled. Curry consumption and its timed poop/gassy effect pass simulated checks. VR jump now reaches the native jump event and activates the curry boost. Hip swap, nonfinal cone boost activation, cooldowns and effect spawning pass simulated checks. Full boost trajectories, final cone use/ragdoll, other foods and full combat acceptance are still outstanding.
 
+## Ragdoll and recovery
+
+Right A also sends the native struggle/escape action when ragdolled or hiding. To use the native give-up/unstuck action, hold left grip **before** pressing and holding right A. Its normal game timer and recovery, respawn or jail rules still apply. Release either control to cancel. Menus, focus loss and VR shutdown also release the hold; closing a menu while the buttons remain held does not restart it.
+
+If a ragdoll camera marker is missing from the player prefab, the view follows its physical head, with native chest/hips as a backup. Basic simulated ragdoll/recovery checks pass; violent impacts, completed give-up outcomes, hiding variants and real-headset comfort still need acceptance.
+
 ## Play with friends
 
 The host must have the mod to relay poses. Modded PC players use `Mode = PC`; VR players use `Mode = VR`. Both are in `BepInEx/config/com.swyf.vr.cfg`, under `[General]`. Restart after changing mode. Use the game's normal lobby/invite flow. [Read multiplayer details](MULTIPLAYER.md).

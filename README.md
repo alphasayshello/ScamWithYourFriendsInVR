@@ -23,9 +23,9 @@ An open-source VR conversion for **Scam With Your Friends**, built with BepInEx 
 ## Get started
 
 1. Use the supported **Windows x64 Mono** game build: Unity **6000.3.26f1** (current) or **6000.3.10f1** (legacy).
-2. [Build and stage the runtime](docs/BUILD.md), then install into a separate game copy using the [setup guide](docs/GETTING-STARTED.md).
+2. [Build and stage the runtime](docs/BUILD.md), then use [Install-GameCopy.ps1](tools/Install-GameCopy.ps1) to create a separate modded copy with PC/VR launchers. [Setup guide](docs/GETTING-STARTED.md).
 3. Connect your headset and choose your active PC OpenXR runtime. Quest 3 through Steam Link uses SteamVR.
-4. Use `tools/Launch-Game.ps1 -GameDir 'D:\Games\SWYF-VR' -Mode VR` to verify the installation, select VR mode and launch.
+4. Open **Play VR.cmd** in that copy. Use **Play PC.cmd** for flat-screen play. Each checks the installation and selects the right mode before launching.
 
 This is a PC VR mod, not a standalone Quest app. The stock game strips required XR APIs, so copying only the plugin DLL will not enable VR.
 
@@ -40,7 +40,8 @@ This is a PC VR mod, not a standalone Quest app. The stock game strips required 
 | Left trigger | World interaction under right-hand aim |
 | Right grip + trigger, away from UI | Native punch / weapon input |
 | Right B | Computer context click / native secondary action |
-| Right A | Jump |
+| Right A | Jump / struggle / native hiding escape |
+| Hold left grip + right A | Native give-up / unstuck hold |
 | Left X | Players |
 | Left Y / controller menu | Back / settings |
 | Hold left stick click | Recenter |

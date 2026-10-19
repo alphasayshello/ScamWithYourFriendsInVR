@@ -10,6 +10,7 @@
 - Readable settings controls, with controller clicking and scrolling.
 - PC mode and tracked-avatar support for modded players.
 - The Visual Studio project, build tools, setup/play guides, Git repository and MIT license.
+- A setup command that creates a separate modded game copy with verified files and PC/VR launchers.
 
 ## Changed, needs another headset check
 
@@ -19,9 +20,10 @@
 - Punch input now stops when grip is released, even if trigger stays down. Native unarmed firing, controller aim, cooldown rejection and nonlethal NPC damage have been checked. Knockback now uses controller direction too; PvP, knockouts and other weapons still need checking.
 - Left trigger provides world interaction while holding items, separate from the pee modifier. Held-item trigger and secondary actions now use native callbacks, covering food/tool use that weapon-only input skipped. Curry consumption, networked poop/gassy effects and normal expiry work in simulation. Native jump-driven curry boost activation, agent hip swap, extra item-action release and nonfinal cone activation/cooldown also pass simulated checks; trajectories, final cone use and other foods still need checking.
 - Ordinary item pickup, release, quick-release pickup and cancellation work in the simulated host. Every item type and throwing feel still need checking.
+- Native ragdoll entry/recovery, head-position fallback, tracked-pose release/resume, struggle and short give-up cancellation pass simulated checks. Holding left grip before right A starts the native give-up hold; full consequences and headset feel still need checking.
 - Tracking reads and UI scans do less repeated work, and destroyed menu graphics release their owned material entries. Smooth performance in busy scenes still needs more work.
 
-- Computer screens now stay attached to their desk monitors and use the controller pointer. An optional floating desktop is available. Clicking, dragging, scrolling and window controls have been checked, but the revised computer experience still needs headset testing.
+- Computer screens now stay attached to their desk monitors and follow screen movement and renderer rebinding. An optional floating desktop is available. Clicking, dragging, scrolling and window controls have been checked, but the revised computer experience still needs headset testing.
 - Head turns now drive the local model, with body turning kept separate from view rotation.
 - VR options inside General settings provide larger controls for recentering, desktop placement, seated comfort, menu distance, aiming, laser visibility, turning and scene resolution.
 - Camera ownership now follows the spectated player; tracked arms release control during ragdoll, hiding and spectating. These transitions still need full gameplay checking.
@@ -35,7 +37,7 @@
 - Combat damage against players, charged/ranged weapons, other food variants, boost trajectories/final cone use and all held-item variants in VR.
 - Complete multiplayer checks across separate Steam accounts, including reconnecting and joining late.
 - Consistently smooth performance, especially in busy scenes.
-- Ragdoll, spectating, tracking loss and every seated/standing transition.
+- Violent ragdoll/final cone impacts, completed give-up outcomes, hiding variants, spectating, tracking loss and every seated/standing transition.
 - Headset/controller compatibility beyond the setup already tried.
 - Headset acceptance of the updated Steam game using Unity 6000.3.26f1 and Input System 1.20.0.
 

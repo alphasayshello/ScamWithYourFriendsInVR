@@ -195,7 +195,49 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     Require(Vector3.Distance(surface.transform.position, nativeCenter) < .015f, "Recenter moved the desktop away from the physical monitor");
                 }
                 finally { Plugin.PhysicalDesktop.Value = true; }
+                Vector3 savedPosition = nativeScreen.transform.position;
+                Quaternion savedRotation = nativeScreen.transform.rotation;
+                GameObject replacement = null;
+                var screenField = AccessTools.Field(stream.GetType(), "monitorRenderer");
+                try
+                {
+                    nativeScreen.transform.SetPositionAndRotation(savedPosition + new Vector3(.12f, .08f, -.04f),
+                        Quaternion.AngleAxis(18, Vector3.up) * savedRotation);
+                    placement.Invoke(surface, null);
+                    Vector3 movedCenter = nativeScreen.transform.TransformPoint(screenMesh.bounds.center);
+                    Require(Vector3.Distance(surface.transform.position, movedCenter) < .015f,
+                        "Desktop did not follow the moved native screen");
+                    Vector3 movedNormal = Vector3.Cross(nativeScreen.transform.TransformVector(Vector3.right),
+                        nativeScreen.transform.TransformVector(Vector3.up)).normalized;
+                    Require(Vector3.Dot(surface.transform.forward, movedNormal) > .999f,
+                        "Desktop did not follow the rotated native screen");
+                    replacement = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                    replacement.name = "SWYF temporary screen rebind fixture";
+                    replacement.transform.SetPositionAndRotation(savedPosition + Vector3.up * .15f, savedRotation);
+                    replacement.transform.localScale = nativeScreen.transform.lossyScale;
+                    var replacementRenderer = replacement.GetComponent<MeshRenderer>();
+                    replacementRenderer.enabled = false;
+                    screenField.SetValue(stream, replacementRenderer); placement.Invoke(surface, null);
+                    Require(surface.MonitorAnchored && Vector3.Distance(surface.transform.position, replacement.transform.position) < .015f,
+                        "Desktop retained a stale screen after the native presenter rebound");
+                    replacement.SetActive(false); placement.Invoke(surface, null);
+                    Require(surface.MonitorAnchored && Vector3.Distance(surface.transform.position, replacement.transform.position) < .015f,
+                        "Hiding the streamed presenter detached the local desktop from its screen geometry");
+                    screenField.SetValue(stream, null); placement.Invoke(surface, null);
+                    Require(!surface.MonitorAnchored, "Missing screen retained a stale monitor attachment");
+                    screenField.SetValue(stream, nativeScreen); placement.Invoke(surface, null);
+                    Require(surface.MonitorAnchored && Vector3.Distance(surface.transform.position, movedCenter) < .015f,
+                        "Desktop did not reacquire the native monitor after rebinding");
+                }
+                finally
+                {
+                    screenField.SetValue(stream, nativeScreen);
+                    nativeScreen.transform.SetPositionAndRotation(savedPosition, savedRotation);
+                    placement.Invoke(surface, null);
+                    if (replacement != null) Destroy(replacement);
+                }
                 Logger.LogInfo("COMPUTER PASS: desktop fits authored monitor, preserves aspect, survives recenter and supports floating fallback without changing native stream renderer");
+                Logger.LogInfo("COMPUTER PASS: desktop follows movement/rotation and renderer rebinding, supports hidden stream geometry and releases missing screens");
                 Type.GetType("UnityEngine.ScreenCapture, UnityEngine.ScreenCaptureModule", false)?.GetMethod("CaptureScreenshot", new[] { typeof(string), typeof(int) })?
                     .Invoke(null, new object[] { System.IO.Path.Combine(System.IO.Path.GetDirectoryName(readyFile), "pair-computer-view.png"), 1 });
                 yield return new WaitForEndOfFrame();

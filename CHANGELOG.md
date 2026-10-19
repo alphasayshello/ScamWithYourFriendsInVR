@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Added an isolated-copy installer with stage/engine verification and portable PC/VR launchers.
+- Desktop attachment follows monitor movement and replaced stream renderers while preserving the game's hidden local presenter.
+- Send VR jump edges to native struggle/hiding-escape input and add a captured left-grip + right-A give-up hold.
+- Cancel give-up on menu, focus loss, component disable and shutdown; require a fresh press after cancellation.
+- Follow physical head/chest bones when a player prefab has no native ragdoll camera marker, and verify view/tracked-pose recovery.
+
 - Map agent hip swap and extra held-item actions to left-grip modifiers with right B / right trigger.
 - Route the fart chord to the native cone boost callback when eligible, retaining native cooldowns, role checks and menu suppression. Avoid injecting the ordinary fart shortcut during eligible cone use.
 - Check actual native jump/curry boost activation, authoritative cone effects, hip swap/reverse and modified-action release.

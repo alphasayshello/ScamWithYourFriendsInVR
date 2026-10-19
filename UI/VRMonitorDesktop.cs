@@ -6,6 +6,7 @@ namespace ScamWithYourFriendsInVR.UI
     internal sealed class VRMonitorDesktop
     {
         private Component monitor;
+        private Component workspace, presenter;
         private MeshRenderer screen;
         private float nextResolve;
         internal Component Monitor => monitor;
@@ -19,17 +20,25 @@ namespace ScamWithYourFriendsInVR.UI
             if (!ReferenceEquals(GameAdapter.Read(os, "kolkataOsDocument"), document)) return false;
             Component active = GameAdapter.Read(os, "activeLocalMonitor") as Component;
             if (active == null || !active.gameObject.activeInHierarchy) return false;
-            if (active != monitor) { monitor = active; screen = null; nextResolve = 0; }
-            if (screen == null && Time.unscaledTime >= nextResolve)
+            Component bound = GameAdapter.Read(os, "boundWorkspace") as Component;
+            if (active != monitor || bound != workspace)
+            {
+                monitor = active; workspace = bound; presenter = null; screen = null; nextResolve = 0;
+            }
+            object state = GameAdapter.Read(workspace, "callStateScreen");
+            if (!ReferenceEquals(GameAdapter.Read(state, "MonitorInteractable"), monitor)) return false;
+            if (presenter == null && Time.unscaledTime >= nextResolve)
             {
                 nextResolve = Time.unscaledTime + .5f;
-                Component workspace = GameAdapter.Read(os, "boundWorkspace") as Component;
-                object state = GameAdapter.Read(workspace, "callStateScreen");
-                if (!ReferenceEquals(GameAdapter.Read(state, "MonitorInteractable"), monitor)) return false;
                 var type = ReflectionTypes.Find("ScammerWorkspaceWebRtc");
                 if (workspace != null && type != null)
-                    screen = GameAdapter.Read(workspace.GetComponent(type), "monitorRenderer") as MeshRenderer;
+                    presenter = workspace.GetComponent(type);
             }
+            // Native streaming can replace its renderer without changing the
+            // selected monitor or workspace. Follow the current binding.
+            screen = GameAdapter.Read(presenter, "monitorRenderer") as MeshRenderer;
+            // The game hides its streamed presenter for the local computer;
+            // its transform is still the authored screen geometry.
             if (screen == null) return false;
             Mesh mesh = screen.GetComponent<MeshFilter>()?.sharedMesh;
             if (mesh == null) return false;

@@ -22,9 +22,9 @@ The game integration deliberately retains the game's CharacterController simulat
 
 - SteamVR and Meta compatibility goes through their OpenXR runtime. There is no OpenVR fallback.
 - IL2CPP needs a separate native/interop and BepInEx 6 build. The current Mono plugin must not be installed into it.
-- Desktop UI is presented on floating world-space surfaces. Existing world-space uGUI is retained. Automatically calibrating arbitrary monitor meshes, material UV transforms and multiple submeshes is not implemented.
-- Standard controller profiles and generated grip meshes are supplied. Anatomical hand tracking and controller-vendor model assets are not supplied.
-- The AudioListener follows the tracked camera. The local player's inspected `PlayerModeManager.voiceChatMouthAudioSource` follows the headset mouth position after the game's animation update and is restored on shutdown. There is no independently replicated headset/microphone transform for remote voice emitters; remote positioning still follows native networking.
+- Local desktop UI follows its authored desk-monitor geometry, with an optional floating fallback. Existing world-space uGUI is retained; texture-backed native panels keep their renderer/UV mapping. Arbitrary replacement monitor geometry still requires validation.
+- Standard controller profiles drive the native avatar hands. Temporary grip capsules are removed. Anatomical hand tracking and controller-vendor model assets are not supplied.
+- The AudioListener follows the tracked camera. Local and modded remote `PlayerModeManager.voiceChatMouthAudioSource` transforms follow tracked head poses after animation and restore when ownership ends. Native voice transport remains unchanged. Cross-account spatialization still needs listening tests.
 - Game-native pickup and phone behavior remain subject to game integration and multiplayer validation. Source presence alone does not establish correctness.
 - BepInEx, Unity library restoration and graphics driver behavior must be validated before installing into a primary game directory.
 

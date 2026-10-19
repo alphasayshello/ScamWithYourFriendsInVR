@@ -15,7 +15,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
     [DefaultExecutionOrder(30550)]
     public sealed partial class LocalPairHarness : BaseUnityPlugin
     {
-        private bool host, client, active, queued, placed, singleComputer;
+        private bool host, client, active, queued, placed, singleComputer, singleRagdoll;
         private string readyFile;
         private Harmony patches;
         private float nextReport, placedAt, connectedAt;
@@ -40,7 +40,8 @@ namespace ScamWithYourFriendsInVR.SmokeTests
         private void Awake()
         {
             string[] args = Environment.GetCommandLineArgs();
-            singleComputer = args.Contains("--swyf-single-computer-tests");
+            singleRagdoll = args.Contains("--swyf-single-ragdoll-tests");
+            singleComputer = args.Contains("--swyf-single-computer-tests") || singleRagdoll;
             host = args.Contains("--swyf-pair-host") || singleComputer; client = args.Contains("--swyf-pair-client");
             active = host || client;
             if (!active) return;
@@ -93,6 +94,27 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 : AccessTools.Method(initializer.GetType(), "EnqueueClient").Invoke(initializer, new object[] { "127.0.0.1", "", Port, false });
             queued = result is bool accepted && accepted;
             Logger.LogInfo("PAIR: automatic " + (host ? "host" : "join") + " queued=" + queued);
+            if (singleRagdoll && queued)
+            {
+                float readyDeadline = Time.realtimeSinceStartup + 90;
+                while (!NetworkClient.ready || NetworkClient.localPlayer == null || VRManager.Instance?.Rig?.Head == null)
+                { Require(Time.realtimeSinceStartup < readyDeadline, "Ragdoll-only host did not become ready"); yield return null; }
+                yield return new WaitForSecondsRealtime(1.5f);
+                IEnumerator test = TestNativeRagdoll();
+                try
+                {
+                    while (true)
+                    {
+                        bool more;
+                        try { more = test.MoveNext(); }
+                        catch (Exception ex) { Logger.LogError("RAGDOLL FAIL: " + ex.GetBaseException()); break; }
+                        if (!more) break;
+                        yield return test.Current;
+                    }
+                }
+                finally { (test as IDisposable)?.Dispose(); }
+                yield break;
+            }
             if (queued && (singleComputer || client && Environment.GetCommandLineArgs().Contains("--swyf-pair-computer-tests")))
             {
                 IEnumerator test = TestComputer();
@@ -184,6 +206,19 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     }
                 }
                 finally { (combatTest as IDisposable)?.Dispose(); }
+                IEnumerator ragdollTest = TestNativeRagdoll();
+                try
+                {
+                    while (true)
+                    {
+                        bool more;
+                        try { more = ragdollTest.MoveNext(); }
+                        catch (Exception ex) { Logger.LogError("RAGDOLL FAIL: " + ex.GetBaseException()); break; }
+                        if (!more) break;
+                        yield return ragdollTest.Current;
+                    }
+                }
+                finally { (ragdollTest as IDisposable)?.Dispose(); }
                 IEnumerator rigTest = TestNativeRigMotion();
                 try
                 {

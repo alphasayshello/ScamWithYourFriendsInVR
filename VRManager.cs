@@ -21,6 +21,7 @@ namespace ScamWithYourFriendsInVR
         public VRUIPatcher UI { get; private set; }
         public VRVirtualKeyboard Keyboard { get; private set; }
         public VRSettingsPanel Settings { get; private set; }
+        public VRBodyActions BodyActions { get; private set; }
         public bool Ready { get; private set; }
         public bool Interactive => Ready && Input != null && Input.HasInputFocus && Input.HeadTracked;
         private readonly List<XRDisplaySubsystem> displays = new List<XRDisplaySubsystem>();
@@ -51,6 +52,7 @@ namespace ScamWithYourFriendsInVR
                 session = new GameObject("SWYF VR Session");
                 session.transform.SetParent(transform, false);
                 Input = session.AddComponent<VRInputManager>();
+                BodyActions = session.AddComponent<VRBodyActions>();
                 Rig = session.AddComponent<VRCameraController>();
                 session.AddComponent<VRAudioController>();
                 session.AddComponent<VRAvatarArms>();
@@ -124,6 +126,7 @@ namespace ScamWithYourFriendsInVR
         {
             Ready = false;
             if (Pointer != null) Pointer.Cancel();
+            if (BodyActions != null) BodyActions.Cancel();
             NativeItemInput.Clear();
             if (UI != null) UI.Restore();
             if (Rig != null) Rig.Restore();
