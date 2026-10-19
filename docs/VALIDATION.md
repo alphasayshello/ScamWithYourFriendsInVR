@@ -32,7 +32,7 @@
 - VR options inside General settings provide larger controls for recentering, desktop placement, seated comfort, menu distance, aiming, laser visibility, turning and scene resolution.
 - Camera ownership now follows the spectated player; tracked arms release control during ragdoll, hiding and spectating. These transitions still need full gameplay checking.
 - Moving around your room now moves the collision body while keeping the headset aligned. Leaning, walls, stairs and in-game chairs need more checking.
-- The computer camera app uses a separate webcam view instead of taking over the headset camera.
+- The computer camera app uses the desk webcam independently of the headset camera. Its shutter, saved photo pixels, gallery/Live switching, photo deletion and preview shutdown pass simulated checks. Watermarks, clipboard sharing and headset usability still need checking.
 - Remote voice position follows the tracked head, but how that sounds to other players still needs checking.
 
 ## Not finished

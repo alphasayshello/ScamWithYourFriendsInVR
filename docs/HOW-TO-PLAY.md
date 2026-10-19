@@ -32,6 +32,8 @@ Point inside a browser webpage and use the stick to scroll that page. Browser to
 
 In Paint, hold trigger over the canvas to draw. Use its Undo and Redo buttons to change a stroke, or hold right B and move sideways over the canvas to change brush size. Painting keeps the game's normal save behaviour. A physical PC keyboard is still needed for text and shortcuts.
 
+In Camera, click **Show** to open its controls. The shutter takes a picture from the desk webcam. Select a gallery thumbnail to view a saved picture, choose **Live** to return to the webcam, or use the trash button to delete the selected picture. Closing Camera stops its preview rendering.
+
 `[UI] PhysicalDesktop = true` keeps the UI attached to the original monitor by default. In settings → General → VR options, change COMPUTER SCREEN to FLOATING if you prefer a closer desktop. App licences, sign-in and game progression still follow the native game; opening a window does not guarantee that every workflow has passed VR testing.
 
 ## Interact and fight

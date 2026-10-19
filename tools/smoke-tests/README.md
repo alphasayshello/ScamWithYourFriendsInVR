@@ -91,6 +91,10 @@ The private computer fixture temporarily unlocks native app runtimes within its 
 
 Add `-CombatEye 'x,y,z'` to replay a scene position. The fixture keeps the native collision body, settles each role transition and approaches the requested eye position in short tracking steps. Obstructions can prevent reaching that point; inspect the actual eye/root and collision state rather than assuming the requested coordinates were attained. Tracking pose, role and position are restored on exit.
 
+## native camera controls
+
+The private computer fixture uses a separate native Camera instance with an isolated picture folder. Controller rays open the tools tray, take a photo, switch between Live and the gallery, and delete the fixture photo. Saved PNG pixels must match the observed native capture and contain a nonuniform image. The preview must match the desk webcam's pose while the headset keeps its own output; closing Camera must stop the preview render. The fixture restores the original app instance, content and window state. Watermarking is disabled only on the fixture instance, and native clipboard finalization is intercepted to preserve the user's clipboard. Watermarks, clipboard sharing and headset acceptance remain unverified.
+
 ## ui tree cleanup
 
 The core suite repeats twenty attach/repair/detach cycles on a nested button tree. Each detach must release its corner snapshots and restore the native styles. Reattachment must reapply the render correction. VR shutdown must restore attached styles and remove callbacks so later native style changes survive a detach.
