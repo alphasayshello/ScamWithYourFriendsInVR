@@ -49,16 +49,20 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             Require(process?.ReturnType == typeof(Task), "Native caller dialogue task signature changed");
             var probe = new Harmony("com.swyf.vr.callfixture");
             Component call = null; uint id = 0;
-            try
+            void SpawnCaller()
             {
-                callFixtureVoice = voice; callFixtureDialogueRequests = 0;
-                probe.Patch(process, prefix: new HarmonyMethod(typeof(LocalPairHarness), nameof(SkipFixtureDialogue)));
-                probe.Patch(AccessTools.Method(voiceType, "ServerWarmUpTts"), prefix: new HarmonyMethod(typeof(LocalPairHarness), nameof(SkipFixtureWarmup)));
                 call = UnityEngine.Object.Instantiate(prefab); callFixtureCaller = call;
                 NetworkServer.Spawn(call.gameObject);
                 id = Convert.ToUInt32(Member(call, "netId"));
                 Require(id != 0 && AccessTools.Method(callType, "ServerInitialize").Invoke(call, new object[] { workspace }) is bool initialized && initialized,
                     "Native server could not initialize the fixture caller");
+            }
+            try
+            {
+                callFixtureVoice = voice; callFixtureDialogueRequests = 0;
+                probe.Patch(process, prefix: new HarmonyMethod(typeof(LocalPairHarness), nameof(SkipFixtureDialogue)));
+                probe.Patch(AccessTools.Method(voiceType, "ServerWarmUpTts"), prefix: new HarmonyMethod(typeof(LocalPairHarness), nameof(SkipFixtureWarmup)));
+                SpawnCaller();
                 float deadline = Time.realtimeSinceStartup + 15;
                 while (!ReferenceEquals(Member(os, "m_boundVictimCall"), call))
                 { Require(Time.realtimeSinceStartup < deadline, "Native ringing caller did not bind to the local computer"); yield return null; }
@@ -66,12 +70,31 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 yield return null; yield return null;
                 Require(NetworkClient.spawned.ContainsKey(id) && Member(call, "callState")?.ToString() == "Ringing"
                     && ReferenceEquals(Member(workspace, "NetworkactiveCall"), call), "Ringing caller did not replicate through native workspace state");
+                var decline = Member(os, "m_incomingCallDeclineButton") as Button;
+                Require(decline != null && decline.enabledInHierarchy, "Native incoming caller did not expose an enabled Decline control");
+                var click = ClickAppControl(surface, decline);
+                try { while (click.MoveNext()) yield return click.Current; }
+                finally { (click as IDisposable)?.Dispose(); }
+                deadline = Time.realtimeSinceStartup + 10;
+                while (NetworkServer.spawned.ContainsKey(id) || NetworkClient.spawned.ContainsKey(id) || Member(os, "m_boundVictimCall") as Component != null)
+                { Require(Time.realtimeSinceStartup < deadline, "Controller Decline did not remove the ringing native caller"); yield return null; }
+                Require(Member(workspace, "NetworkactiveCall") as Component == null && Member(voice, "NetworkcurrentCall") as Component == null
+                    && Member(voice, "IsOnCall") is bool declined && !declined && callFixtureDialogueRequests == 0,
+                    "Declining assigned talker ownership, retained a workspace call or started dialogue");
+                Logger.LogInfo("CALL PASS: controller Decline reaches native authority and removes the ringing caller without assigning a talker or starting dialogue");
+
+                SpawnCaller(); deadline = Time.realtimeSinceStartup + 15;
+                while (!ReferenceEquals(Member(os, "m_boundVictimCall"), call))
+                { Require(Time.realtimeSinceStartup < deadline, "Second native ringing caller did not bind after decline"); yield return null; }
+                phone = (Member(os, "m_appsById") as IDictionary)?["phone"];
+                AccessTools.Method(os.GetType(), "OpenAppById").Invoke(os, new object[] { "phone" });
+                yield return null; yield return null;
                 var content = Member(phone, "WindowContent") as VisualElement;
                 var pickup = Member(os, "m_incomingCallAnswerButton") as Button
                     ?? content?.Q<Button>(className: "kolkata-command-button--pickup");
                 Require(pickup != null && pickup.enabledInHierarchy && pickup.resolvedStyle.display != DisplayStyle.None,
                     "Native incoming caller did not expose an enabled Pick Up control");
-                var click = ClickAppControl(surface, pickup);
+                click = ClickAppControl(surface, pickup);
                 try { while (click.MoveNext()) yield return click.Current; }
                 finally { (click as IDisposable)?.Dispose(); }
                 deadline = Time.realtimeSinceStartup + 10;

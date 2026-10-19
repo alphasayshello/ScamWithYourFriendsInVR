@@ -38,7 +38,7 @@ In Scamazon, use the week buttons to preview the day-unlock pages. For **Hold to
 
 In Phone, use the language button to open its language list. The speaker icon mutes or restores caller audio; point at it to expose the volume slider, then hold trigger and drag the slider. The microphone icon toggles the game's phone-input mute when a recording device is available.
 
-When a caller rings, point at the incoming call card's answer button and press trigger. The phone opens from that card; use **Hang Up** inside the phone to end the call. Older builds may show **Pick Up** directly inside the phone instead. Call ownership and permissions stay with the native game.
+When a caller rings, point at the incoming call card's answer button and press trigger, or choose **Decline** to reject it. Answering opens the phone from that card; use **Hang Up** inside the phone to end the call. Older builds may show **Pick Up** directly inside the phone instead. Call ownership and permissions stay with the native game.
 
 `[UI] PhysicalDesktop = true` keeps the UI attached to the original monitor by default. In settings → General → VR options, change COMPUTER SCREEN to FLOATING if you prefer a closer desktop. App licences, sign-in and game progression still follow the native game; opening a window does not guarantee that every workflow has passed VR testing.
 
