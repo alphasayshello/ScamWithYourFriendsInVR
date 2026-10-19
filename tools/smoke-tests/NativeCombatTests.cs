@@ -46,14 +46,43 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             object controller = Instance("Metater.MetaPlayerController");
             MethodInfo setRole = AccessTools.Method(mode.GetType(), "ServerSetIsAgent");
             MethodInfo teleport = AccessTools.Method(controller.GetType(), "Teleport");
+            Vector3 testPosition = originalPosition;
+            Vector3? requestedEye = null;
+            string eyeArgument = Environment.GetCommandLineArgs().FirstOrDefault(a => a.StartsWith("--swyf-combat-eye="));
+            if (eyeArgument != null)
+            {
+                string[] values = eyeArgument.Substring("--swyf-combat-eye=".Length).Split(',');
+                Require(values.Length == 3, "Combat eye diagnostic requires x,y,z");
+                float Coordinate(int index)
+                {
+                    float value = float.Parse(values[index], System.Globalization.CultureInfo.InvariantCulture);
+                    Require(!float.IsNaN(value) && !float.IsInfinity(value) && Mathf.Abs(value) < 10000, "Invalid combat eye diagnostic coordinate");
+                    return value;
+                }
+                Vector3 targetEye = new Vector3(Coordinate(0), Coordinate(1), Coordinate(2));
+                requestedEye = targetEye;
+                testPosition += Vector3.ProjectOnPlane(targetEye - VRManager.Instance.Rig.AuthoredEye, Vector3.up);
+            }
             try
             {
                 for (int iteration = 0; iteration < 20; iteration++)
                 {
+                    SetMockHeadPose(new Vector3(0, 1.65f, 0), Quaternion.identity);
                     setRole.Invoke(mode, new object[] { !originalRole });
                     yield return new WaitForSecondsRealtime(.8f);
                     setRole.Invoke(mode, new object[] { originalRole });
-                    teleport.Invoke(controller, new object[] { originalPosition, true }); VRManager.Instance.Rig.Recenter();
+                    teleport.Invoke(controller, new object[] { testPosition, true }); VRManager.Instance.Rig.Recenter();
+                    if (requestedEye.HasValue)
+                    {
+                        yield return new WaitForSecondsRealtime(1f);
+                        Vector3 from = new Vector3(0, 1.65f, 0);
+                        Vector3 to = VRManager.Instance.Rig.Origin.InverseTransformPoint(requestedEye.Value);
+                        // Move in short tracking steps, as an actual crouch would,
+                        // rather than tripping the large-pose-jump recenter guard.
+                        for (int step = 1; step <= 10; step++)
+                        { SetMockHeadPose(Vector3.Lerp(from, to, step / 10f), Quaternion.identity); yield return null; }
+                        yield return new WaitForEndOfFrame();
+                    }
                     IEnumerator test = TestNativeCombat(true);
                     try { while (test.MoveNext()) yield return test.Current; }
                     finally { (test as IDisposable)?.Dispose(); }
@@ -62,6 +91,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             }
             finally
             {
+                SetMockHeadPose(new Vector3(0, 1.65f, 0), Quaternion.identity);
                 setRole.Invoke(mode, new object[] { originalRole });
                 teleport.Invoke(controller, new object[] { originalPosition, true }); VRManager.Instance.Rig.Recenter();
             }
@@ -121,6 +151,12 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     aim.SetPositionAndRotation(manager.Rig.Head.transform.position + Vector3.up * 1000, Quaternion.LookRotation(Vector3.up, Vector3.forward));
                     Input("Trigger", true); Input("TriggerDown", true); Input("TriggerUp", false); Input("Grip", true);
                     pointerTick.Invoke(manager.Pointer, null);
+                    if (inputOnly)
+                        Logger.LogInfo("COMBAT INPUT STATE: eye=" + manager.Rig.Head.transform.position + "; authored=" + manager.Rig.AuthoredEye
+                            + "; root=" + Mirror.NetworkClient.localPlayer.transform.position + "; blocked=" + manager.Rig.HeadObstructed
+                            + "; overlaps=" + string.Join(",", Physics.OverlapSphere(manager.Rig.Head.transform.position, .11f,
+                                Plugin.CollisionMask.Value, QueryTriggerInteraction.Ignore)
+                                .Select(c => c.name + "/" + c.transform.parent?.name + "/own=" + c.transform.IsChildOf(Mirror.NetworkClient.localPlayer.transform))));
                     Require(Member(combatWeapon, "isAttackHeld") is bool held && held, "Controller combo did not start native attack hold; interactive=" + manager.Interactive
                         + "; headBlocked=" + manager.Rig.HeadObstructed + "; rightTracked=" + manager.Rig.Right.IsTracked
                         + "; panel=" + manager.Pointer.HasPanelHit + "; pointerAttack=" + pointerAttacking.GetValue(manager.Pointer)

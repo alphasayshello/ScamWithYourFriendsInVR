@@ -82,3 +82,5 @@ The native browser fixture also sends controller down/up through its actual view
 ## combat transition diagnostics
 
 `outputs/Run-Single-VR-Checks.ps1 -Combat` starts a focused private mock host and repeats twenty native role changes and teleports. Each cycle checks actual punch input, cooldown, grip-release cancellation and settings suppression. It excludes the NPC damage portion and restores role/position on exit. This helps investigate an intermittent hold-input failure in the larger suite; passing these cycles does not explain that failure or establish PvP reliability.
+
+Add `-CombatEye 'x,y,z'` to replay a scene position. The fixture keeps the native collision body, settles each role transition and approaches the requested eye position in short tracking steps. Obstructions can prevent reaching that point; inspect the actual eye/root and collision state rather than assuming the requested coordinates were attained. Tracking pose, role and position are restored on exit.
