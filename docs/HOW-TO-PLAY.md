@@ -36,6 +36,8 @@ In Camera, click **Show** to open its controls. The shutter takes a picture from
 
 In Scamazon, use the week buttons to preview the day-unlock pages. For **Hold to buy**, keep the trigger held until its progress completes; release early to cancel. Store access, prices and delivery still use the game's normal rules.
 
+In Phone, use the language button to open its language list. The speaker icon mutes or restores caller audio; point at it to expose the volume slider, then hold trigger and drag the slider. The microphone icon toggles the game's phone-input mute when a recording device is available.
+
 `[UI] PhysicalDesktop = true` keeps the UI attached to the original monitor by default. In settings → General → VR options, change COMPUTER SCREEN to FLOATING if you prefer a closer desktop. App licences, sign-in and game progression still follow the native game; opening a window does not guarantee that every workflow has passed VR testing.
 
 ## Interact and fight

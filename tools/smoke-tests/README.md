@@ -99,6 +99,10 @@ The private computer fixture uses a separate native Camera instance with an isol
 
 The private computer fixture builds a separate native Scamazon storefront, switches its three week pages through controller rays and checks the actual page visibility. A temporary zero-price button uses the game's native hold-to-buy handler. Short release and focus loss must stop charging and release capture; a completed hold must reach `BuyProduct` exactly once. That UI dispatch is intercepted for the fixture instance, so no money is spent and no delivery or entitlement is created. Original content and window state are restored. This checks store input, not actual purchase authority, purchased-store tabs or delivery outcomes.
 
+## native phone controls
+
+The private computer fixture opens the real idle Phone app and uses controller rays to open/select its current language, toggle caller audio, drag the native speaker-volume slider and toggle phone microphone mute when the native game detects a recording device. The slider must own the press, and its value must match the actual native audio setting. Cleanup restores native audio state, automatic/explicit language selection, and the original saved values or absent preference keys. Real incoming-call answer/hang-up, live transcription, other languages and headset audio remain separate acceptance checks.
+
 ## ui tree cleanup
 
 The core suite repeats twenty attach/repair/detach cycles on a nested button tree. Each detach must release its corner snapshots and restore the native styles. Reattachment must reapply the render correction. VR shutdown must restore attached styles and remove callbacks so later native style changes survive a detach.

@@ -437,6 +437,9 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     var storeChecks = TestNativeStore(os, surface);
                     try { while (storeChecks.MoveNext()) yield return storeChecks.Current; }
                     finally { (storeChecks as IDisposable)?.Dispose(); }
+                    var phoneChecks = TestNativePhone(os, surface);
+                    try { while (phoneChecks.MoveNext()) yield return phoneChecks.Current; }
+                    finally { (phoneChecks as IDisposable)?.Dispose(); }
                     var appChecks = TestAllAppWindows(os, surface);
                     try { while (appChecks.MoveNext()) yield return appChecks.Current; }
                     finally { (appChecks as IDisposable)?.Dispose(); }
