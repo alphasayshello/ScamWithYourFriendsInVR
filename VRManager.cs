@@ -124,6 +124,7 @@ namespace ScamWithYourFriendsInVR
         {
             Ready = false;
             if (Pointer != null) Pointer.Cancel();
+            NativeItemInput.Clear();
             if (UI != null) UI.Restore();
             if (Rig != null) Rig.Restore();
             harmony?.UnpatchSelf();

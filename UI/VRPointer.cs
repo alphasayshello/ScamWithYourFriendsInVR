@@ -28,7 +28,8 @@ namespace ScamWithYourFriendsInVR.UI
         private UIDocument pressedWorldDocument;
         private VisualElement pressedElement, hoverElement;
         private Vector3 lastPanelPosition;
-        private bool toolkitDown, worldDown, attacking;
+        private bool toolkitDown, worldDown, leftWorldDown, attacking;
+        private bool attackRequiresGrip = true, secondaryHeld;
         private VisualElement clickRoot, clickTarget;
         private UnityEngine.UIElements.Button clickButton;
         private bool observedClick, observedButton;
@@ -142,7 +143,7 @@ namespace ScamWithYourFriendsInVR.UI
             }
             EnsureModule();
             if (toolkitDown && pressedWorldDocument == null && (pressedPanel == null || !pressedPanel.CanInteract)) CancelToolkit();
-            bool context = GameAdapter.InMainMenu || GameAdapter.SettingsOpen || GameAdapter.MonitorCaptured
+            bool context = GameAdapter.InMainMenu || GameAdapter.SettingsOpen || GameAdapter.MonitorCaptured || manager.Keyboard.Visible
                 || GameAdapter.Read(GameAdapter.Static("TabMenu", "Instance"), "IsOpen") is bool playersOpen && playersOpen;
             sampledRotation = manager.Rig.Right.Aim.rotation;
             if (!context && !HasPanelHit && !toolkitDown && !module.IsPressed) aimFilter.Reset();
@@ -283,33 +284,45 @@ namespace ScamWithYourFriendsInVR.UI
                 manager.Keyboard.TryOpen(elementHit, worldDocumentHit ?? panelHit.DocumentFor(elementHit));
             }
 
-            if (attacking && (!manager.Input.Grip || !manager.Input.Trigger || HasPanelHit || context))
+            if (attacking && (attackRequiresGrip && !manager.Input.Grip || !manager.Input.Trigger || HasPanelHit || context))
             {
                 GameAdapter.Attack(false); attacking = false;
             }
             if (manager.Input.TriggerDown && !HasPanelHit && !context)
             {
-                if (manager.Input.Grip) { GameAdapter.Attack(true); attacking = true; }
-                else { GameAdapter.Interact(true); worldDown = true; }
+                if (manager.Input.Grip || GameAdapter.Read(GameAdapter.Interactor, "CurrentHeldItem") is Component heldItem && heldItem != null)
+                {
+                    attackRequiresGrip = manager.Input.Grip;
+                    GameAdapter.Attack(true); attacking = true;
+                }
+                else { if (!leftWorldDown) GameAdapter.Interact(true); worldDown = true; }
             }
             if (manager.Input.TriggerUp)
             {
                 ReleaseToolkit();
                 if (attacking) { GameAdapter.Attack(false); attacking = false; }
-                if (worldDown) { GameAdapter.Interact(false); worldDown = false; }
+                if (worldDown) { worldDown = false; if (!leftWorldDown) GameAdapter.Interact(false); }
             }
+            if (leftWorldDown && (!manager.Input.LeftTrigger || manager.Input.LeftGrip || HasPanelHit || context))
+            { leftWorldDown = false; if (!worldDown) GameAdapter.Interact(false); }
+            if (manager.Input.LeftTriggerDown && !manager.Input.LeftGrip && !HasPanelHit && !context)
+            { if (!worldDown) GameAdapter.Interact(true); leftWorldDown = true; }
             grab.Tick(HasPanelHit || context);
             if (manager.Input.SecondaryDown && elementHit != null)
             {
                 Send3D(elementHit, EventType.MouseDown, lastPanelPosition, 1, true);
                 Send3D(elementHit, EventType.MouseUp, lastPanelPosition, 1, false);
             }
+            if (secondaryHeld && (!manager.Input.Secondary || HasPanelHit || context))
+            { GameAdapter.SecondaryUse(false); secondaryHeld = false; }
+            if (manager.Input.SecondaryDown && !HasPanelHit && !context)
+            { GameAdapter.SecondaryUse(true); secondaryHeld = true; }
             if (manager.Input.TriggerUp && graphic.gameObject != null) manager.Keyboard.TryOpen(graphic.gameObject);
             visualHit = HasPanelHit || toolkitDown;
             visualDistance = visualHit ? Vector3.Distance(ray.origin, endpoint) : Mathf.Min(nearest, 2);
             object nativeTarget = GameAdapter.Read(GameAdapter.Interactor, "currentInteractable") ?? GameAdapter.Read(GameAdapter.Interactor, "currentScenePickup");
             bool worldTarget = !context && nativeTarget is UnityEngine.Object target && target != null;
-            bool show = VRPointerAim.Visible(Plugin.AlwaysShowPointer.Value, context, HasPanelHit, toolkitDown || module.IsPressed || worldDown, worldTarget);
+            bool show = VRPointerAim.Visible(Plugin.AlwaysShowPointer.Value, context, HasPanelHit, toolkitDown || module.IsPressed || worldDown || leftWorldDown, worldTarget);
             if (show) showUntil = Time.unscaledTime + .12f;
             line.enabled = show || Time.unscaledTime < showUntil;
             dot.SetActive(line.enabled && visualHit);
@@ -474,11 +487,12 @@ namespace ScamWithYourFriendsInVR.UI
             releasePointers?.Invoke(null, new object[] { ToolkitPointerId });
 
             if (attacking) { GameAdapter.Attack(false); attacking = false; }
+            if (secondaryHeld) { GameAdapter.SecondaryUse(false); secondaryHeld = false; }
             CancelToolkit();
             grab.Cancel();
             module?.Cancel();
-            if (worldDown) GameAdapter.Interact(false);
-            worldDown = false;
+            if (worldDown || leftWorldDown) GameAdapter.Interact(false);
+            worldDown = leftWorldDown = false;
             Send3D(hoverElement, EventType.MouseLeaveWindow, lastPanelPosition, 0, false);
             hoverElement = null;
             HasPanelHit = false;

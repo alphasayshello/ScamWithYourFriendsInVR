@@ -12,6 +12,7 @@ namespace ScamWithYourFriendsInVR.Patches
     {
         internal static void Install(Harmony harmony)
         {
+            NativeItemInput.Install(harmony);
             Patch(harmony, "Metater.MetaPlayerController", "Update", nameof(BeforeController));
             Patch(harmony, "Metater.MetaPlayerController", "OnMove", nameof(BeforeMove));
             Patch(harmony, "Metater.MetaPlayerController", "ProcessLookInput", nameof(BeforeLook),

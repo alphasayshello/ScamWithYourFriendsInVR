@@ -78,16 +78,23 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 Require(combatRays == firstCount, "Repeated VR attack bypassed the native cooldown");
                 Logger.LogInfo("COMBAT PASS: native unarmed attack fires from controller ray and rejects repeat input during its own cooldown");
 
-                attack.Invoke(null, new object[] { true });
-                Require(Member(combatWeapon, "isAttackHeld") is bool held && held, "Native attack hold missing before grip release");
-                pointerAttacking.SetValue(manager.Pointer, true);
-                Input("Trigger", true); Input("TriggerDown", false); Input("TriggerUp", false); Input("Grip", false);
-                pointerTick.Invoke(manager.Pointer, null);
+                Transform aim = manager.Rig.Right.Aim;
+                Vector3 savedAim = aim.position; Quaternion savedAimRotation = aim.rotation;
+                try
+                {
+                    aim.SetPositionAndRotation(manager.Rig.Head.transform.position + Vector3.up * 1000, Quaternion.LookRotation(Vector3.up, Vector3.forward));
+                    Input("Trigger", true); Input("TriggerDown", true); Input("TriggerUp", false); Input("Grip", true);
+                    pointerTick.Invoke(manager.Pointer, null);
+                    Require(Member(combatWeapon, "isAttackHeld") is bool held && held, "Controller combo did not start native attack hold");
+                    Input("TriggerDown", false); Input("Grip", false); pointerTick.Invoke(manager.Pointer, null);
+                }
+                finally { aim.SetPositionAndRotation(savedAim, savedAimRotation); }
                 Require(Member(combatWeapon, "isAttackHeld") is bool released && !released
                     && !(bool)pointerAttacking.GetValue(manager.Pointer), "Releasing grip left native attack held while trigger remained down");
                 toggle.Invoke(null, null); paused = true;
                 attack.Invoke(null, new object[] { true });
                 Require(Member(combatWeapon, "isAttackHeld") is bool blocked && !blocked, "Settings accepted a VR attack hold");
+                attack.Invoke(null, new object[] { false });
                 Logger.LogInfo("COMBAT PASS: grip release cancels native attack while trigger stays held; settings reject attack input");
                 toggle.Invoke(null, null); paused = false;
 

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Route controller primary/secondary use through native PlayerInteractor callbacks, preserving held-item use events, weapon selection and native gameplay gates.
+- Add left-trigger world interaction while holding items, with separate left-grip/pee modifier handling.
+- Let trigger use a held item without grip; keep grip + trigger for empty-hand combat. Deliver held secondary press/release with right B away from UI.
+- Clear callback dispatch ownership before removing VR patches, and block gameplay input behind the optional keyboard.
+- Verify native curry consumption, spawned poop/gassy effects and normal expiry through the actual pointer input path.
+
 - Add a separate pinned dependency profile for Unity 6000.3.26f1 and Input System 1.20.0, retaining the 6000.3.10f1 / 1.19.0 target.
 - Select dependencies from the actual game version, isolate default caches by engine, and reject incompatible Input System assemblies before staging or launching.
 - Account for the moved InputForUI source directory in newer Input System packages.

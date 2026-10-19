@@ -18,11 +18,14 @@ namespace ScamWithYourFriendsInVR.Input
         public bool MenuDown { get; private set; }
         public bool PlayersDown { get; private set; }
         public bool LeftGrip { get; private set; }
+        public bool LeftTrigger { get; private set; }
+        public bool LeftTriggerDown { get; private set; }
         public bool Jump { get; private set; }
         public bool Pee { get; private set; }
         public bool FartDown { get; private set; }
         public bool RecenterDown { get; private set; }
         public bool SecondaryDown { get; private set; }
+        public bool Secondary { get; private set; }
         public bool HeadTracked { get; private set; }
         public bool RightTracked { get; private set; }
         public bool HasInputFocus { get; private set; }
@@ -69,8 +72,11 @@ namespace ScamWithYourFriendsInVR.Input
             LeftGrip = active && Tracked(left) && (Button(left, CommonUsages.gripButton)
                 || left.TryGetFeatureValue(CommonUsages.grip, out float leftGrip) && leftGrip > .6f);
             Jump = active && RightTracked && Button(right, CommonUsages.primaryButton);
-            Pee = LeftGrip && (Button(left, CommonUsages.triggerButton)
-                || left.TryGetFeatureValue(CommonUsages.trigger, out float leftTrigger) && leftTrigger > .6f);
+            bool nextLeftTrigger = active && Tracked(left) && (Button(left, CommonUsages.triggerButton)
+                || left.TryGetFeatureValue(CommonUsages.trigger, out float leftTrigger) && leftTrigger > (LeftTrigger ? .45f : .6f));
+            LeftTriggerDown = nextLeftTrigger && !LeftTrigger;
+            LeftTrigger = nextLeftTrigger;
+            Pee = LeftGrip && LeftTrigger;
             bool nextFart = LeftGrip && Button(left, CommonUsages.primaryButton);
             FartDown = nextFart && !fart; fart = nextFart;
             bool nextPlayers = active && !LeftGrip && Button(left, CommonUsages.primaryButton);
@@ -83,6 +89,7 @@ namespace ScamWithYourFriendsInVR.Input
             recenterHeld = nextRecenter;
             bool nextSecondary = active && RightTracked && Button(right, CommonUsages.secondaryButton);
             SecondaryDown = nextSecondary && !secondary;
+            Secondary = nextSecondary;
             secondary = nextSecondary;
         }
 

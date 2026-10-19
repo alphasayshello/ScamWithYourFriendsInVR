@@ -168,15 +168,15 @@ namespace ScamWithYourFriendsInVR.Patches
 
         internal static void Attack(bool pressed)
         {
-            Component player = LocalPlayer;
-            Type weaponType = ReflectionTypes.Find("RaycastWeapon");
-            if (player == null || weaponType == null || pressed && (VRManager.Instance?.Interactive != true
-                || InMainMenu || AvatarUnavailable(player) || !Allowed(Interactor))) return;
-            MethodInfo input = AccessTools.Method(weaponType, "OnAttackInput", new[] { typeof(bool) });
-            foreach (Component weapon in player.GetComponents(weaponType))
-                if (weapon is Behaviour behaviour && behaviour.enabled)
-                    try { input?.Invoke(weapon, new object[] { pressed }); }
-                    catch (Exception ex) { Report("Tracked weapon input", ex); }
+            if (pressed && (VRManager.Instance?.Interactive != true || InMainMenu)) return;
+            NativeItemInput.Send(Interactor, false, pressed);
+        }
+
+        internal static void SecondaryUse(bool pressed)
+        {
+            if (pressed && (VRManager.Instance?.Interactive != true || InMainMenu)) return;
+            if (pressed) Call(Interactor, "HandleInteractionRay");
+            NativeItemInput.Send(Interactor, true, pressed);
         }
 
         internal static void Drop(Component item, Vector3 velocity, Transform hand)

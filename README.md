@@ -35,10 +35,11 @@ This is a PC VR mod, not a standalone Quest app. The stock game strips required 
 | --- | --- |
 | Left stick | Move; scroll when pointing at UI |
 | Right stick left/right | Snap turn |
-| Right trigger | Click, hold/drag, or interact |
+| Right trigger | Click, hold/drag, interact, or use a held item |
 | Right grip | Pick up / hold; release to drop |
+| Left trigger | World interaction under right-hand aim |
 | Right grip + trigger, away from UI | Native punch / weapon input |
-| Right B | Computer context click |
+| Right B | Computer context click / native secondary action |
 | Right A | Jump |
 | Left X | Players |
 | Left Y / controller menu | Back / settings |

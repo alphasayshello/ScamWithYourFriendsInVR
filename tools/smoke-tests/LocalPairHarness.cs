@@ -145,6 +145,19 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     }
                 }
                 finally { (gameplayTest as IDisposable)?.Dispose(); }
+                IEnumerator foodTest = TestNativeFood();
+                try
+                {
+                    while (true)
+                    {
+                        bool more;
+                        try { more = foodTest.MoveNext(); }
+                        catch (Exception ex) { Logger.LogError("FOOD FAIL: " + ex.GetBaseException()); break; }
+                        if (!more) break;
+                        yield return foodTest.Current;
+                    }
+                }
+                finally { (foodTest as IDisposable)?.Dispose(); }
                 IEnumerator combatTest = TestNativeCombat();
                 try
                 {
