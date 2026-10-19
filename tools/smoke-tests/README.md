@@ -95,6 +95,10 @@ Add `-CombatEye 'x,y,z'` to replay a scene position. The fixture keeps the nativ
 
 The private computer fixture uses a separate native Camera instance with an isolated picture folder. Controller rays open the tools tray, take a photo, switch between Live and the gallery, and delete the fixture photo. Saved PNG pixels must match the observed native capture and contain a nonuniform image. The preview must match the desk webcam's pose while the headset keeps its own output; closing Camera must stop the preview render. The fixture restores the original app instance, content and window state. Watermarking is disabled only on the fixture instance, and native clipboard finalization is intercepted to preserve the user's clipboard. Watermarks, clipboard sharing and headset acceptance remain unverified.
 
+## native store controls
+
+The private computer fixture builds a separate native Scamazon storefront, switches its three week pages through controller rays and checks the actual page visibility. A temporary zero-price button uses the game's native hold-to-buy handler. Short release and focus loss must stop charging and release capture; a completed hold must reach `BuyProduct` exactly once. That UI dispatch is intercepted for the fixture instance, so no money is spent and no delivery or entitlement is created. Original content and window state are restored. This checks store input, not actual purchase authority, purchased-store tabs or delivery outcomes.
+
 ## ui tree cleanup
 
 The core suite repeats twenty attach/repair/detach cycles on a nested button tree. Each detach must release its corner snapshots and restore the native styles. Reattachment must reapply the render correction. VR shutdown must restore attached styles and remove callbacks so later native style changes survive a detach.

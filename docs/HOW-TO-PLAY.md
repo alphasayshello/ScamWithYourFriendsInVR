@@ -34,6 +34,8 @@ In Paint, hold trigger over the canvas to draw. Use its Undo and Redo buttons to
 
 In Camera, click **Show** to open its controls. The shutter takes a picture from the desk webcam. Select a gallery thumbnail to view a saved picture, choose **Live** to return to the webcam, or use the trash button to delete the selected picture. Closing Camera stops its preview rendering.
 
+In Scamazon, use the week buttons to preview the day-unlock pages. For **Hold to buy**, keep the trigger held until its progress completes; release early to cancel. Store access, prices and delivery still use the game's normal rules.
+
 `[UI] PhysicalDesktop = true` keeps the UI attached to the original monitor by default. In settings → General → VR options, change COMPUTER SCREEN to FLOATING if you prefer a closer desktop. App licences, sign-in and game progression still follow the native game; opening a window does not guarantee that every workflow has passed VR testing.
 
 ## Interact and fight
