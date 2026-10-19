@@ -14,6 +14,9 @@ namespace ScamWithYourFriendsInVR.Patches
                 var up = browser == null ? null : AccessTools.Method(browser, "HandlePointerUp");
                 if (up != null) harmony.Patch(up, prefix: new HarmonyMethod(typeof(DesktopUIPatches), nameof(BeforeBrowserPointerUp)));
                 else Plugin.Log.LogWarning("Native browser release method unavailable; controller drag release compatibility unverified.");
+                Type client = browser == null ? null : AccessTools.Field(browser, "browserClient")?.FieldType;
+                var init = client == null ? null : AccessTools.Method(client, "Init", Type.EmptyTypes);
+                if (init != null) harmony.Patch(init, prefix: new HarmonyMethod(typeof(DesktopUIPatches), nameof(BeforeBrowserStartup)));
             }
             catch (Exception ex) { GameAdapter.Report("Browser controller release patch", ex); }
             try
@@ -32,6 +35,16 @@ namespace ScamWithYourFriendsInVR.Patches
                 harmony.Patch(method, prefix: new HarmonyMethod(typeof(DesktopUIPatches), nameof(BeforeNormalizedMouse)));
             }
             catch (Exception ex) { GameAdapter.Report("Monitor cursor patch", ex); }
+        }
+
+        private static void BeforeBrowserStartup(object __instance)
+        {
+            if (VRManager.Instance == null || !VRManager.Instance.Ready) return;
+            object os = GameAdapter.Read(GameAdapter.Static("KolkataOsSingleton", "Instance"), "Controller");
+            object host = GameAdapter.Read(os, "m_browserHost");
+            if (ReferenceEquals(GameAdapter.Read(host, "browserClient"), __instance)
+                && GameAdapter.Read(__instance, "engineStartupTimeout") is int timeout && timeout < 20000)
+                GameAdapter.Write(__instance, "engineStartupTimeout", 20000);
         }
 
         private static void BeforeBrowserPointerUp(object __instance, UnityEngine.UIElements.PointerUpEvent evt)

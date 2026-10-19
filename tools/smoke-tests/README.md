@@ -75,9 +75,11 @@ A separate owned traffic-cone fixture temporarily uses the native agent role, dr
 
 ## browser scrolling
 
-The core group uses a real panel with an offset browser image and a transport probe to check page coordinates, direction, fractional pixels, host changes and detached/chrome/readiness guards. The private computer host also resolves the real browser host and viewport through the production pointer router, intercepting only the native transport call. That probe requires no live CEF connection and does not change the game's browser privacy setting. Actual webpage rendering, click/drag behaviour and external-service workflows remain separate requirements.
+The core group uses a real panel with an offset browser image and a transport probe to check page coordinates, direction, fractional pixels, host changes and detached/chrome/readiness guards. The private computer host also resolves the real browser host and viewport through the production pointer router, intercepting only the native transport call. That probe requires no live CEF connection and does not change the game's saved browser privacy setting.
 
 The native browser fixture also sends controller down/up through its actual viewport callbacks, releases outside the image and requires exactly one transport release plus cleared pointer capture. It checks an ordinary in-page click and verifies that the correction leaves physical-mouse behaviour unchanged. The transport is intercepted; this is not an end-to-end rendered webpage or browser-detach check.
+
+The separate rendered-browser fixture starts the real bundled CEF engine at `about:blank`, using a fresh temporary incognito profile. It loads self-contained HTML with no external resources, checks the actual page texture and drives a DOM button, drag target, off-page release, page scrolling, focus cancellation and context click through the controller ray. DOM state returns through native browser title events; transport calls are not intercepted. It checks the production startup allowance, preserves saved privacy settings and restores native URL/history fields. Window-only checks suppress browser startup so they do not open saved sessions in the background. External websites, text entry, browser detach/close during a drag and real-headset usability remain separate requirements.
 
 ## combat transition diagnostics
 

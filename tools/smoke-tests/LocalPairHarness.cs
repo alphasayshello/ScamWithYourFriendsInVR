@@ -49,6 +49,9 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             readyFile = args.FirstOrDefault(a => a.StartsWith("--swyf-pair-ready="))?.Substring("--swyf-pair-ready=".Length);
             if (string.IsNullOrWhiteSpace(readyFile)) { Logger.LogError("PAIR: ready-file path missing"); active = false; return; }
             patches = new Harmony("com.swyf.vr.localpair");
+            if (singleComputer && !singleRagdoll && !singleCombat)
+                patches.Patch(AccessTools.Method(Find("Kolkata.UI.KolkataOsBrowserHost"), "EnsureBrowserClient"),
+                    prefix: new HarmonyMethod(typeof(LocalPairHarness), nameof(AllowRenderedBrowserOnly)));
             patches.Patch(AccessTools.Method(typeof(ScamWithYourFriendsInVR.Input.VRInputManager), "Update"), postfix: new HarmonyMethod(typeof(LocalPairHarness), nameof(KeepTestTriggerHeld)));
             var initializer = Find("NetworkingInitializer");
             var start = initializer == null ? null : AccessTools.Method(initializer, "Start");

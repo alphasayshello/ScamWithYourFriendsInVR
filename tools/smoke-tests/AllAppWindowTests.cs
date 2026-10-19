@@ -16,6 +16,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
         private static bool holdInjectedTrigger;
         private static void KeepTestTriggerHeld(object __instance)
         {
+            if (renderedBrowserScroll != 0) __instance.GetType().GetProperty("Move").SetValue(__instance, new Vector2(0, renderedBrowserScroll));
             if (injectFoodJump) __instance.GetType().GetProperty("Jump").SetValue(__instance, true);
             if (injectGiveUp)
             {

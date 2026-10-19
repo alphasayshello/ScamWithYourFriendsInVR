@@ -25,11 +25,22 @@ foreach ($relative in @('GameAssembly.dll', 'swyf-vr-manifest.json', 'winhttp.dl
 $profile = & (Join-Path $PSScriptRoot 'Resolve-Dependencies.ps1') -GameDir $SourceGameDir
 & (Join-Path $PSScriptRoot 'Assert-InputVersion.ps1') -GameDir $SourceGameDir -ExpectedVersion ($profile.packages | Where-Object name -eq 'com.unity.inputsystem').version
 # Never follow junctions out of either input tree while copying or hashing.
+function Get-SourceItems([string]$Folder) {
+    foreach ($item in Get-ChildItem -LiteralPath $Folder -Force) {
+        $relative = [IO.Path]::GetRelativePath($SourceGameDir, $item.FullName)
+        if ($relative -eq 'Scam With Your Friends_Data\UWBCache' -or
+            $relative -eq 'Scam With Your Friends_Data\UnityWebBrowser.Engine.Cef.log') { continue }
+        if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Linked source files or folders are unsupported.' }
+        $item
+        if ($item.PSIsContainer) { Get-SourceItems $item.FullName }
+    }
+}
 foreach ($root in @($SourceGameDir, $StageDir)) {
     if ((Get-Item -LiteralPath $root).Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Linked input folders are unsupported.' }
-    if (Get-ChildItem -LiteralPath $root -Recurse -Force | Where-Object { $_.Attributes -band [IO.FileAttributes]::ReparsePoint } | Select-Object -First 1) {
-        throw 'Linked files or folders are unsupported. Use a regular game copy and stage.'
-    }
+}
+$sourceItems = @(Get-SourceItems $SourceGameDir)
+if (Get-ChildItem -LiteralPath $StageDir -Recurse -Force | Where-Object { $_.Attributes -band [IO.FileAttributes]::ReparsePoint } | Select-Object -First 1) {
+    throw 'Linked stage files or folders are unsupported.'
 }
 $manifestPath = Join-Path $StageDir 'swyf-vr-manifest.json'
 if (!(Test-Path -LiteralPath $manifestPath -PathType Leaf)) { throw 'Missing stage manifest. Run Stage-Mod.ps1 first.' }
@@ -61,7 +72,15 @@ if ($build.schemaVersion -ne 1 -or $build.unityVersion -ne $profile.unityVersion
 Write-Output "Copying the game to $Destination. The original stays untouched."
 [void][IO.Directory]::CreateDirectory($Destination)
 try {
-    Get-ChildItem -LiteralPath $SourceGameDir -Force | Copy-Item -Destination $Destination -Recurse -Force
+    foreach ($item in $sourceItems) {
+        $relative = [IO.Path]::GetRelativePath($SourceGameDir, $item.FullName)
+        $target = Join-Path $Destination $relative
+        if ($item.PSIsContainer) { [void][IO.Directory]::CreateDirectory($target) }
+        else {
+            [void][IO.Directory]::CreateDirectory((Split-Path $target -Parent))
+            Copy-Item -LiteralPath $item.FullName -Destination $target -Force
+        }
+    }
     foreach ($entry in $entries) {
         $target = Join-Path $Destination $entry.path
         [void][IO.Directory]::CreateDirectory((Split-Path $target -Parent))

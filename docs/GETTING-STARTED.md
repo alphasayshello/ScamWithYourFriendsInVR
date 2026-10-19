@@ -16,7 +16,7 @@ This implementation targets the Windows x64 **Mono** game, Unity **6000.3.26f1**
 ./tools/Install-GameCopy.ps1 -SourceGameDir 'C:\Program Files (x86)\Steam\steamapps\common\Scam With Your Friends' -StageDir 'D:\staging\ScamWithYourFriendsInVR' -Destination 'D:\Games\SWYF-VR'
 ```
 
-The installer checks the stage hashes and exact engine identity before copying, leaves your original game untouched, and refuses existing destinations or a running game. The copy has its own launch tools, so moving the source repository does not break its PC/VR launchers. PowerShell 7 is required. It does not launch the game during setup.
+The installer checks the stage hashes and exact engine identity before copying, leaves your original game untouched, and refuses existing destinations or a running game. Its browser cache starts fresh; generated browser data from the source installation is skipped. The copy has its own launch tools, so moving the source repository does not break its PC/VR launchers. PowerShell 7 is required. It does not launch the game during setup.
 
 Keep Steam running when playing the copied game. To uninstall an isolated copy, close it and remove that copy; your original installation is unchanged. Your game may share saves/settings between copies.
 

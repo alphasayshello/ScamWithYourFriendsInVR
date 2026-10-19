@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Allow the local browser engine at least twenty seconds to start in VR, preserving longer configured timeouts.
+- Start newly installed game copies with a fresh browser cache instead of cloning generated browser profiles/output.
+- Verify controller clicking, dragging, off-page release, scrolling, focus cancellation and context input on a locally rendered CEF webpage with a temporary profile.
 - Clamp captured controller releases to the browser image boundary so dragging off the page still delivers the native mouse-up, preserving normal mouse behaviour.
 - Forward controller scrolling over the embedded browser to native pixel scrolling at the laser position, preserving fine input across frames and ordinary scrolling in other controls.
 - Added an isolated-copy installer with stage/engine verification and portable PC/VR launchers.

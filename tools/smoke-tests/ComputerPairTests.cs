@@ -418,6 +418,9 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     var browserChecks = TestNativeBrowserScroll(os);
                     try { while (browserChecks.MoveNext()) yield return browserChecks.Current; }
                     finally { (browserChecks as IDisposable)?.Dispose(); }
+                    var renderedBrowser = TestRenderedBrowser(os, surface);
+                    try { while (renderedBrowser.MoveNext()) yield return renderedBrowser.Current; }
+                    finally { (renderedBrowser as IDisposable)?.Dispose(); }
                     var appChecks = TestAllAppWindows(os, surface);
                     try { while (appChecks.MoveNext()) yield return appChecks.Current; }
                     finally { (appChecks as IDisposable)?.Dispose(); }
