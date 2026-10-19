@@ -101,7 +101,9 @@ The private computer fixture builds a separate native Scamazon storefront, switc
 
 ## native phone controls
 
-The private computer fixture opens the real idle Phone app and uses controller rays to open/select its current language, toggle caller audio, drag the native speaker-volume slider and toggle phone microphone mute when the native game detects a recording device. The slider must own the press, and its value must match the actual native audio setting. Cleanup restores native audio state, automatic/explicit language selection, and the original saved values or absent preference keys. Real incoming-call answer/hang-up, live transcription, other languages and headset audio remain separate acceptance checks.
+The private computer fixture opens the real idle Phone app and uses controller rays to open/select its current language, toggle caller audio, drag the native speaker-volume slider and toggle phone microphone mute when the native game detects a recording device. The slider must own the press, and its value must match the actual native audio setting. Cleanup restores native audio state, automatic/explicit language selection, and the original saved values or absent preference keys. Live transcription, other languages and headset audio remain separate acceptance checks.
+
+The call fixture spawns the game's actual victim-call prefab on its owned idle workstation and calls native server initialization. It uses the incoming popup's Answer control when present, or the older phone's Pick Up control, then waits for native server talker ownership and uses Hang Up. Both server/client spawn registries, workstation binding and local player call state must clear. AI dialogue task execution is intercepted only for this caller, and TTS warmup only for its local voice component. Tutorial progression must be inactive; the fixture does not commit switchboard caller history, restores workstation cooldown and force-cleans an unfinished caller on failure. It verifies real call authority and UI input, not AI/TTS responses, rejection, transfers, completed scams or cross-account networking.
 
 ## ui tree cleanup
 
