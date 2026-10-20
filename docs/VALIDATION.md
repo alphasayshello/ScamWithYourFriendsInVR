@@ -21,7 +21,7 @@
 - Left trigger provides world interaction while holding items, separate from the pee modifier. Held-item trigger and secondary actions now use native callbacks, covering food/tool use that weapon-only input skipped. Curry consumption, networked poop/gassy effects and normal expiry work in simulation. Native jump-driven curry boost activation, agent hip swap, extra item-action release and nonfinal cone activation/cooldown also pass simulated checks; trajectories, final cone use and other foods still need checking.
 - Ordinary item pickup, release, quick-release pickup and cancellation work in the simulated host. Release velocity now follows physical controller movement instead of rig translation/snap rotation, and recentering resets its motion sample. Native held ownership survives recenter and a stationary release sends zero inherited velocity. Every item type and throwing feel still need checking.
 - Native ragdoll entry/recovery, head-position fallback, tracked-pose release/resume, struggle and short give-up cancellation pass simulated checks. Holding left grip before right A starts the native give-up hold; full consequences and headset feel still need checking.
-- Tracking reads and UI scans do less repeated work, destroyed menu graphics release their owned material entries, and detached app trees release their saved corner styles. Smooth performance in busy scenes still needs more work.
+- Tracking reads and UI scans do less repeated work, floating/native UI occlusion shares one physics query, destroyed menu graphics release their owned material entries, and detached app trees release their saved corner styles. Smooth performance in busy scenes still needs more work.
 
 - Computer screens now stay attached to their desk monitors and follow screen movement and renderer rebinding. An optional floating desktop is available. Clicking, dragging, scrolling and window controls have been checked, but the revised computer experience still needs headset testing.
 - A locally rendered browser page passes controller clicking, dragging, off-page release, thumbstick scrolling, focus cancellation, context-click and close-during-drag checks. Closing or hiding a pressed control now cancels its controller press. Live websites, text entry and headset usability still need testing.
@@ -45,7 +45,7 @@
 
 - Every computer app and every action inside those apps.
 - Combat damage against players, charged/ranged weapons, other food variants, boost trajectories/final cone use and all held-item variants in VR.
-- Combat input reliability needs more checking after an intermittent simulated hold-input failure; a repeat passed, but its cause is unresolved.
+- Headset combat feel and player-versus-player reliability still need checking. Controller attacks are rejected while the head is inside world geometry.
 - Complete multiplayer checks across separate Steam accounts, including reconnecting and joining late.
 - Consistently smooth performance, especially in busy scenes.
 - Violent ragdoll/final cone impacts, completed give-up outcomes, hiding variants, spectating, tracking loss and every seated/standing transition.

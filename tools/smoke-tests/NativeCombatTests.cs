@@ -125,9 +125,48 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             combatRays = 0; combatOriginError = combatDirectionError = 0;
             bool paused = false;
             void Input(string key, bool value) => manager.Input.GetType().GetProperty(key).SetValue(manager.Input, value);
+            object fixtureController = Instance("Metater.MetaPlayerController");
+            var fixtureTeleport = AccessTools.Method(fixtureController.GetType(), "Teleport");
+            var fixtureBody = Member(fixtureController, "CharacterController") as CharacterController;
+            Vector3 fixtureOriginalPosition = Mirror.NetworkClient.localPlayer.transform.position;
+            GameObject fixtureFloor = null;
             try
             {
                 manager.Pointer.Cancel();
+                if (inputOnly && manager.Rig.HeadObstructed)
+                {
+                    Transform blockedAim = manager.Rig.Right.Aim;
+                    Vector3 before = blockedAim.position; Quaternion rotation = blockedAim.rotation;
+                    try
+                    {
+                        blockedAim.SetPositionAndRotation(manager.Rig.Head.transform.position + Vector3.up * 1000,
+                            Quaternion.LookRotation(Vector3.up, Vector3.forward));
+                        Input("Trigger", true); Input("TriggerDown", true); Input("TriggerUp", false); Input("Grip", true);
+                        pointerTick.Invoke(manager.Pointer, null);
+                        Require(Member(combatWeapon, "isAttackHeld") is bool headBlockedHold && !headBlockedHold
+                            && !(bool)pointerAttacking.GetValue(manager.Pointer) && combatRays == 0,
+                            "A head-obstructed controller attack reached the native weapon");
+                        Logger.LogInfo("COMBAT BLOCK PASS: actual head obstruction rejects controller attack; eye=" + manager.Rig.Head.transform.position
+                            + "; overlaps=" + string.Join(",", Physics.OverlapSphere(manager.Rig.Head.transform.position, .11f,
+                                Plugin.CollisionMask.Value, QueryTriggerInteraction.Ignore)
+                                .Where(c => !c.transform.IsChildOf(Mirror.NetworkClient.localPlayer.transform))
+                                .Select(c => c.name + "/" + c.transform.parent?.name)));
+                    }
+                    finally { blockedAim.SetPositionAndRotation(before, rotation); }
+                    yield break;
+                }
+                if (!inputOnly)
+                {
+                    Require(fixtureBody != null && fixtureBody.enabled, "Combat input fixture requires the native collision body");
+                    fixtureFloor = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    fixtureFloor.name = "SWYF isolated combat input floor";
+                    fixtureFloor.transform.position = new Vector3(1050, 50 + fixtureBody.bounds.min.y - fixtureOriginalPosition.y - .12f, 1050);
+                    fixtureFloor.transform.localScale = new Vector3(20, .2f, 20);
+                    Physics.SyncTransforms();
+                    fixtureTeleport.Invoke(fixtureController, new object[] { new Vector3(1050, 50, 1050), true }); manager.Rig.Recenter();
+                    yield return new WaitForSecondsRealtime(.8f);
+                    Require(!manager.Rig.HeadObstructed, "Positive combat input fixture did not obtain a clear head position");
+                }
                 float deadline = Time.realtimeSinceStartup + 10;
                 while (Mirror.NetworkTime.time < Convert.ToDouble(nextFire.Invoke(combatWeapon, null)))
                 { Require(Time.realtimeSinceStartup < deadline, "Native punch cooldown never expired"); yield return null; }
@@ -226,6 +265,11 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 attack.Invoke(null, new object[] { false }); manager.Pointer.Cancel();
                 if (paused) toggle.Invoke(null, null);
                 probe.UnpatchSelf(); combatWeapon = null;
+                if (fixtureFloor != null)
+                {
+                    fixtureTeleport.Invoke(fixtureController, new object[] { fixtureOriginalPosition, true }); manager.Rig.Recenter();
+                    Destroy(fixtureFloor);
+                }
             }
         }
     }

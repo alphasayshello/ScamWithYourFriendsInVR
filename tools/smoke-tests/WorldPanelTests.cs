@@ -68,17 +68,29 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             object[] captured = { doc, button, new Ray(center + elementMatrix.MultiplyVector(Vector3.right * 250) - normal, normal), Vector3.zero };
             Check((bool)drag.Invoke(null, captured), "Captured drag lost the world document outside the element");
             Check(Vector3.Distance((Vector3)captured[3], position) > 0.01f, "Captured world drag did not update coordinates");
-            if (Array.IndexOf(Environment.GetCommandLineArgs(), "--swyf-pair-client") >= 0)
+            bool pairWorld = Array.IndexOf(Environment.GetCommandLineArgs(), "--swyf-pair-client") >= 0;
+            if (pairWorld || Array.IndexOf(Environment.GetCommandLineArgs(), "--swyf-vr-smoke-tests") >= 0)
             {
                 float until = Time.realtimeSinceStartup + 45;
+                if (!pairWorld)
+                {
+                    while (VRManager.Instance?.Ready != true)
+                    { Check(Time.realtimeSinceStartup < until, "World UI mock session did not become ready"); yield return null; }
+                    var helper = FindFirstObjectByType<LocalPairHarness>();
+                    Check(helper != null, "World UI mock pose helper missing");
+                    typeof(LocalPairHarness).GetMethod("InitializeMockPose", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(helper, null);
+                }
                 do
                 {
                     yield return new WaitForEndOfFrame();
-                    Check(Time.realtimeSinceStartup < until, "World UI controller integration did not become ready/discover its document");
-                } while (!Mirror.NetworkClient.ready || Mirror.NetworkClient.localPlayer == null
+                    Check(Time.realtimeSinceStartup < until, "World UI controller integration not ready: interactive=" + VRManager.Instance?.Interactive
+                        + "; blocked=" + VRManager.Instance?.Rig?.HeadObstructed + "; hand=" + VRManager.Instance?.Rig?.Right?.IsTracked
+                        + "; discovered=" + VRManager.Instance?.UI?.WorldDocuments.Contains(doc));
+                } while (pairWorld && (!Mirror.NetworkClient.ready || Mirror.NetworkClient.localPlayer == null)
                     || VRManager.Instance?.Interactive != true || VRManager.Instance.Rig.Head == null
                     || VRManager.Instance.Rig.HeadObstructed || !VRManager.Instance.Rig.Right.IsTracked || !VRManager.Instance.UI.WorldDocuments.Contains(doc));
                 var manager = VRManager.Instance;
+                bool originalOcclusion = Plugin.OccludeFloatingUI.Value;
                 MethodInfo tick = typeof(VRPointer).GetMethod("LateUpdate", instance);
                 void Input(string name, bool value) => manager.Input.GetType().GetProperty(name).SetValue(manager.Input, value);
                 void Aim() => manager.Rig.Right.Aim.SetPositionAndRotation(ray.origin, Quaternion.LookRotation(ray.direction));
@@ -99,15 +111,19 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     wall.transform.SetPositionAndRotation(center - normal * 0.5f, Quaternion.LookRotation(normal));
                     wall.transform.localScale = new Vector3(0.5f, 0.5f, 0.05f);
                     Physics.SyncTransforms();
-                    Aim(); Input("TriggerUp", false);
-                    tick.Invoke(manager.Pointer, null);
-                    Check(!manager.Pointer.HasPanelHit, "Native world UI ray passed through world geometry");
+                    foreach (bool floatingOcclusion in new[] { true, false })
+                    {
+                        Plugin.OccludeFloatingUI.Value = floatingOcclusion;
+                        Aim(); Input("TriggerUp", false); tick.Invoke(manager.Pointer, null);
+                        Check(!manager.Pointer.HasPanelHit, "Native world UI ray passed through world geometry; floating occlusion=" + floatingOcclusion);
+                    }
                     wall.SetActive(false);
                     Logger.LogInfo("SMOKE PASS: controller ray activates native world UI and respects world occlusion");
                 }
                 finally
                 {
                     Input("Trigger", false); Input("TriggerDown", false); Input("TriggerUp", false);
+                    Plugin.OccludeFloatingUI.Value = originalOcclusion;
                     manager.Pointer.Cancel();
                 }
             }

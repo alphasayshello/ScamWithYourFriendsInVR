@@ -158,7 +158,8 @@ namespace ScamWithYourFriendsInVR.UI
             Ray ray = new Ray(manager.Rig.Right.Aim.position + direction * BeamOffset, direction);
             float nearest = 10f;
             Transform player = GameAdapter.LocalPlayer?.transform;
-            int hitCount = Plugin.OccludeFloatingUI.Value ? Physics.RaycastNonAlloc(ray, worldHits, 10f, ~(1 << 2), QueryTriggerInteraction.Ignore) : 0;
+            bool occludeFloating = Plugin.OccludeFloatingUI.Value;
+            int hitCount = occludeFloating ? Physics.RaycastNonAlloc(ray, worldHits, 10f, ~(1 << 2), QueryTriggerInteraction.Ignore) : 0;
             for (int i = 0; i < hitCount; i++)
             {
                 RaycastHit wall = worldHits[i];
@@ -208,7 +209,7 @@ namespace ScamWithYourFriendsInVR.UI
             float nativeLimit = nearest;
             bool nativeSurfaces = manager.UI.Panels.Exists(p => p != null && p.PhysicalPresenter);
             int nativeHits = manager.UI.WorldDocuments.Count == 0 && !nativeSurfaces ? 0
-                : Physics.RaycastNonAlloc(ray, worldHits, 10f, ~(1 << 2), QueryTriggerInteraction.Ignore);
+                : occludeFloating ? hitCount : Physics.RaycastNonAlloc(ray, worldHits, 10f, ~(1 << 2), QueryTriggerInteraction.Ignore);
             foreach (VRPanelSurface surface in manager.UI.Panels)
             {
 

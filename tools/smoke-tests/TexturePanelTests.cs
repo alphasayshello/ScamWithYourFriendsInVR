@@ -70,7 +70,8 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             renderer.enabled = false;
             Check(!surface.Intersect(ray, out _, out _, out _), "Disabled native renderer consumed input");
             renderer.enabled = true;
-            if (Array.IndexOf(Environment.GetCommandLineArgs(), "--swyf-pair-client") >= 0)
+            bool pairTexture = Array.IndexOf(Environment.GetCommandLineArgs(), "--swyf-pair-client") >= 0;
+            if (pairTexture || Array.IndexOf(Environment.GetCommandLineArgs(), "--swyf-vr-smoke-tests") >= 0)
             {
                 float until = Time.realtimeSinceStartup + 45;
                 VRPanelSurface discovered = null;
@@ -79,11 +80,12 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     // Observe readiness after native camera/pose updates too.
                     yield return new WaitForEndOfFrame();
                     Check(Time.realtimeSinceStartup < until, "Texture presenter was not automatically discovered/ready");
-                } while (!Mirror.NetworkClient.ready || Mirror.NetworkClient.localPlayer == null
+                } while (pairTexture && (!Mirror.NetworkClient.ready || Mirror.NetworkClient.localPlayer == null)
                     || VRManager.Instance?.Interactive != true || VRManager.Instance.Rig.Head == null
                     || VRManager.Instance.Rig.HeadObstructed || !VRManager.Instance.Rig.Right.IsTracked
                     || (discovered = VRManager.Instance.UI.Panels.FirstOrDefault(p => p != null && p.NativePresenter && p.Document == doc)) == null);
                 var manager = VRManager.Instance;
+                bool originalOcclusion = Plugin.OccludeFloatingUI.Value;
                 var tick = typeof(VRPointer).GetMethod("LateUpdate", instance);
                 void Input(string name, bool value) => manager.Input.GetType().GetProperty(name).SetValue(manager.Input, value);
                 void Aim() => manager.Rig.Right.Aim.SetPositionAndRotation(ray.origin, Quaternion.LookRotation(ray.direction));
@@ -109,12 +111,16 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     var wall = Own(GameObject.CreatePrimitive(PrimitiveType.Cube));
                     wall.transform.SetPositionAndRotation(center - normal * .5f, Quaternion.LookRotation(normal));
                     wall.transform.localScale = new Vector3(.5f, .5f, .05f); Physics.SyncTransforms();
-                    Aim(); tick.Invoke(manager.Pointer, null);
-                    Check(!manager.Pointer.HasPanelHit, "Native texture ray passed through a world obstacle");
+                    foreach (bool floatingOcclusion in new[] { true, false })
+                    {
+                        Plugin.OccludeFloatingUI.Value = floatingOcclusion;
+                        Aim(); tick.Invoke(manager.Pointer, null);
+                        Check(!manager.Pointer.HasPanelHit, "Native texture ray passed through a world obstacle; floating occlusion=" + floatingOcclusion);
+                    }
                     wall.SetActive(false);
                     Logger.LogInfo("SMOKE PASS: discovered texture presenter controller click and world occlusion");
                 }
-                finally { Input("Trigger", false); Input("TriggerDown", false); Input("TriggerUp", false); manager.Pointer.Cancel(); }
+                finally { Plugin.OccludeFloatingUI.Value = originalOcclusion; Input("Trigger", false); Input("TriggerDown", false); Input("TriggerUp", false); manager.Pointer.Cancel(); }
             }
             surface.Restore();
             Check(meshObject != null && renderer.enabled && renderer.sharedMaterial == material && material.GetTexture("_BaseMap") == texture
