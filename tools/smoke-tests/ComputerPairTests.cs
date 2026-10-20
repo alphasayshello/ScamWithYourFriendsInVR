@@ -440,6 +440,9 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     var phoneChecks = TestNativePhone(os, surface);
                     try { while (phoneChecks.MoveNext()) yield return phoneChecks.Current; }
                     finally { (phoneChecks as IDisposable)?.Dispose(); }
+                    var recordingChecks = TestNativeRecording(os, surface);
+                    try { while (recordingChecks.MoveNext()) yield return recordingChecks.Current; }
+                    finally { (recordingChecks as IDisposable)?.Dispose(); }
                     var callChecks = TestNativeCall(os, surface);
                     try { while (callChecks.MoveNext()) yield return callChecks.Current; }
                     finally { (callChecks as IDisposable)?.Dispose(); }
