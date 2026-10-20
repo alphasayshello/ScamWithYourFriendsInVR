@@ -32,7 +32,7 @@
 - Eighteen native scam-app windows pass controller window controls. Four enabled forms also pass controller focus, scrolling to clipped controls and empty-submit validation. Native notification dismissal works. Typing, successful submissions, payouts and dialogue-specific controls still need checking.
 - Tic-Tac-Toe passes a complete native solo round with controller moves, opponent replies, a locked result and New Game reset. Multiplayer search reaches the native server's waiting state and cancels back to idle. Matched games, rematches and headset usability still need checking.
 - Head turns now drive the local model, with body turning kept separate from view rotation.
-- Eye calibration rejects mesh bounds far from the player or the native camera reference, preventing those stale positions from replacing the authored eye anchor. Long teleports, role changes and headset comfort still need more checking.
+- Eye calibration rejects displaced mesh bounds and keeps a sensible body-relative eye offset while native camera smoothing catches up after a teleport. Ragdoll head fallback now uses the current role's chest hierarchy. Long teleports, role changes and headset comfort still need more checking.
 - VR options inside General settings provide larger controls for recentering, desktop placement, seated comfort, menu distance, aiming, laser visibility, turning and scene resolution.
 - Camera ownership now follows the spectated player; tracked arms release control during ragdoll, hiding and spectating. These transitions still need full gameplay checking.
 - Moving around your room now moves the collision body while keeping the headset aligned. Leaning, walls, stairs and in-game chairs need more checking.

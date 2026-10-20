@@ -33,14 +33,14 @@ namespace ScamWithYourFriendsInVR.Camera
             return true;
         }
 
-        internal bool TryHeadPosition(Transform player, out Vector3 position)
+        internal bool TryHeadPosition(Transform player, Transform chest, out Vector3 position)
         {
             position = default;
             if (player == null) return false;
             Scan(player);
             foreach (Transform head in heads)
             {
-                if (head == null || !head.gameObject.activeInHierarchy) continue;
+                if (head == null || !head.gameObject.activeInHierarchy || chest == null || !head.IsChildOf(chest)) continue;
                 position = head.position + Vector3.up * (.12f * Mathf.Clamp(player.lossyScale.y, .5f, 2f));
                 return true;
             }
@@ -48,7 +48,17 @@ namespace ScamWithYourFriendsInVR.Camera
         }
 
         internal static bool NearAuthoredEye(Transform player, Vector3 meshEye, Vector3 authoredEye)
-            => (meshEye - authoredEye).sqrMagnitude <= Mathf.Pow(Mathf.Clamp(player.lossyScale.y, .5f, 2f), 2);
+        {
+            float allowance = .35f * Mathf.Clamp(player.lossyScale.y, .5f, 2f);
+            return (meshEye - authoredEye).sqrMagnitude <= allowance * allowance;
+        }
+
+        internal static bool ValidStandingOffset(Transform player, Vector3 offset)
+        {
+            float scale = Mathf.Clamp(player.lossyScale.y, .5f, 2f);
+            return offset.y > .1f * scale && offset.y < 4f * scale
+                && offset.x * offset.x + offset.z * offset.z < .16f * scale * scale;
+        }
 
         private void Scan(Transform player)
         {

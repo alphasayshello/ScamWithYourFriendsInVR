@@ -40,8 +40,28 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             Check(!(bool)near.Invoke(null, new object[] { root.transform, center, center + Vector3.forward * 2 }),
                 "A stale eye near the body but far from its authored camera was accepted");
             root.transform.localScale = Vector3.one * 2;
-            Check((bool)near.Invoke(null, new object[] { root.transform, center, center + Vector3.up * 1.5f }),
+            Check((bool)near.Invoke(null, new object[] { root.transform, center, center + Vector3.up * .6f }),
                 "Eye adjustment allowance did not respect avatar scale");
+            root.transform.localScale = Vector3.one;
+            var standing = type.GetMethod("ValidStandingOffset", BindingFlags.Static | BindingFlags.NonPublic);
+            Check((bool)standing.Invoke(null, new object[] { root.transform, new Vector3(.05f, 1.85f, .1f) })
+                && !(bool)standing.Invoke(null, new object[] { root.transform, new Vector3(0, 1.85f, -.6f) })
+                && !(bool)standing.Invoke(null, new object[] { root.transform, Vector3.zero }),
+                "Standing calibration accepted a displaced/transient native eye or rejected a normal body offset");
+            Transform ChestHead(string name, float x, out Transform chest)
+            {
+                chest = Own(new GameObject(name)).transform; chest.SetParent(root.transform, false);
+                chest.localPosition = new Vector3(x, 1, 0);
+                var head = Own(new GameObject("mixamorig:Head")).transform; head.SetParent(chest, false);
+                head.localPosition = Vector3.up * .3f; return head;
+            }
+            ChestHead("other active role", 10, out _);
+            Transform correct = ChestHead("current ragdoll role", 0, out var selectedChest);
+            anchor = Activator.CreateInstance(type, true);
+            var headPick = type.GetMethod("TryHeadPosition", BindingFlags.Instance | BindingFlags.NonPublic);
+            object[] headArgs = { root.transform, selectedChest, Vector3.zero };
+            Check((bool)headPick.Invoke(anchor, headArgs) && Vector3.Distance((Vector3)headArgs[2], correct.position + Vector3.up * .12f) < .001f,
+                "Ragdoll head fallback selected another active role's skeleton");
         }
     }
 }

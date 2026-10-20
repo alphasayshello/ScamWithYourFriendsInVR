@@ -202,11 +202,11 @@ namespace ScamWithYourFriendsInVR.Camera
             Vector3 fallbackPosition = default;
             if (player != null && ragdolled && nativeEye == null)
             {
-                fallbackEye = avatarEyes.TryHeadPosition(player, out fallbackPosition);
+                Transform chest = GameAdapter.Call(ragdoll, "GetCurrentChestTransform") as Transform
+                    ?? GameAdapter.Call(ragdoll, "GetCurrentHipsTransform") as Transform;
+                fallbackEye = avatarEyes.TryHeadPosition(player, chest, out fallbackPosition);
                 if (!fallbackEye)
                 {
-                    Transform chest = GameAdapter.Call(ragdoll, "GetCurrentChestTransform") as Transform
-                        ?? GameAdapter.Call(ragdoll, "GetCurrentHipsTransform") as Transform;
                     if (chest != null) { fallbackEye = true; fallbackPosition = chest.position + Vector3.up * .25f; }
                 }
             }
@@ -219,7 +219,21 @@ namespace ScamWithYourFriendsInVR.Camera
                     ? (savedParent != null ? savedParent.TransformPoint(savedPosition) : savedPosition) : nativeEye.position;
                 if (!ragdolled && avatarEyes.TryPosition(player, out Vector3 eyePosition)
                     && VRAvatarEyeAnchor.NearAuthoredEye(player, eyePosition, anchor)) anchor = eyePosition;
-                if (!hasEyeOffset || ragdolled || Time.unscaledTime < anchorSettlesUntil) { eyeOffset = anchor - player.position; hasEyeOffset = true; }
+                if (!hasEyeOffset || ragdolled || Time.unscaledTime < anchorSettlesUntil)
+                {
+                    Vector3 candidateOffset = anchor - player.position;
+                    if (ragdolled || sitting || VRAvatarEyeAnchor.ValidStandingOffset(player, candidateOffset))
+                    { eyeOffset = candidateOffset; hasEyeOffset = true; }
+                    else if (!VRAvatarEyeAnchor.ValidStandingOffset(player, eyeOffset))
+                    {
+                        // Native camera/model smoothing can still be crossing the
+                        // map after a teleport. Keep the last sensible offset, or
+                        // use the capsule top until the authored eye settles.
+                        float top = body != null ? body.center.y + body.height * .5f : 1.85f;
+                        float scale = body != null ? Mathf.Abs(body.transform.lossyScale.y) : Mathf.Clamp(player.lossyScale.y, .5f, 2f);
+                        eyeOffset = Vector3.up * top * scale;
+                    }
+                }
                 // Native eye meshes follow animation and the tracked head bone.
                 // Reusing their new position each frame feeds tracking back into itself.
                 anchor = player.position + eyeOffset;
