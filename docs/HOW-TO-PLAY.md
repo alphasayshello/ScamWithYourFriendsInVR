@@ -40,6 +40,8 @@ In Phone, use the language button to open its language list. The speaker icon mu
 
 When a caller rings, point at the incoming call card's answer button and press trigger, or choose **Decline** to reject it. Answering opens the phone from that card; use **Hang Up** inside the phone to end the call. Older builds may show **Pick Up** directly inside the phone instead. Call ownership and permissions stay with the native game.
 
+In AnyViewer, enter the fictional connection code supplied by your current caller, then click **Connect**. Double-click a desktop folder to open its files, and double-click a text file to open Notepad. Use the explorer arrows to go back, forward or up. The power/unplug button in the remote desktop taskbar disconnects. If another app covers a control, minimise that app first.
+
 `[UI] PhysicalDesktop = true` keeps the UI attached to the original monitor by default. In settings → General → VR options, change COMPUTER SCREEN to FLOATING if you prefer a closer desktop. App licences, sign-in and game progression still follow the native game; opening a window does not guarantee that every workflow has passed VR testing.
 
 ## Interact and fight

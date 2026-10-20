@@ -50,7 +50,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             type.GetProperty("TriggerUp").SetValue(__instance, false);
         }
 
-        private IEnumerator ClickAppControl(VRPanelSurface surface, VisualElement control)
+        private IEnumerator ClickAppControl(VRPanelSurface surface, VisualElement control, bool cancelAfter = true)
         {
             bool previousAim = appFixtureAim;
             VRPanelSurface previousSurface = appFixtureSurface;
@@ -117,7 +117,8 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             finally
             {
                 holdInjectedTrigger = false;
-                Set("Trigger", false); Set("TriggerDown", false); Set("TriggerUp", false); manager.Pointer.Cancel();
+                Set("Trigger", false); Set("TriggerDown", false); Set("TriggerUp", false);
+                if (cancelAfter) manager.Pointer.Cancel();
                 appFixtureAim = previousAim; appFixtureSurface = previousSurface; appFixturePoint = previousPoint;
             }
         }

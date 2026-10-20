@@ -181,6 +181,9 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 var validSubmission = TestNativeScamSubmission(os, surface);
                 try { while (validSubmission.MoveNext()) yield return validSubmission.Current; }
                 finally { (validSubmission as IDisposable)?.Dispose(); }
+                var remoteDesktop = TestNativeRemoteDesktop(os, surface);
+                try { while (remoteDesktop.MoveNext()) yield return remoteDesktop.Current; }
+                finally { (remoteDesktop as IDisposable)?.Dispose(); }
             }
             finally
             {

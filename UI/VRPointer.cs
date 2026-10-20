@@ -469,7 +469,15 @@ namespace ScamWithYourFriendsInVR.UI
             clickRoot?.RegisterCallback<ClickEvent>(ObserveClick, TrickleDown.TrickleDown);
             if (clickButton != null) clickButton.clicked += ObserveButton;
         }
-        private void ObserveClick(ClickEvent evt) { if (evt.pointerId == ToolkitPointerId) observedClick = true; }
+        private void ObserveClick(ClickEvent evt)
+        {
+            if (evt.pointerId != ToolkitPointerId) return;
+            // Toolkit's click detector counts independently of the supplied pen
+            // events and can reset between controller samples. Keep generated
+            // clicks consistent with our button-aware double-click window.
+            GameAdapter.Write(evt, "clickCount", Mathf.Max(1, clickCount));
+            observedClick = true;
+        }
         private void ObserveButton() => observedButton = true;
         private void EndClickWatch()
         {
