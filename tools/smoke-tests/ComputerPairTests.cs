@@ -422,6 +422,13 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 yield return new WaitForSecondsRealtime(0.5f);
                 if (singleComputer)
                 {
+                    if (singleRecording)
+                    {
+                        var focusedRecording = TestNativeRecording(os, surface);
+                        try { while (focusedRecording.MoveNext()) yield return focusedRecording.Current; }
+                        finally { (focusedRecording as IDisposable)?.Dispose(); }
+                        yield break;
+                    }
                     var browserChecks = TestNativeBrowserScroll(os);
                     try { while (browserChecks.MoveNext()) yield return browserChecks.Current; }
                     finally { (browserChecks as IDisposable)?.Dispose(); }

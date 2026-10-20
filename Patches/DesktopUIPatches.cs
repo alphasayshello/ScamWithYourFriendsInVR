@@ -1,6 +1,7 @@
 using System;
 using HarmonyLib;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace ScamWithYourFriendsInVR.Patches
 {
@@ -29,12 +30,35 @@ namespace ScamWithYourFriendsInVR.Patches
             catch (Exception ex) { GameAdapter.Report("Desktop camera preview patch", ex); }
             try
             {
+                Type app = ReflectionTypes.Find("Kolkata.UI.KolkataOsBanditCamApp");
+                var build = app == null ? null : AccessTools.Method(app, "BuildPlaybackControls");
+                if (build != null) harmony.Patch(build, postfix: new HarmonyMethod(typeof(DesktopUIPatches), nameof(AfterPlaybackControls)));
+                else Plugin.Log.LogWarning("Native playback controls unavailable; controller seek compatibility unverified.");
+            }
+            catch (Exception ex) { GameAdapter.Report("Desktop playback seek patch", ex); }
+            try
+            {
                 Type type = ReflectionTypes.Find("MonitorInteractable");
                 var method = type == null ? null : AccessTools.Method(type, "GetNormalizedMousePosition", Type.EmptyTypes);
                 if (method == null) { Plugin.Log.LogWarning("Monitor cursor method unavailable; animation cursor remains native."); return; }
                 harmony.Patch(method, prefix: new HarmonyMethod(typeof(DesktopUIPatches), nameof(BeforeNormalizedMouse)));
             }
             catch (Exception ex) { GameAdapter.Report("Monitor cursor patch", ex); }
+        }
+
+        private static void AfterPlaybackControls(object __instance)
+        {
+            if (!(GameAdapter.Read(__instance, "m_playbackSeek") is Slider seek)) return;
+            bool Controller(int pointerId) => pointerId == UI.VRPointer.ToolkitPointerId
+                && VRManager.Instance != null && VRManager.Instance.Ready;
+            // The slider handle consumes pointer-down before bubble callbacks on
+            // the slider. Mark seeking first so its refresh timer cannot fight a drag.
+            seek.RegisterCallback<PointerDownEvent>(evt =>
+            { if (Controller(evt.pointerId)) GameAdapter.Write(__instance, "m_seekingPlayback", true); }, TrickleDown.TrickleDown);
+            seek.RegisterCallback<PointerUpEvent>(evt =>
+            { if (evt.pointerId == UI.VRPointer.ToolkitPointerId) GameAdapter.Write(__instance, "m_seekingPlayback", false); }, TrickleDown.TrickleDown);
+            seek.RegisterCallback<PointerCaptureOutEvent>(evt =>
+            { if (evt.pointerId == UI.VRPointer.ToolkitPointerId) GameAdapter.Write(__instance, "m_seekingPlayback", false); }, TrickleDown.TrickleDown);
         }
 
         private static void BeforeBrowserStartup(object __instance)
