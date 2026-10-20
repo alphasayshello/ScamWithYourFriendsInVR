@@ -26,6 +26,8 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             catch (Exception ex) { Logger.LogError("SMOKE FAIL: pose context: " + ex.GetBaseException()); }
             try { TestGameAdapterCache(); Logger.LogInfo("SMOKE PASS: cached game fields, properties, owner types, inherited methods and optional arguments"); }
             catch (Exception ex) { Logger.LogError("SMOKE FAIL: game adapter cache: " + ex.GetBaseException()); }
+            try { TestEyeAnchor(); Logger.LogInfo("SMOKE PASS: valid eye averaging, stale world-bounds rejection and restored renderer anchoring"); }
+            catch (Exception ex) { Logger.LogError("SMOKE FAIL: eye anchor: " + ex.GetBaseException()); }
             try { TestPointerAim(); Logger.LogInfo("SMOKE PASS: adaptive aim stability, direct fast turns, reset and contextual pointer visibility"); }
             catch (Exception ex) { Logger.LogError("SMOKE FAIL: pointer aim: " + ex.GetBaseException()); }
             try { TestRoomScale(); Logger.LogInfo("SMOKE PASS: room-scale body follows tracking without double movement and respects walls/disabled controllers"); }

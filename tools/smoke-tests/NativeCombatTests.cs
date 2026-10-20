@@ -165,7 +165,16 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     Physics.SyncTransforms();
                     fixtureTeleport.Invoke(fixtureController, new object[] { new Vector3(1050, 50, 1050), true }); manager.Rig.Recenter();
                     yield return new WaitForSecondsRealtime(.8f);
+                    Logger.LogInfo("COMBAT FLOOR: root=" + Mirror.NetworkClient.localPlayer.transform.position
+                        + "; head=" + manager.Rig.Head.transform.position + "; authored=" + manager.Rig.AuthoredEye
+                        + "; blocked=" + manager.Rig.HeadObstructed + "; overlaps="
+                        + string.Join(",", Physics.OverlapSphere(manager.Rig.Head.transform.position, .11f,
+                            Plugin.CollisionMask.Value, QueryTriggerInteraction.Ignore)
+                            .Where(c => !c.transform.IsChildOf(Mirror.NetworkClient.localPlayer.transform))
+                            .Select(c => c.name + "/" + c.transform.parent?.name)));
                     Require(!manager.Rig.HeadObstructed, "Positive combat input fixture did not obtain a clear head position");
+                    Require(Vector3.ProjectOnPlane(manager.Rig.Head.transform.position - Mirror.NetworkClient.localPlayer.transform.position, Vector3.up).magnitude < .5f,
+                        "Teleport left the centered mock headset displaced horizontally from its native body");
                 }
                 float deadline = Time.realtimeSinceStartup + 10;
                 while (Mirror.NetworkTime.time < Convert.ToDouble(nextFire.Invoke(combatWeapon, null)))

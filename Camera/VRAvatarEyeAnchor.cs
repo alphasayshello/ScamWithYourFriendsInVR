@@ -21,6 +21,10 @@ namespace ScamWithYourFriendsInVR.Camera
                 if (eye == null || !eye.enabled || !eye.gameObject.activeInHierarchy) continue;
                 Bounds bounds = eye.bounds;
                 if (bounds.extents.magnitude < .001f || bounds.extents.magnitude > .6f) continue;
+                // Renderer world bounds can lag behind a teleport when offscreen.
+                // Never calibrate the tracked origin to a mesh far from its owner.
+                float reach = 4f * Mathf.Clamp(player.lossyScale.y, .5f, 2f);
+                if ((bounds.center - player.position).sqrMagnitude > reach * reach) continue;
                 position += bounds.center;
                 count++;
             }
@@ -42,6 +46,9 @@ namespace ScamWithYourFriendsInVR.Camera
             }
             return false;
         }
+
+        internal static bool NearAuthoredEye(Transform player, Vector3 meshEye, Vector3 authoredEye)
+            => (meshEye - authoredEye).sqrMagnitude <= Mathf.Pow(Mathf.Clamp(player.lossyScale.y, .5f, 2f), 2);
 
         private void Scan(Transform player)
         {

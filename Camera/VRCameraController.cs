@@ -217,7 +217,8 @@ namespace ScamWithYourFriendsInVR.Camera
                 // Avoid feeding an already tracked camera back into its origin.
                 anchor = fallbackEye ? fallbackPosition : nativeEye == Head.transform || nativeEye.IsChildOf(Head.transform)
                     ? (savedParent != null ? savedParent.TransformPoint(savedPosition) : savedPosition) : nativeEye.position;
-                if (!ragdolled && avatarEyes.TryPosition(player, out Vector3 eyePosition)) anchor = eyePosition;
+                if (!ragdolled && avatarEyes.TryPosition(player, out Vector3 eyePosition)
+                    && VRAvatarEyeAnchor.NearAuthoredEye(player, eyePosition, anchor)) anchor = eyePosition;
                 if (!hasEyeOffset || ragdolled || Time.unscaledTime < anchorSettlesUntil) { eyeOffset = anchor - player.position; hasEyeOffset = true; }
                 // Native eye meshes follow animation and the tracked head bone.
                 // Reusing their new position each frame feeds tracking back into itself.
