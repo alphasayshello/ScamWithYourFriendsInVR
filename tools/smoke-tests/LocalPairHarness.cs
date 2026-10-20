@@ -108,14 +108,15 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 while (!NetworkClient.ready || NetworkClient.localPlayer == null || VRManager.Instance?.Rig?.Head == null)
                 { Require(Time.realtimeSinceStartup < readyDeadline, "Focused test host did not become ready"); yield return null; }
                 yield return new WaitForSecondsRealtime(1.5f);
-                IEnumerator test = singleCombat ? TestCombatTransitions() : TestNativeRagdoll();
+                bool heldWeapons = Environment.GetCommandLineArgs().Contains("--swyf-only-held-weapon-tests");
+                IEnumerator test = singleCombat ? heldWeapons ? TestNativeHeldWeapons() : TestCombatTransitions() : TestNativeRagdoll();
                 try
                 {
                     while (true)
                     {
                         bool more;
                         try { more = test.MoveNext(); }
-                        catch (Exception ex) { Logger.LogError((singleCombat ? "COMBAT TRANSITION FAIL: " : "RAGDOLL FAIL: ") + ex.GetBaseException()); break; }
+                        catch (Exception ex) { Logger.LogError((singleCombat ? heldWeapons ? "HELD WEAPON FAIL: " : "COMBAT TRANSITION FAIL: " : "RAGDOLL FAIL: ") + ex.GetBaseException()); break; }
                         if (!more) break;
                         yield return test.Current;
                     }
@@ -202,6 +203,19 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     }
                 }
                 finally { (boostTest as IDisposable)?.Dispose(); }
+                IEnumerator heldWeaponTest = TestNativeHeldWeapons();
+                try
+                {
+                    while (true)
+                    {
+                        bool more;
+                        try { more = heldWeaponTest.MoveNext(); }
+                        catch (Exception ex) { Logger.LogError("HELD WEAPON FAIL: " + ex.GetBaseException()); break; }
+                        if (!more) break;
+                        yield return heldWeaponTest.Current;
+                    }
+                }
+                finally { (heldWeaponTest as IDisposable)?.Dispose(); }
                 IEnumerator combatTest = TestNativeCombat();
                 try
                 {

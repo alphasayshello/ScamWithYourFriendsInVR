@@ -172,15 +172,21 @@ namespace ScamWithYourFriendsInVR.Patches
         }
         private static Vector3 RayPosition(Transform value) => Redirect(value) ? VRManager.Instance.Rig.Right.Aim.position : value.position;
         private static Vector3 RayForward(Transform value) => Redirect(value) ? VRManager.Instance.Rig.Right.Aim.forward : value.forward;
+        private static Vector3 RayRight(Transform value) => Redirect(value) ? VRManager.Instance.Rig.Right.Aim.right : value.right;
+        private static Vector3 RayUp(Transform value) => Redirect(value) ? VRManager.Instance.Rig.Right.Aim.up : value.up;
 
         private static IEnumerable<CodeInstruction> WeaponRays(IEnumerable<CodeInstruction> instructions)
         {
             MethodInfo original = AccessTools.Method(typeof(UnityEngine.Camera), "ScreenPointToRay", new[] { typeof(Vector3) });
             MethodInfo forward = AccessTools.PropertyGetter(typeof(Transform), "forward");
+            MethodInfo right = AccessTools.PropertyGetter(typeof(Transform), "right");
+            MethodInfo up = AccessTools.PropertyGetter(typeof(Transform), "up");
             foreach (CodeInstruction instruction in instructions)
             {
                 if (instruction.Calls(original)) { instruction.opcode = OpCodes.Call; instruction.operand = AccessTools.Method(typeof(PlayerPatches), nameof(WeaponRay)); }
                 else if (instruction.Calls(forward)) { instruction.opcode = OpCodes.Call; instruction.operand = AccessTools.Method(typeof(PlayerPatches), nameof(RayForward)); }
+                else if (instruction.Calls(right)) { instruction.opcode = OpCodes.Call; instruction.operand = AccessTools.Method(typeof(PlayerPatches), nameof(RayRight)); }
+                else if (instruction.Calls(up)) { instruction.opcode = OpCodes.Call; instruction.operand = AccessTools.Method(typeof(PlayerPatches), nameof(RayUp)); }
                 yield return instruction;
             }
         }
