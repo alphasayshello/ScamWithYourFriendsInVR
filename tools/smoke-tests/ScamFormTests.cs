@@ -109,6 +109,15 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             int windows = 0, fields = 0, locked = 0, noEntry = 0;
             try
             {
+                if (Environment.GetCommandLineArgs().Contains("--swyf-only-remote-tests"))
+                {
+                    unlock.Invoke(game, new object[] { true, true }); refresh.Invoke(os, null);
+                    yield return null; yield return null;
+                    var remote = TestNativeRemoteDesktop(os, surface);
+                    try { while (remote.MoveNext()) yield return remote.Current; }
+                    finally { (remote as IDisposable)?.Dispose(); }
+                    yield break;
+                }
                 scamFormPlayer = AccessTools.Property(Find("KolkataOsPlayer"), "LocalPlayerInstance").GetValue(null);
                 Require(scamFormPlayer != null, "Native scam form player missing");
                 scamFormSubmissions = 0;

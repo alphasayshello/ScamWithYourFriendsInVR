@@ -1,4 +1,8 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Reflection;
+using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -38,12 +42,102 @@ namespace ScamWithYourFriendsInVR.Patches
             catch (Exception ex) { GameAdapter.Report("Desktop playback seek patch", ex); }
             try
             {
+                Type app = ReflectionTypes.Find("Kolkata.UI.KolkataOsAnyViewerApp");
+                var build = app == null ? null : AccessTools.Method(app, "BuildAudioPlayer");
+                if (build != null) harmony.Patch(build, postfix: new HarmonyMethod(typeof(DesktopUIPatches), nameof(AfterRemoteAudioControls)));
+                else Plugin.Log.LogWarning("Native remote audio controls unavailable; controller layout compatibility unverified.");
+                var create = app == null ? null : AccessTools.Method(app, "CreateRemoteApp");
+                if (create != null) harmony.Patch(create, postfix: new HarmonyMethod(typeof(DesktopUIPatches), nameof(AfterRemoteAppCreated)));
+                else Plugin.Log.LogWarning("Native remote window creation unavailable; controller window bounds compatibility unverified.");
+                if (app != null) PatchRemoteAudioClock(harmony, app);
+            }
+            catch (Exception ex) { GameAdapter.Report("Remote audio layout patch", ex); }
+            try
+            {
                 Type type = ReflectionTypes.Find("MonitorInteractable");
                 var method = type == null ? null : AccessTools.Method(type, "GetNormalizedMousePosition", Type.EmptyTypes);
                 if (method == null) { Plugin.Log.LogWarning("Monitor cursor method unavailable; animation cursor remains native."); return; }
                 harmony.Patch(method, prefix: new HarmonyMethod(typeof(DesktopUIPatches), nameof(BeforeNormalizedMouse)));
             }
             catch (Exception ex) { GameAdapter.Report("Monitor cursor patch", ex); }
+        }
+
+        private static void AfterRemoteAppCreated(object __instance, object __0)
+        {
+            if (VRManager.Instance == null || !VRManager.Instance.Ready) return;
+            string id = GameAdapter.Read(__0, "id") as string;
+            var apps = GameAdapter.Read(__instance, "m_appsById") as IDictionary;
+            var window = id == null ? null : GameAdapter.Read(apps?[id], "Window") as VisualElement;
+            var layer = GameAdapter.Read(__instance, "m_windowLayer") as VisualElement;
+            if (window == null || layer == null) return;
+            void Fit()
+            {
+                if (VRManager.Instance == null || !VRManager.Instance.Ready || window.panel == null || layer.panel != window.panel || !window.visible
+                    || window.resolvedStyle.display == DisplayStyle.None) return;
+                float width = layer.layout.width - 8, height = layer.layout.height - 8;
+                if (!(width > 100) || !(height > 100)) return;
+                // Native app dimensions assume a larger remote desktop. Keep
+                // titlebars and bottom controls above its taskbar after opening,
+                // restoring or resizing the enclosing AnyViewer window.
+                if (Mathf.Abs(window.style.maxWidth.value.value - width) > .25f) window.style.maxWidth = width;
+                if (Mathf.Abs(window.style.maxHeight.value.value - height) > .25f) window.style.maxHeight = height;
+                float left = window.resolvedStyle.left, top = window.resolvedStyle.top;
+                float x = Mathf.Clamp(left, 4, Mathf.Max(4, layer.layout.width - Mathf.Min(window.layout.width, width) - 4));
+                float y = Mathf.Clamp(top, 4, Mathf.Max(4, layer.layout.height - Mathf.Min(window.layout.height, height) - 4));
+                if (!float.IsNaN(x) && Mathf.Abs(x - left) > .25f) window.style.left = x;
+                if (!float.IsNaN(y) && Mathf.Abs(y - top) > .25f) window.style.top = y;
+            }
+            window.RegisterCallback<GeometryChangedEvent>(_ => Fit());
+            layer.RegisterCallback<GeometryChangedEvent>(_ => Fit());
+            Fit();
+        }
+
+        private static void PatchRemoteAudioClock(Harmony harmony, Type app)
+        {
+            bool patched = false;
+            foreach (Type closure in app.GetNestedTypes(BindingFlags.Public | BindingFlags.NonPublic))
+                foreach (var method in closure.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly))
+                {
+                    if (!method.Name.Contains("<BuildAudioPlayer>") || method.ReturnType != typeof(void) || method.GetParameters().Length != 0) continue;
+                    harmony.Patch(method, transpiler: new HarmonyMethod(typeof(DesktopUIPatches), nameof(RemoteAudioClock)));
+                    patched = true;
+                }
+            if (!patched) Plugin.Log.LogWarning("Native remote audio clock callback unavailable; empty-clip compatibility unverified.");
+        }
+
+        private static IEnumerable<CodeInstruction> RemoteAudioClock(IEnumerable<CodeInstruction> instructions)
+        {
+            var getter = AccessTools.PropertyGetter(typeof(AudioSource), "time");
+            var safe = AccessTools.Method(typeof(DesktopUIPatches), nameof(ReadRemoteAudioTime));
+            bool replaced = false;
+            foreach (var instruction in instructions)
+            {
+                if (instruction.Calls(getter)) { instruction.opcode = OpCodes.Call; instruction.operand = safe; replaced = true; }
+                yield return instruction;
+            }
+            if (!replaced) Plugin.Log.LogWarning("Native remote audio clock getter changed; empty-clip compatibility unverified.");
+        }
+
+        // The closed native audio app still updates its elapsed label. Unity's
+        // empty-source time getter emits warnings each tick; its intended value
+        // remains zero until a clip is loaded. Loaded playback stays native.
+        private static float ReadRemoteAudioTime(AudioSource source) => source != null && source.clip != null ? source.time : 0;
+
+        private static void AfterRemoteAudioControls(object __0)
+        {
+            if (VRManager.Instance == null || !VRManager.Instance.Ready) return;
+            var content = GameAdapter.Read(__0, "WindowContent") as VisualElement;
+            var controls = content?.Q<VisualElement>(className: "kolkata-rdp-media--audio");
+            if (controls == null || controls.parent != content) return;
+            // The native fixed-height audio window clips its volume row. Keep
+            // the original controls and timers, with controller scrolling when
+            // their minimum content height exceeds the window's client area.
+            var scroll = new ScrollView(ScrollViewMode.Vertical) { name = "swyf-remote-audio-scroll" };
+            scroll.style.flexGrow = 1; scroll.style.flexShrink = 1; scroll.style.minHeight = 0;
+            scroll.horizontalScrollerVisibility = ScrollerVisibility.Hidden;
+            controls.style.height = StyleKeyword.Auto;
+            controls.style.flexGrow = 0; controls.style.flexShrink = 0;
+            controls.RemoveFromHierarchy(); scroll.Add(controls); content.Add(scroll);
         }
 
         private static void AfterPlaybackControls(object __instance)

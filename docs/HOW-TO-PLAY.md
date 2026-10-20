@@ -42,6 +42,8 @@ When a caller rings, point at the incoming call card's answer button and press t
 
 In AnyViewer, enter the fictional connection code supplied by your current caller, then click **Connect**. Double-click a desktop folder to open its files, and double-click a text file to open Notepad. Use the explorer arrows to go back, forward or up. The power/unplug button in the remote desktop taskbar disconnects. If another app covers a control, minimise that app first.
 
+Remote photos have fit/fill controls. Audio and video use play/pause buttons, a seek bar and a volume slider. Point inside the audio window and use the stick to scroll to controls below the view. Remote windows stay within AnyViewer's usable desktop area, including when you maximise or restore it.
+
 `[UI] PhysicalDesktop = true` keeps the UI attached to the original monitor by default. In settings → General → VR options, change COMPUTER SCREEN to FLOATING if you prefer a closer desktop. App licences, sign-in and game progression still follow the native game; opening a window does not guarantee that every workflow has passed VR testing.
 
 ## Interact and fight

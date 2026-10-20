@@ -198,6 +198,9 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 finally { (action as IDisposable)?.Dispose(); }
                 Require(Editor()?.value == edited, "Native remote text edit did not survive closing/reopening its window");
                 Logger.LogInfo("REMOTE DESKTOP PASS: real connection opens generated fictional files; controller double-click, folders, back/forward and notepad edit/reopen work; save payout intercepted");
+                var media = TestNativeRemoteMedia(owner, surface, entries);
+                try { while (media.MoveNext()) yield return media.Current; }
+                finally { (media as IDisposable)?.Dispose(); }
                 for (int cycle = 0; cycle < 2; cycle++)
                 {
                     action = RemoteClick(surface, Content()?.Q<Button>(className: "kolkata-taskbar-power"));
