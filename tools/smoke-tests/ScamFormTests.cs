@@ -121,6 +121,9 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 finally { (notification as IDisposable)?.Dispose(); }
                 unlock.Invoke(game, new object[] { true, true }); refresh.Invoke(os, null);
                 yield return null; yield return null;
+                var ticTacToe = TestNativeTicTacToe(os, surface);
+                try { while (ticTacToe.MoveNext()) yield return ticTacToe.Current; }
+                finally { (ticTacToe as IDisposable)?.Dispose(); }
                 var apps = Member(os, "m_appsById") as IDictionary;
                 string[] ids = apps.Keys.Cast<string>().Where(id => Member(Member(apps[id], "Definition"), "contentType") as string == "conversationScam")
                     .OrderBy(id => id).ToArray();

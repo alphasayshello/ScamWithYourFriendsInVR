@@ -122,3 +122,7 @@ A separate native notification center checks controller dismissal without trigge
 ## selected uGUI input
 
 The core suite requires the VR input module to dispatch one selected-control update per Process call, stop dispatch on XR focus loss and follow selection changes or clearing. This restores the event pump used by uGUI/TMP keyboard editing; it does not establish physical Windows keyboard input, keyboard-layout or IME compatibility. UI Toolkit has a separate input path.
+
+## native tic-tac-toe
+
+Within the same temporary lobby app-access scope, an isolated native Tic-Tac-Toe owner replaces the app content while preserving the original board and children. Controller clicks play a complete solo round through native opponent logic, require the displayed marks/enabled squares to agree with the native board, and restart using New Game. Multiplayer mode must disable solo moves; Find Coworker must reach the real server's Waiting snapshot, and Cancel Search must return to Idle. Cleanup closes/disposes only the fixture owner, restores the original content/owner and releases queue participation through native close handling. No saved licence is bought or granted. This does not cover matched network games, rematches, cross-account play or headset usability.

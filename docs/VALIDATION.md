@@ -30,6 +30,7 @@
 - Right-B UI drags now stay held until B is released, and switching between trigger and B no longer creates accidental double clicks.
 - Selected uGUI controls now receive the per-frame updates used for physical keyboard editing, with input paused when XR focus is lost. Actual physical typing, keyboard layouts and IME still need checking.
 - Eighteen native scam-app windows pass controller window controls. Four enabled forms also pass controller focus, scrolling to clipped controls and empty-submit validation. Native notification dismissal works. Typing, successful submissions, payouts and dialogue-specific controls still need checking.
+- Tic-Tac-Toe passes a complete native solo round with controller moves, opponent replies, a locked result and New Game reset. Multiplayer search reaches the native server's waiting state and cancels back to idle. Matched games, rematches and headset usability still need checking.
 - Head turns now drive the local model, with body turning kept separate from view rotation.
 - VR options inside General settings provide larger controls for recentering, desktop placement, seated comfort, menu distance, aiming, laser visibility, turning and scene resolution.
 - Camera ownership now follows the spectated player; tracked arms release control during ragdoll, hiding and spectating. These transitions still need full gameplay checking.
