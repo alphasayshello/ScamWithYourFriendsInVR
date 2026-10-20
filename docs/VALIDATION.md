@@ -28,13 +28,15 @@
 - The browser gets more startup time under VR load. New game-copy installs start with a fresh browser cache.
 - Paint passes simulated controller drawing, saved-image, undo/redo, held right-B brush resizing and focus-cancellation checks. Printing, artwork browsing, clipboard actions, text entry and headset usability still need checking.
 - Right-B UI drags now stay held until B is released, and switching between trigger and B no longer creates accidental double clicks.
+- Selected uGUI controls now receive the per-frame updates used for physical keyboard editing, with input paused when XR focus is lost. Actual physical typing, keyboard layouts and IME still need checking.
+- Eighteen native scam-app windows pass controller window controls. Four enabled forms also pass controller focus, scrolling to clipped controls and empty-submit validation. Native notification dismissal works. Typing, successful submissions, payouts and dialogue-specific controls still need checking.
 - Head turns now drive the local model, with body turning kept separate from view rotation.
 - VR options inside General settings provide larger controls for recentering, desktop placement, seated comfort, menu distance, aiming, laser visibility, turning and scene resolution.
 - Camera ownership now follows the spectated player; tracked arms release control during ragdoll, hiding and spectating. These transitions still need full gameplay checking.
 - Moving around your room now moves the collision body while keeping the headset aligned. Leaning, walls, stairs and in-game chairs need more checking.
 - The computer camera app uses the desk webcam independently of the headset camera. Its shutter, saved photo pixels, gallery/Live switching, photo deletion and preview shutdown pass simulated checks. Watermarks, clipboard sharing and headset usability still need checking.
 - Scamazon week navigation and controller hold-to-buy input pass simulated checks, including early release and focus cancellation. Spending, delivery, purchased-store tabs and actual purchase outcomes still need checking.
-- Phone language-popup selection, caller-audio mute/unmute, volume dragging and phone-input mute pass simulated checks with an available PC microphone. Real native networked callers also pass controller decline, answer/hang-up and talker/workspace cleanup checks with AI/TTS suppressed. Transfers, live dialogue, speech recognition, other languages and headset audio still need checking.
+- Phone language-popup selection, caller-audio mute/unmute, volume dragging and phone-input mute pass simulated checks with an available PC microphone. Real native networked callers also pass controller decline, answer/hang-up and talker/workspace cleanup checks with AI/TTS and automatic recording suppressed for test callers. Transfers, recording, live dialogue, speech recognition, other languages and headset audio still need checking.
 - Remote voice position follows the tracked head, but how that sounds to other players still needs checking.
 
 ## Not finished

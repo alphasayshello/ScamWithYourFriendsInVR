@@ -77,7 +77,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 object product = productCtor.Invoke(new object[] { "VR fixture", "Isolated UI hold", "0", "", "", "", "Hold", Enum.Parse(actionType, "PhysicalProduct"), "swyf-vr-fixture", 1 });
                 AccessTools.Method(type, "ConfigureHoldToBuy").Invoke(store, new[] { action, product, (object)0 });
                 yield return null; yield return new WaitForEndOfFrame();
-                probe.Patch(tick, prefix: new HarmonyMethod(typeof(LocalPairHarness), nameof(AimAppFixture)));
+
                 appFixtureSurface = surface; appFixturePoint = action.worldBound.center; appFixtureAim = true;
                 Trigger(true);
                 Require(action.ClassListContains("scamazon__buy-button--charging") && action.HasPointerCapture(VRPointer.ToolkitPointerId),

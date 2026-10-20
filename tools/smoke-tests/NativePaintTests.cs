@@ -82,7 +82,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 Require(paint != null && image?.panel != null && image.contentRect.width > 10 && Texture() != null,
                     "Native paint canvas did not initialize");
                 Require(!DarkCenter(), "Native paint fixture did not start with a blank canvas");
-                probe.Patch(tick, prefix: new HarmonyMethod(typeof(LocalPairHarness), nameof(AimAppFixture)));
+
                 appFixtureSurface = surface; appFixtureAim = true;
                 yield return new WaitForEndOfFrame();
                 Point(.35f, .5f); Trigger(true);

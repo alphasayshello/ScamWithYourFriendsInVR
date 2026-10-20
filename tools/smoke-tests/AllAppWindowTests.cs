@@ -18,6 +18,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
         private static VRPanelSurface appFixtureSurface;
         private static Vector2 appFixturePoint;
         private static bool appFixtureAim;
+        private static float appFixtureScroll;
         private static void AimAppFixture()
         {
             if (!appFixtureAim || appFixtureSurface?.Panel == null) return;
@@ -35,7 +36,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 __instance.GetType().GetProperty("Secondary").SetValue(__instance, true);
                 __instance.GetType().GetProperty("SecondaryDown").SetValue(__instance, false);
             }
-            if (renderedBrowserScroll != 0) __instance.GetType().GetProperty("Move").SetValue(__instance, new Vector2(0, renderedBrowserScroll));
+            if (appFixtureScroll != 0) __instance.GetType().GetProperty("Move").SetValue(__instance, new Vector2(0, appFixtureScroll));
             if (injectFoodJump) __instance.GetType().GetProperty("Jump").SetValue(__instance, true);
             if (injectGiveUp)
             {
@@ -51,6 +52,9 @@ namespace ScamWithYourFriendsInVR.SmokeTests
 
         private IEnumerator ClickAppControl(VRPanelSurface surface, VisualElement control)
         {
+            bool previousAim = appFixtureAim;
+            VRPanelSurface previousSurface = appFixtureSurface;
+            Vector2 previousPoint = appFixturePoint;
             float layoutDeadline = Time.realtimeSinceStartup + 5;
             while (control != null && (control.panel == null || !(control.worldBound.width > 1)) && Time.realtimeSinceStartup < layoutDeadline) yield return null;
             Require(control?.panel != null && control.enabledInHierarchy && control.worldBound.width > 1, "App control is not visible and enabled: " + control + "; panel=" + (control?.panel != null) + "; enabled=" + control?.enabledInHierarchy);
@@ -60,7 +64,17 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             void Aim()
             {
                 Rect bounds = surface.Panel.visualTree.layout;
-                Vector2 center = control.worldBound.center;
+                Rect visible = control.worldBound;
+                for (VisualElement parent = control.parent; parent != null; parent = parent.parent)
+                    if (parent is ScrollView scroll)
+                    {
+                        Rect clip = scroll.contentViewport.worldBound;
+                        visible = Rect.MinMaxRect(Mathf.Max(visible.xMin, clip.xMin + 4), Mathf.Max(visible.yMin, clip.yMin + 4),
+                            Mathf.Min(visible.xMax, clip.xMax - 4), Mathf.Min(visible.yMax, clip.yMax - 4));
+                    }
+                Require(visible.width > 4 && visible.height > 4, "App control is clipped outside its native viewport: " + control.name);
+                Vector2 center = visible.center;
+                appFixtureSurface = surface; appFixturePoint = center; appFixtureAim = true;
                 Vector2 uv = new Vector2(center.x / bounds.width, 1 - center.y / bounds.height);
                 Require(uv.x >= 0 && uv.x <= 1 && uv.y >= 0 && uv.y <= 1, "App control lies outside the desktop texture");
                 Vector3 point = surface.transform.TransformPoint(new Vector3(uv.x - .5f, uv.y - .5f, 0));
@@ -75,6 +89,22 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 Aim(); Set("Trigger", true); Set("TriggerDown", true); Set("TriggerUp", false); tick.Invoke(manager.Pointer, null);
                 Require(manager.Pointer.HasPanelHit, "App control ray missed the desktop");
                 var recipient = Member(manager.Pointer, "pressedElement") as VisualElement;
+                if (recipient != null && recipient != control && !control.Contains(recipient))
+                {
+                    Logger.LogInfo("APP MISS expected: " + control.name + "; rect=" + control.worldBound);
+                    for (var parent = recipient; parent != null; parent = parent.parent)
+                        Logger.LogInfo("APP MISS recipient: " + parent.GetType().Name + "/" + parent.name + "; classes=" + string.Join(",", parent.GetClasses())
+                            + "; rect=" + parent.worldBound);
+                    RenderTexture previous = RenderTexture.active; Texture2D capture = null;
+                    try
+                    {
+                        RenderTexture.active = surface.Texture;
+                        capture = new Texture2D(surface.Texture.width, surface.Texture.height, TextureFormat.RGBA32, false);
+                        capture.ReadPixels(new Rect(0, 0, capture.width, capture.height), 0, 0); capture.Apply();
+                        File.WriteAllBytes(Path.Combine(Path.GetDirectoryName(readyFile), "app-control-miss.png"), capture.EncodeToPNG());
+                    }
+                    finally { RenderTexture.active = previous; if (capture != null) Destroy(capture); }
+                }
                 Require(ReferenceEquals(Member(manager.Pointer, "pressedPanel"), surface) && recipient != null && (recipient == control || control.Contains(recipient)),
                     "App control ray selected another element: " + recipient + "; surface=" + (Member(manager.Pointer, "pressedPanel") as VRPanelSurface)?.name);
                 yield return null;
@@ -88,6 +118,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             {
                 holdInjectedTrigger = false;
                 Set("Trigger", false); Set("TriggerDown", false); Set("TriggerUp", false); manager.Pointer.Cancel();
+                appFixtureAim = previousAim; appFixtureSurface = previousSurface; appFixturePoint = previousPoint;
             }
         }
 

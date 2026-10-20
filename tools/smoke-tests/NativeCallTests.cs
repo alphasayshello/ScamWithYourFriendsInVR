@@ -19,6 +19,11 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             callFixtureDialogueRequests++; __result = Task.CompletedTask; return false;
         }
         private static bool SkipFixtureWarmup(object __instance) => !ReferenceEquals(__instance, callFixtureVoice);
+        private static bool SkipFixtureAutoRecording(object __instance, ref bool __result)
+        {
+            if (!ReferenceEquals(Member(__instance, "m_boundCall"), callFixtureCaller)) return true;
+            __result = false; return false;
+        }
 
         private IEnumerator TestNativeCall(object os, VRPanelSurface surface)
         {
@@ -62,6 +67,8 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 callFixtureVoice = voice; callFixtureDialogueRequests = 0;
                 probe.Patch(process, prefix: new HarmonyMethod(typeof(LocalPairHarness), nameof(SkipFixtureDialogue)));
                 probe.Patch(AccessTools.Method(voiceType, "ServerWarmUpTts"), prefix: new HarmonyMethod(typeof(LocalPairHarness), nameof(SkipFixtureWarmup)));
+                probe.Patch(AccessTools.Method(Find("Kolkata.UI.KolkataOsBanditCamApp"), "IsAutoRecordRequested"),
+                    prefix: new HarmonyMethod(typeof(LocalPairHarness), nameof(SkipFixtureAutoRecording)));
                 SpawnCaller();
                 float deadline = Time.realtimeSinceStartup + 15;
                 while (!ReferenceEquals(Member(os, "m_boundVictimCall"), call))
@@ -103,7 +110,12 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 Require(ReferenceEquals(Member(call, "Networktalker"), voice) && ReferenceEquals(Member(voice, "NetworkcurrentCall"), call)
                     && Member(voice, "IsOnCall") is bool talking && talking, "Native answer did not assign the local player as talker");
                 Require(callFixtureDialogueRequests > 0, "Native answer did not reach its opening dialogue boundary");
+                Require(Member(Member(os, "m_banditCamApp"), "m_autoOwnsRecording") is bool automatic && !automatic,
+                    "Native call fixture started an automatic recording");
                 Logger.LogInfo("CALL PASS: real native caller rings on the desk, controller Pick Up reaches server authority and assigns replicated local talker ownership");
+                var scamForms = TestScamForms(os, surface);
+                try { while (scamForms.MoveNext()) yield return scamForms.Current; }
+                finally { (scamForms as IDisposable)?.Dispose(); }
                 Button hangup = null;
                 deadline = Time.realtimeSinceStartup + 8;
                 while (hangup == null)
@@ -123,7 +135,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 { Require(Time.realtimeSinceStartup < deadline, "Controller Hang Up did not remove the native call and release its computer binding"); yield return null; }
                 Require(Member(workspace, "NetworkactiveCall") as Component == null && Member(voice, "NetworkcurrentCall") as Component == null
                     && Member(voice, "IsOnCall") is bool ended && !ended, "Native hang-up left workspace or talker ownership active");
-                Logger.LogInfo("CALL PASS: controller Hang Up reaches native authority, despawns the caller and clears workspace, computer and local talker state; AI/TTS excluded");
+                Logger.LogInfo("CALL PASS: controller Hang Up reaches native authority, despawns the caller and clears workspace, computer and local talker state; AI/TTS and automatic recording excluded");
             }
             finally
             {

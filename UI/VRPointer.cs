@@ -540,7 +540,13 @@ namespace ScamWithYourFriendsInVR.UI
     {
         private PointerEventData data;
         internal bool IsPressed => data?.pointerPress != null;
-        public override void Process() { }
+        public override void Process()
+        {
+            var manager = VRManager.Instance;
+            if (manager != null && manager.Ready && !manager.Input.HasInputFocus) return;
+            if (eventSystem.currentSelectedGameObject != null)
+                ExecuteEvents.Execute(eventSystem.currentSelectedGameObject, GetBaseEventData(), ExecuteEvents.updateSelectedHandler);
+        }
         public override bool ShouldActivateModule() => isActiveAndEnabled && VRManager.Instance != null && VRManager.Instance.Ready;
         public override bool IsPointerOverGameObject(int pointerId) => data?.pointerEnter != null;
 

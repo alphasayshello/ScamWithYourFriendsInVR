@@ -133,6 +133,8 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             }
             finally { (motionTest as IDisposable)?.Dispose(); }
             if (motionPassed) Logger.LogInfo("SMOKE PASS: grip release ignores rig translation/snap motion, maps physical controller velocity and resets after recenter");
+            try { TestSelectedInput(); Logger.LogInfo("SMOKE PASS: selected uGUI controls receive per-frame keyboard/edit updates, respect XR focus and follow selection changes"); }
+            catch (Exception ex) { Logger.LogError("SMOKE FAIL: selected input: " + ex.GetBaseException()); }
             IEnumerator keyboardTest = TestKeyboard(document);
             bool keyboardPassed = true;
             bool savedKeyboard = Plugin.VirtualKeyboard.Value;
@@ -427,7 +429,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
     }
 
     public sealed class PointerProbe : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IPointerClickHandler,
-        IBeginDragHandler, IDragHandler, IEndDragHandler, IDropHandler, IScrollHandler
+        IBeginDragHandler, IDragHandler, IEndDragHandler, IDropHandler, IScrollHandler, IUpdateSelectedHandler
     {
         public readonly List<string> Events = new List<string>();
         public void OnPointerDown(PointerEventData e) => Events.Add("down");
@@ -438,5 +440,6 @@ namespace ScamWithYourFriendsInVR.SmokeTests
         public void OnEndDrag(PointerEventData e) => Events.Add("end");
         public void OnDrop(PointerEventData e) => Events.Add("drop");
         public void OnScroll(PointerEventData e) => Events.Add("scroll");
+        public void OnUpdateSelected(BaseEventData e) { Events.Add("update"); e.Use(); }
     }
 }

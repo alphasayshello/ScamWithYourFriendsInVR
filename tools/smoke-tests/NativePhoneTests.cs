@@ -29,7 +29,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 languagePrefs[key] = PlayerPrefs.HasKey(key) ? PlayerPrefs.GetString(key) : null;
             var manager = VRManager.Instance;
             var tick = AccessTools.Method(typeof(VRPointer), "LateUpdate");
-            var probe = new Harmony("com.swyf.vr.phonefixture");
+
             void Set(string key, bool value) => manager.Input.GetType().GetProperty(key).SetValue(manager.Input, value);
             float Volume() => Convert.ToSingle(Member(os, "PhoneSpeakerVolume"));
             try
@@ -70,7 +70,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 Require(Mathf.Abs(Volume() - .65f) < .001f, "Controller speaker unmute did not restore its native volume");
                 Logger.LogInfo("PHONE PASS: controller caller-audio mute/unmute updates native speaker volume and restores the previous level");
 
-                probe.Patch(tick, prefix: new HarmonyMethod(typeof(LocalPairHarness), nameof(AimAppFixture)));
+
                 appFixtureSurface = surface; appFixturePoint = volumeButton.worldBound.center; appFixtureAim = true;
                 tick.Invoke(manager.Pointer, null); yield return null; yield return null;
                 var slider = content.Q<Slider>(className: "kolkata-phone-volume-slider");
@@ -108,7 +108,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             finally
             {
                 appFixtureAim = false; appFixtureSurface = null; holdInjectedTrigger = false;
-                Set("Trigger", false); Set("TriggerDown", false); Set("TriggerUp", false); manager.Pointer.Cancel(); probe.UnpatchSelf();
+                Set("Trigger", false); Set("TriggerDown", false); Set("TriggerUp", false); manager.Pointer.Cancel();
                 AccessTools.Method(os.GetType(), "SetPhoneSpeakerVolume").Invoke(os, new object[] { originalVolume });
                 AccessTools.Method(os.GetType(), "SetPhoneMicrophoneMuted").Invoke(os, new object[] { originalMute });
                 AccessTools.Field(builder.GetType(), "m_phoneVolumeBeforeMute").SetValue(builder, beforeMute);

@@ -26,7 +26,6 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             AccessTools.Field(__instance.GetType(), "localStorage").SetValue(__instance, false);
             AccessTools.Field(__instance.GetType(), "cachePath").SetValue(__instance, new FileInfo(renderedBrowserProfile));
         }
-        private static float renderedBrowserScroll;
 
         private IEnumerator TestRenderedBrowser(object os, VRPanelSurface surface)
         {
@@ -122,7 +121,7 @@ document.onmousedown=()=>{s.downs++;report()};document.onmouseup=()=>{s.ups++;s.
                 Color pixel = texture.GetPixel(texture.width / 2, texture.height / 2);
                 Require(Vector3.Distance(new Vector3(pixel.r, pixel.g, pixel.b), new Vector3(18 / 255f, 52 / 255f, 86 / 255f)) < .12f,
                     "CEF page texture did not render its local background: " + pixel);
-                probe.Patch(tick, prefix: new HarmonyMethod(typeof(LocalPairHarness), nameof(AimAppFixture)));
+
                 appFixtureSurface = surface; appFixtureAim = true;
                 yield return new WaitForEndOfFrame();
                 PagePoint(120, 75); Trigger(true);
@@ -142,9 +141,9 @@ document.onmousedown=()=>{s.downs++;report()};document.onmouseup=()=>{s.ups++;s.
                 while (wait.MoveNext()) yield return wait.Current;
                 Logger.LogInfo("RENDERED BROWSER PASS: real DOM drag/move and off-page controller release");
 
-                PagePoint(600, 250); renderedBrowserScroll = -1;
+                PagePoint(600, 250); appFixtureScroll = -1;
                 yield return new WaitForSecondsRealtime(.8f);
-                renderedBrowserScroll = 0;
+                appFixtureScroll = 0;
                 manager.Input.GetType().GetProperty("Move").SetValue(manager.Input, Vector2.zero);
                 wait = Await(s => s.scroll > 50, "Rendered webpage did not scroll from controller stick");
                 while (wait.MoveNext()) yield return wait.Current;
@@ -185,7 +184,7 @@ document.onmousedown=()=>{s.downs++;report()};document.onmouseup=()=>{s.ups++;s.
             }
             finally
             {
-                appFixtureAim = false; renderedBrowserScroll = 0; appFixtureSurface = null; holdInjectedTrigger = false;
+                appFixtureAim = false; appFixtureScroll = 0; appFixtureSurface = null; holdInjectedTrigger = false;
                 Set("Trigger", false); Set("TriggerDown", false); Set("TriggerUp", false);
                 Set("HasInputFocus", true); Set("SecondaryDown", false);
                 manager.Input.GetType().GetProperty("Move").SetValue(manager.Input, Vector2.zero); manager.Pointer.Cancel();
