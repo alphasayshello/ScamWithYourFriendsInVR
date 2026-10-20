@@ -41,6 +41,7 @@ namespace ScamWithYourFriendsInVR.Input
 
         private void Update()
         {
+            VRMouseFallback.Ensure();
             InputDevice head = InputDevices.GetDeviceAtXRNode(XRNode.Head);
             InputDevice left = InputDevices.GetDeviceAtXRNode(XRNode.LeftHand);
             InputDevice right = InputDevices.GetDeviceAtXRNode(XRNode.RightHand);

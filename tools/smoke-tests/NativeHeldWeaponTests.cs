@@ -68,6 +68,11 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             var pointerTick = AccessTools.Method(manager.Pointer.GetType(), "LateUpdate");
             var toggle = AccessTools.Method(typeof(VRManager).Assembly.GetType("ScamWithYourFriendsInVR.Patches.GameAdapter"), "TogglePause");
             bool originalFocus = manager.Input.HasInputFocus, paused = false;
+            Type mouseType = Find("UnityEngine.InputSystem.Mouse"), inputSystem = Find("UnityEngine.InputSystem.InputSystem"), deviceType = Find("UnityEngine.InputSystem.InputDevice");
+            bool noMouse = Environment.GetCommandLineArgs().Contains("--swyf-no-desktop-mouse-tests");
+            object[] originalMice = Array.Empty<object>();
+            object originalMouse = null;
+            object[] Mice() => ((IEnumerable)AccessTools.Property(inputSystem, "devices").GetValue(null)).Cast<object>().Where(mouseType.IsInstanceOfType).ToArray();
             void Input(string name, bool value) => manager.Input.GetType().GetProperty(name).SetValue(manager.Input, value);
             void Press()
             {
@@ -82,6 +87,17 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             }
             try
             {
+                if (noMouse)
+                {
+                    Require(mouseType != null && inputSystem != null && deviceType != null, "Native input device types missing");
+                    originalMouse = AccessTools.Property(mouseType, "current").GetValue(null); originalMice = Mice();
+                    foreach (object mouse in originalMice) AccessTools.Method(inputSystem, "RemoveDevice", new[] { deviceType }).Invoke(null, new[] { mouse });
+                    Require(Mice().Length == 0 && AccessTools.Property(mouseType, "current").GetValue(null) == null, "Private no-mouse fixture still has an active mouse");
+                    yield return new WaitForSecondsRealtime(.7f);
+                    Require(Mice().Length == 1 && Member(Mice()[0], "name") as string == "SWYFVRPointer"
+                        && ReferenceEquals(Mice()[0], AccessTools.Property(mouseType, "current").GetValue(null)), "VR compatibility mouse did not become the sole current device");
+                    Logger.LogInfo("MOUSE FALLBACK PASS: removing only this private game's mouse devices creates one current VR compatibility device");
+                }
                 probe.Patch(AccessTools.Method(weaponType, "FireRayFromRay"), prefix: new HarmonyMethod(typeof(LocalPairHarness), nameof(CaptureHeldWeaponRay)));
                 probe.Patch(AccessTools.Method(weaponType, "FireShotgun"), prefix: new HarmonyMethod(typeof(LocalPairHarness), nameof(BeginHeldSpread)),
                     postfix: new HarmonyMethod(typeof(LocalPairHarness), nameof(EndHeldSpread)));
@@ -151,6 +167,24 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     NetworkServer.Destroy(item); item = null; heldWeaponFixture = null;
                     yield return null;
                 }
+                if (noMouse)
+                {
+                    Type fallback = Find("ScamWithYourFriendsInVR.Input.VRMouseFallback");
+                    Require(fallback != null && Mice().Length == 1, "VR compatibility device was duplicated during weapon input");
+                    bool ready = manager.Ready;
+                    try
+                    {
+                        AccessTools.Property(typeof(VRManager), "Ready").SetValue(manager, false);
+                        AccessTools.Method(fallback, "Release").Invoke(null, null);
+                        AccessTools.Method(fallback, "Ensure").Invoke(null, null);
+                        Require(Mice().Length == 0, "Inactive VR readiness created or retained a compatibility mouse");
+                    }
+                    finally { AccessTools.Property(typeof(VRManager), "Ready").SetValue(manager, ready); }
+                    AccessTools.Method(fallback, "Ensure").Invoke(null, null);
+                    Require(Mice().Length == 1 && ReferenceEquals(Mice()[0], AccessTools.Property(mouseType, "current").GetValue(null)),
+                        "VR compatibility device did not recover after readiness/cleanup");
+                    Logger.LogInfo("MOUSE FALLBACK PASS: repeated input keeps one device; readiness loss prevents creation and cleanup/recovery restores one current device");
+                }
             }
             finally
             {
@@ -165,6 +199,17 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     NetworkServer.Destroy(item);
                 }
                 probe.UnpatchSelf(); heldWeaponFixture = null; heldWeaponRays.Clear();
+                if (noMouse)
+                {
+                    var fallback = Find("ScamWithYourFriendsInVR.Input.VRMouseFallback");
+                    if (fallback != null) AccessTools.Method(fallback, "Release").Invoke(null, null);
+                    foreach (object mouse in originalMice)
+                        if (!(bool)Member(mouse, "added")) AccessTools.Method(inputSystem, "AddDevice", new[] { deviceType }).Invoke(null, new[] { mouse });
+                    if (originalMouse != null && (bool)Member(originalMouse, "added")) AccessTools.Method(mouseType, "MakeCurrent").Invoke(originalMouse, null);
+                    Require(Mice().Length == originalMice.Length && originalMice.All(m => (bool)Member(m, "added"))
+                        && !Mice().Any(m => Member(m, "name") as string == "SWYFVRPointer"), "Private mouse devices did not restore after VR compatibility cleanup");
+                    Logger.LogInfo("MOUSE FALLBACK PASS: compatibility cleanup removes only its owned device and restores the private game's original mouse objects");
+                }
                 teleport.Invoke(controller, new object[] { originalPosition, true }); manager.Rig.Recenter(); Destroy(floor);
             }
         }

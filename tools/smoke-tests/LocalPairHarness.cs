@@ -94,7 +94,13 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             }
             while (!(Find("BackendAuthenticationStatusSource")?.GetProperty("CanStartGame", BindingFlags.Static | BindingFlags.Public)?.GetValue(null) is bool signedIn && signedIn))
             {
-                if (Time.realtimeSinceStartup > deadline) { Logger.LogError("PAIR: native sign-in did not become ready"); yield break; }
+                if (Time.realtimeSinceStartup > deadline)
+                {
+                    object status = AccessTools.Property(Find("BackendAuthenticationStatusSource"), "Current")?.GetValue(null);
+                    Logger.LogError("PAIR: native sign-in did not become ready; status=" + Member(status, "BackendAuthStatus")
+                        + "; http=" + Member(status, "LastAuthenticationResponseCode") + "; clockIncorrect=" + Member(status, "SystemClockIncorrect"));
+                    yield break;
+                }
                 yield return null;
             }
             object result = host

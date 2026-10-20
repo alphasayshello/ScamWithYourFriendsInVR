@@ -52,6 +52,8 @@ Use right grip for native pickup/hold interactions, then release to drop. While 
 
 For charged weapons such as the shotgun and sniper, keep the right trigger held until the game fires. Release early to cancel charging. Opening settings or losing VR input focus cancels the charge too; release and press again to start a new shot. Shotgun spread follows the controller's orientation as well as its aim direction.
 
+You can aim and fire with the controllers even when no PC mouse is connected. No extra setup is needed for this.
+
 Physical controller movement supplies inherited release speed. Snap turns, rig repositioning and recentering no longer count as a hand swing; recentering keeps your grip-held item held. The game's normal drop impulse and velocity limit still apply.
 
 Left trigger interacts with the world under your right-hand aim, so you can open a computer while holding an item. Like the native interact key, it can drop your held item when aimed at empty space. Left grip + left trigger is reserved for pee and does not also interact. Release either grip or trigger to end attack input. Opening a menu or pointing onto UI also cancels it. Right A jumps. Cooldowns, stamina, ownership and server rules still apply.
