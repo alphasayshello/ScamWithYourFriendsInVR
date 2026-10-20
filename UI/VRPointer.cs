@@ -526,6 +526,7 @@ namespace ScamWithYourFriendsInVR.UI
 
         private void Hide() { if (line != null) line.enabled = false; if (dot != null) dot.SetActive(false); }
         internal void ResetAim() => aimFilter.Reset();
+        internal void ResetGrabMotion() => grab.ResetMotion();
         private void RestoreModules() { foreach (var pair in modules) if (pair.Key != null) pair.Key.enabled = pair.Value; modules.Clear(); }
         private void OnDestroy()
         {

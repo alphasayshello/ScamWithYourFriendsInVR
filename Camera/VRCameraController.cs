@@ -110,6 +110,7 @@ namespace ScamWithYourFriendsInVR.Camera
         public void Recenter()
         {
             VRManager.Instance?.Pointer?.ResetAim();
+            VRManager.Instance?.Pointer?.ResetGrabMotion();
             inputs.Clear();
             SubsystemManager.GetSubsystems(inputs);
             floorOrigin = false;

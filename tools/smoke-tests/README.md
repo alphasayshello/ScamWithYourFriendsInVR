@@ -105,6 +105,10 @@ The private computer fixture opens the real idle Phone app and uses controller r
 
 The call fixture spawns the game's actual victim-call prefab on its owned idle workstation and calls native server initialization. Controller Decline must remove the ringing caller without assigning a talker or starting dialogue. A fresh caller then uses the incoming popup's Answer control when present, or the older phone's Pick Up control, waits for native server talker ownership and uses Hang Up. Both server/client spawn registries, workstation binding and local player call state must clear. AI dialogue task execution is intercepted only for the fixture caller, and TTS warmup only for its local voice component. Tutorial progression must be inactive; the fixture does not commit switchboard caller history, restores workstation cooldown and force-cleans an unfinished caller on failure. It verifies real call authority and UI input, not AI/TTS responses, transfers, completed scams or cross-account networking.
 
+## grip release motion
+
+The core suite moves and rotates the live tracking frame while keeping the controller's local pose still; release velocity must stay zero. Real local controller movement must map through the current tracking frame, and motion reset/recenter must discard a pose jump. It also checks that calling the rig's real Recenter method resets the live pointer's grip-motion sample. The private host retains a native held item through recenter, observes the real drop command without intercepting it, and requires one zero-inherited-velocity release from a stationary controller. This is motion/authority coverage, not headset throwing feel or every item variant.
+
 ## ui tree cleanup
 
 The core suite repeats twenty attach/repair/detach cycles on a nested button tree. Each detach must release its corner snapshots and restore the native styles. Reattachment must reapply the render correction. VR shutdown must restore attached styles and remove callbacks so later native style changes survive a detach.

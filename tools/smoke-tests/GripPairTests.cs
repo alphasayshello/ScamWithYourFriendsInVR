@@ -10,6 +10,12 @@ namespace ScamWithYourFriendsInVR.SmokeTests
 {
     public sealed partial class LocalPairHarness
     {
+        private static object gripDropOwner;
+        private static Vector3 gripDropVelocity;
+        private static int gripDropCommands;
+        private static void ObserveGripDrop(object __instance, Vector3 inheritedVelocity)
+        { if (ReferenceEquals(__instance, gripDropOwner)) { gripDropVelocity = inheritedVelocity; gripDropCommands++; } }
+
         private IEnumerator TestGrip()
         {
             float until = Time.realtimeSinceStartup + 90;
@@ -43,6 +49,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             object grip = Activator.CreateInstance(gripType, true);
             MethodInfo tick = AccessTools.Method(gripType, "Tick");
             MethodInfo cancel = AccessTools.Method(gripType, "Cancel");
+            var motionProbe = new Harmony("com.swyf.vr.gripmotionfixture");
             void Input(string name, bool value) => manager.Input.GetType().GetProperty(name).SetValue(manager.Input, value);
             try
             {
@@ -70,6 +77,12 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 Require(ReferenceEquals(gripType.GetField("acquired", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(grip), item), "Grip did not adopt the native held item");
                 yield return new WaitForSecondsRealtime(0.25f);
                 Require(ReferenceEquals(Member(interactor, "CurrentHeldItem"), item), "Grip press dropped an already-held item");
+                AccessTools.Method(gripType, "ResetMotion").Invoke(grip, null);
+                manager.Rig.Recenter(); yield return null;
+                Require(ReferenceEquals(Member(interactor, "CurrentHeldItem"), item), "Recenter dropped the native grip-owned item");
+                gripDropOwner = interactor; gripDropCommands = 0;
+                motionProbe.Patch(AccessTools.Method(interactor.GetType(), "CmdDropHeldItem"),
+                    prefix: new HarmonyMethod(typeof(LocalPairHarness), nameof(ObserveGripDrop)));
                 Input("Grip", false); Input("GripUp", true);
                 tick.Invoke(grip, new object[] { false });
                 Input("GripUp", false);
@@ -79,6 +92,10 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     Require(Time.realtimeSinceStartup < until, "Grip release drop command was not replicated");
                     yield return null;
                 }
+                Require(gripDropCommands == 1 && gripDropVelocity.sqrMagnitude < .001f,
+                    "Native release inherited artificial recenter velocity or dispatched more than once: " + gripDropCommands + "/" + gripDropVelocity);
+                motionProbe.UnpatchSelf(); gripDropOwner = null;
+                Logger.LogInfo("GRIP PASS: recenter preserves native held ownership and a stationary controller sends one zero-velocity release command");
                 Logger.LogInfo("GRIP PASS: native pickup replication, grip adoption without premature drop, release through native drop command; item=" + item.name);
                 yield return new WaitForSecondsRealtime(0.4f);
                 Collider collider = item.GetComponentsInChildren<Collider>().FirstOrDefault(c => c.enabled && !c.isTrigger);
@@ -152,6 +169,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             }
             finally
             {
+                motionProbe.UnpatchSelf(); gripDropOwner = null;
                 Input("Grip", false); Input("GripDown", false); Input("GripUp", false);
                 cancel.Invoke(grip, null);
                 if (item != null && ReferenceEquals(Member(interactor, "CurrentHeldItem"), item))

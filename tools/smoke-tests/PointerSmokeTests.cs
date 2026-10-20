@@ -118,6 +118,21 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             }
             finally { (cornerTest as IDisposable)?.Dispose(); }
             if (cornersPassed) Logger.LogInfo("SMOKE PASS: repeated UI tree detach releases corner snapshots, reattach repairs and shutdown restores native styles");
+            IEnumerator motionTest = TestGripMotion();
+            bool motionPassed = true;
+            try
+            {
+                while (true)
+                {
+                    bool more;
+                    try { more = motionTest.MoveNext(); }
+                    catch (Exception ex) { motionPassed = false; Logger.LogError("SMOKE FAIL: grip motion: " + ex.GetBaseException()); break; }
+                    if (!more) break;
+                    yield return motionTest.Current;
+                }
+            }
+            finally { (motionTest as IDisposable)?.Dispose(); }
+            if (motionPassed) Logger.LogInfo("SMOKE PASS: grip release ignores rig translation/snap motion, maps physical controller velocity and resets after recenter");
             IEnumerator keyboardTest = TestKeyboard(document);
             bool keyboardPassed = true;
             bool savedKeyboard = Plugin.VirtualKeyboard.Value;

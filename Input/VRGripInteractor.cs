@@ -10,14 +10,21 @@ namespace ScamWithYourFriendsInVR.Input
         private float deadline;
         private Vector3 previousPosition, velocity;
         private bool havePrevious;
+        private Transform motionSpace;
 
         internal void Tick(bool overUI)
         {
             VRManager manager = VRManager.Instance;
             Transform hand = manager.Rig.Right.transform;
-            if (havePrevious && Time.unscaledDeltaTime > 0)
-                velocity = (hand.position - previousPosition) / Time.unscaledDeltaTime;
-            previousPosition = hand.position; havePrevious = true;
+            if (motionSpace != hand.parent) ResetMotion();
+            motionSpace = hand.parent;
+            Vector3 position = hand.localPosition;
+            // Measure physical controller movement before applying the rig's
+            // artificial turn/translation, then express it in the current world frame.
+            Vector3 delta = position - previousPosition;
+            velocity = havePrevious && Time.unscaledDeltaTime > 0
+                ? (motionSpace != null ? motionSpace.TransformVector(delta) : delta) / Time.unscaledDeltaTime : Vector3.zero;
+            previousPosition = position; havePrevious = true;
             Component interactor = GameAdapter.Interactor;
             Component held = GameAdapter.Read(interactor, "CurrentHeldItem") as Component;
             // A native swap/drop can replace the item between grip frames.
@@ -55,7 +62,10 @@ namespace ScamWithYourFriendsInVR.Input
             if (interacting) GameAdapter.Interact(false);
             if (acquired != null && manager?.Rig?.Right != null)
                 GameAdapter.Drop(acquired, Vector3.zero, manager.Rig.Right.transform);
-            acquired = null; pending = false; interacting = false; havePrevious = false;
+            acquired = null; pending = false; interacting = false; ResetMotion();
         }
+
+        internal void ResetMotion()
+        { havePrevious = false; velocity = Vector3.zero; motionSpace = null; }
     }
 }
