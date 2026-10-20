@@ -15,7 +15,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
     [DefaultExecutionOrder(30550)]
     public sealed partial class LocalPairHarness : BaseUnityPlugin
     {
-        private bool host, client, active, queued, placed, singleComputer, singleRagdoll, singleCombat, singleRecording;
+        private bool host, client, active, queued, placed, singleComputer, singleRagdoll, singleCombat, singleRecording, singleScam;
         private string readyFile;
         private Harmony patches;
         private float nextReport, placedAt, connectedAt;
@@ -43,7 +43,8 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             singleRagdoll = args.Contains("--swyf-single-ragdoll-tests");
             singleCombat = args.Contains("--swyf-single-combat-tests");
             singleRecording = args.Contains("--swyf-single-recording-tests");
-            singleComputer = args.Contains("--swyf-single-computer-tests") || singleRagdoll || singleCombat || singleRecording;
+            singleScam = args.Contains("--swyf-single-scam-tests");
+            singleComputer = args.Contains("--swyf-single-computer-tests") || singleRagdoll || singleCombat || singleRecording || singleScam;
             host = args.Contains("--swyf-pair-host") || singleComputer; client = args.Contains("--swyf-pair-client");
             active = host || client;
             if (!active) return;
@@ -134,7 +135,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     yield return test.Current;
                 }
             }
-            if (singleRecording) yield break;
+            if (singleRecording || singleScam) yield break;
             if ((client || singleComputer) && queued && Environment.GetCommandLineArgs().Contains("--swyf-pair-grip-tests"))
             {
                 IEnumerator test = TestGrip();

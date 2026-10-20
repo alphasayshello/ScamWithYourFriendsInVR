@@ -176,7 +176,11 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 Require(windows == ids.Length && fields > 0 && scamFormSubmissions == 0,
                     "Scam form fixture did not cover every exposed window and at least one enabled native entry");
                 Logger.LogInfo("SCAM FORM PASS: windows=" + windows + "; focused/validated entries=" + fields + "; native locked entries=" + locked
-                    + "; dialogue/special panels=" + noEntry + "; typing, successful submissions and payouts not covered");
+                    + "; dialogue/special panels=" + noEntry + "; window/empty-validation coverage only");
+                probe.UnpatchSelf();
+                var validSubmission = TestNativeScamSubmission(os, surface);
+                try { while (validSubmission.MoveNext()) yield return validSubmission.Current; }
+                finally { (validSubmission as IDisposable)?.Dispose(); }
             }
             finally
             {
