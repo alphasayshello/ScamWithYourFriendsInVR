@@ -25,6 +25,35 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             var toggle = AccessTools.Method(adapter, "TogglePause");
             var tick = AccessTools.Method(typeof(UI.VRPointer), "LateUpdate");
             bool savedAlwaysPointer = Plugin.AlwaysShowPointer.Value;
+            void CheckModalGameplay(string screen)
+            {
+                Type patches = typeof(VRManager).Assembly.GetType("ScamWithYourFriendsInVR.Patches.PlayerPatches", true);
+                object controller = AccessTools.Property(adapter, "Controller").GetValue(null);
+                var beforeController = AccessTools.Method(patches, "BeforeController");
+                Type bindings = Find("GameInputBindings");
+                string[] names = { "Move", "Jump", "Pee", "FartDown" };
+                object[] values = new object[names.Length];
+                for (int i = 0; i < names.Length; i++) values[i] = manager.Input.GetType().GetProperty(names[i]).GetValue(manager.Input);
+                try
+                {
+                    manager.Pointer.Cancel();
+                    manager.Input.GetType().GetProperty("Move").SetValue(manager.Input, Vector2.one);
+                    foreach (string name in new[] { "Jump", "Pee", "FartDown" }) manager.Input.GetType().GetProperty(name).SetValue(manager.Input, true);
+                    beforeController.Invoke(null, new[] { controller });
+                    bool pee = (bool)AccessTools.Method(bindings, "Held", new[] { typeof(string), typeof(string) }).Invoke(null, new object[] { "Shortcuts", "HoldP" });
+                    bool fart = (bool)AccessTools.Method(bindings, "Pressed", new[] { typeof(string), typeof(string) }).Invoke(null, new object[] { "Shortcuts", "ManualFart" });
+                    bool allowed = (bool)AccessTools.Property(patches, "GameplayInput").GetValue(null);
+                    Require(!allowed && !pee && !fart && Member(controller, "movementVector") is Vector2 movement && movement == Vector2.zero
+                        && Member(controller, "isJumping") is bool jumping && !jumping,
+                        "Native " + screen + " overlay allows controller gameplay input: allowed=" + allowed + "; pee=" + pee + "; fart=" + fart);
+                }
+                finally
+                {
+                    for (int i = 0; i < names.Length; i++) manager.Input.GetType().GetProperty(names[i]).SetValue(manager.Input, values[i]);
+                    beforeController.Invoke(null, new[] { controller });
+                }
+                Logger.LogInfo("MENU GAMEPLAY PASS: " + screen + " blocks controller movement, jumping and native pee/fart bindings");
+            }
             void CheckModalBeam(string screen)
             {
                 var aim = manager.Rig.Right.Aim;
@@ -66,6 +95,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 yield return null; yield return null;
                 Require(Review(), "Native results panel did not open");
                 CheckModalBeam("results");
+                CheckModalGameplay("results");
                 PressMenu();
                 Require(!Review() && !Settings(), "Controller menu opened settings under results instead of dismissing results");
                 PressMenu(); Require(!Settings(), "Consumed results/back input opened settings again in the same frame");
@@ -75,6 +105,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 yield return null; yield return null;
                 Require(Feedback() && !Settings() && !Review(), "Standalone feedback overlay did not open");
                 CheckModalBeam("feedback");
+                CheckModalGameplay("feedback");
                 PressMenu(); Require(!Feedback() && !Settings(), "Standalone feedback did not dismiss cleanly");
                 yield return null;
                 PressMenu(); yield return null;

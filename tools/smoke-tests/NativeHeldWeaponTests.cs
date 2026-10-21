@@ -11,13 +11,22 @@ namespace ScamWithYourFriendsInVR.SmokeTests
     public sealed partial class LocalPairHarness
     {
         private static Component heldWeaponFixture;
+        private static Component heldWeaponTarget;
+        private static int heldTargetAcceptedHits;
         private static readonly List<Ray> heldWeaponRays = new List<Ray>();
         private static UnityEngine.Random.State heldWeaponRandomState;
         private static bool heldWeaponRandomScoped;
         private static bool CaptureHeldWeaponRay(object __instance, Ray __0)
         {
             if (!ReferenceEquals(__instance, heldWeaponFixture)) return true;
-            heldWeaponRays.Add(__0); return false;
+            heldWeaponRays.Add(__0); return heldWeaponTarget != null;
+        }
+        private static void ObserveHeldTargetHit(object __instance, bool __result)
+        { if (ReferenceEquals(__instance, heldWeaponTarget) && __result) heldTargetAcceptedHits++; }
+        private static bool SkipFixtureRangeScore(object __0, ref bool __result)
+        {
+            if (heldWeaponTarget == null || __0 is not Component player || player.gameObject != NetworkClient.localPlayer.gameObject) return true;
+            __result = false; return false;
         }
         private static void BeginHeldSpread(object __instance)
         {
@@ -35,6 +44,12 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             if (heldWeaponFixture == null) return;
             var camera = Member(heldWeaponFixture, "cam") as UnityEngine.Camera;
             var rig = VRManager.Instance.Rig;
+            if (heldWeaponTarget != null)
+            {
+                Vector3 origin = rig.Head.transform.position + camera.transform.right * .35f;
+                rig.Right.Aim.SetPositionAndRotation(origin, Quaternion.LookRotation(heldWeaponTarget.transform.position - origin, camera.transform.forward));
+                return;
+            }
             // Aim along the native camera's up axis, where camera-based shotgun
             // spread collapses onto one plane instead of the controller cone.
             rig.Right.Aim.SetPositionAndRotation(rig.Head.transform.position + camera.transform.right * .35f,
@@ -58,7 +73,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             var teleport = AccessTools.Method(controller.GetType(), "Teleport");
             Vector3 originalPosition = NetworkClient.localPlayer.transform.position;
             Require(body != null, "Held weapon fixture requires the native collision body");
-            GameObject floor = GameObject.CreatePrimitive(PrimitiveType.Cube), item = null;
+            GameObject floor = GameObject.CreatePrimitive(PrimitiveType.Cube), item = null, target = null;
             floor.name = "SWYF isolated held weapon floor";
             floor.transform.position = new Vector3(1050, 50 + body.bounds.min.y - originalPosition.y - .12f, 1050);
             floor.transform.localScale = new Vector3(20, .2f, 20);
@@ -102,6 +117,10 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 probe.Patch(AccessTools.Method(weaponType, "FireShotgun"), prefix: new HarmonyMethod(typeof(LocalPairHarness), nameof(BeginHeldSpread)),
                     postfix: new HarmonyMethod(typeof(LocalPairHarness), nameof(EndHeldSpread)));
                 probe.Patch(AccessTools.Method(weaponType, "FireChargedWeapon"), prefix: new HarmonyMethod(typeof(LocalPairHarness), nameof(AimHeldWeaponForFire)));
+                probe.Patch(AccessTools.Method(Find("TargetController"), "TryPlayHitFeedbackFromHit"),
+                    postfix: new HarmonyMethod(typeof(LocalPairHarness), nameof(ObserveHeldTargetHit)));
+                probe.Patch(AccessTools.Method(Find("ShootingRangeScoreboard"), "ServerRecordTargetHit"),
+                    prefix: new HarmonyMethod(typeof(LocalPairHarness), nameof(SkipFixtureRangeScore)));
                 manager.Pointer.Cancel();
                 teleport.Invoke(controller, new object[] { new Vector3(1050, 50, 1050), true }); manager.Rig.Recenter();
                 yield return new WaitForSecondsRealtime(.8f);
@@ -159,6 +178,44 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     Press(); Release();
                     Require(heldWeaponRays.Count == rays, "Native held weapon cooldown was bypassed: " + name);
                     Logger.LogInfo("HELD WEAPON PASS: native " + name + " charged fire, controller origin/aim/spread and cooldown; hit effects intercepted");
+                    // A fixture-owned native target exercises the complete ray,
+                    // authority command and feedback/recovery path. Scoreboard
+                    // persistence alone is suppressed for this local player.
+                    target = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    // Mirror caches sibling NetworkBehaviours in Awake. Build
+                    // the whole fixture while inactive before that cache runs.
+                    target.SetActive(false);
+                    target.name = "SWYF owned native weapon target";
+                    target.transform.position = manager.Rig.Head.transform.position + Vector3.up * 3;
+                    target.transform.localScale = new Vector3(2, .3f, 2);
+                    int mask = ((LayerMask)Member(heldWeaponFixture, "layerMask")).value;
+                    int layer = 0; while (layer < 31 && (mask & (1 << layer)) == 0) layer++;
+                    Require((mask & (1 << layer)) != 0, "Native weapon has no raycast target layer");
+                    target.layer = layer;
+                    target.AddComponent<NetworkIdentity>();
+                    heldWeaponTarget = target.AddComponent(Find("TargetController"));
+                    target.SetActive(true);
+                    NetworkServer.Spawn(target); Physics.SyncTransforms();
+                    heldTargetAcceptedHits = 0;
+                    var targetCollider = target.GetComponent<Collider>();
+                    var nextFire = AccessTools.Method(weaponType, "GetCurrentNextFireTime");
+                    deadline = Time.realtimeSinceStartup + 10;
+                    while (NetworkTime.time < Convert.ToDouble(nextFire.Invoke(heldWeaponFixture, null)))
+                    { Require(Time.realtimeSinceStartup < deadline, "Charged weapon cooldown did not expire before native hit test"); yield return null; }
+                    Press(); deadline = Time.realtimeSinceStartup + charge + 5;
+                    while (!(Member(heldWeaponTarget, "serverHitLocked") is bool locked && locked))
+                    { Require(Time.realtimeSinceStartup < deadline, "Controller shot never reached native target authority: " + name); yield return null; }
+                    Release();
+                    Require(heldTargetAcceptedHits == 1 && !targetCollider.enabled,
+                        "Native target accepted duplicate pellet hits or failed to disable its collider: " + name);
+                    deadline = Time.realtimeSinceStartup + 8;
+                    while (!targetCollider.enabled || Member(heldWeaponTarget, "localHitPending") is bool pending && pending
+                        || Member(heldWeaponTarget, "localHitSequenceActive") is bool sequence && sequence)
+                    { Require(Time.realtimeSinceStartup < deadline, "Native target feedback did not recover: " + name); yield return null; }
+                    Require(Member(heldWeaponTarget, "serverHitLocked") is bool unlocked && !unlocked,
+                        "Native target collider recovered while authority remained locked: " + name);
+                    Logger.LogInfo("HELD TARGET PASS: controller-fired " + name + " reaches native target raycast/authority/feedback, accepts one hit and restores its collider; scoreboard reward suppressed");
+                    NetworkServer.Destroy(target); target = null; heldWeaponTarget = null;
                     manager.Pointer.Cancel();
                     AccessTools.Method(interactor.GetType(), "ServerClearHeldItem").Invoke(interactor, null);
                     // Let queued native animation/audio commands for the held
@@ -199,6 +256,8 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     NetworkServer.Destroy(item);
                 }
                 probe.UnpatchSelf(); heldWeaponFixture = null; heldWeaponRays.Clear();
+                if (target != null) NetworkServer.Destroy(target);
+                heldWeaponTarget = null;
                 if (noMouse)
                 {
                     var fallback = Find("ScamWithYourFriendsInVR.Input.VRMouseFallback");

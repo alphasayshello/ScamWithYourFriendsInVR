@@ -171,7 +171,9 @@ The private `-Weapons` launcher option uses `--swyf-single-combat-tests --swyf-o
 
 Controller trigger input must start charge, cancel on early release, cancel when settings open or input focus is lost, and stay cancelled when focus/settings return while the trigger remains held. A fresh press must fire through the real weapon flow and set its normal cooldown. Ray origins and the central shot must match controller aim. The shotgun test points along the native camera's up axis and requires spread along both controller axes, retaining the native pellet count. It seeds randomness only inside the owned shotgun call and restores the original random state. This reproduced a collapsed spread plane before adapting camera up/right reads to the controller, alongside the existing forward/central-ray adaptation. Reads from other transforms stay native.
 
-Only this owned weapon's final ray-hit effects are intercepted; the fixture does not establish weapon-specific damage, ragdoll, PvP, projectile behaviour, other weapons or headset handling. Queued native animation/audio commands are allowed to reach the host before fixture items are destroyed. The existing unarmed test separately checks a real nonlethal NPC damage command.
+The origin/spread phase intercepts only this owned weapon's final ray-hit effects. A second phase builds a fixture-owned cube with the native TargetController and NetworkIdentity, then allows the complete native raycast, command, server hit lock, collider disable and client feedback/recovery path. Both weapons must accept exactly one hit and restore the collider with no pending/active local feedback or server lock. The fixture is assembled while inactive so Mirror caches all native NetworkBehaviours together before spawning; adding the behaviour after the identity's Awake produced an invalid command component index in the first attempt. Only scoreboard recording for this fixture's local player is suppressed. This tests the native target component, not a shipping target prefab, saved rewards or player/NPC damage.
+
+The fixture does not establish weapon-specific damage, ragdoll, PvP, projectile behaviour, other weapons or headset handling. Queued native animation/audio commands are allowed to reach the host before fixture items are destroyed. The existing unarmed test separately checks a real nonlethal NPC damage command.
 
 ## controller-only mouse compatibility
 
@@ -200,6 +202,8 @@ The current mock comparison reduced peak presenter discovery from about 6.5 ms t
 The native texture-panel fixture also supplies a multi-batch snapshot containing a destroyed renderer and an initially inactive document. It requires the first call to leave pending work, a later batch to bind the native presenter after the document returns, and cancellation to release the snapshot without changing the native renderer or texture.
 
 ## native menu/back routing
+
+Standalone results and feedback also receive synthetic movement, jump, pee and fart input through the normal controller patch/native binding methods. Movement/jump must clear and the native shortcut bindings must remain false. The game's existing menu/input blocker already satisfies this check; no redundant production guard was added. Input values are restored in the same frame and no body-action transition is invoked by this probe.
 
 The capture probes also release the trigger and send a genuinely fresh press toward the underlying button/slider while feedback remains open. The old control must remain unchanged, with no report submission attempted. A scoped guard blocks the owned native report-send method if a test ray unexpectedly reaches it. Focused menu checks wait for the native loading overlay/network transition to finish; a player object alone does not prove the UI is ready. A cold-start run exposed the loading panel intercepting the fixture ray before that readiness check was added.
 
