@@ -318,9 +318,10 @@ namespace ScamWithYourFriendsInVR.UI
                 if (worldDown) { worldDown = false; if (!leftWorldDown) GameAdapter.Interact(false); }
             }
             if (toolkitDown && toolkitButton == 1 && !manager.Input.Secondary) ReleaseToolkit();
-            if (leftWorldDown && (!manager.Input.LeftTrigger || manager.Input.LeftGrip || HasPanelHit || context))
+            bool flightRelease = VRFlightControls.WaitingForBodyRelease;
+            if (leftWorldDown && (!manager.Input.LeftTrigger || manager.Input.LeftGrip || HasPanelHit || context || flightRelease))
             { leftWorldDown = false; if (!worldDown) GameAdapter.Interact(false); }
-            if (manager.Input.LeftTriggerDown && !manager.Input.LeftGrip && !HasPanelHit && !context && !toolkitDown)
+            if (manager.Input.LeftTriggerDown && !manager.Input.LeftGrip && !HasPanelHit && !context && !toolkitDown && !flightRelease)
             { if (!worldDown) GameAdapter.Interact(true); leftWorldDown = true; }
             grab.Tick(HasPanelHit || context || toolkitDown);
             if (secondaryHeld && (!manager.Input.Secondary || secondaryHipSwap && !manager.Input.LeftGrip || HasPanelHit || context)) StopSecondary();

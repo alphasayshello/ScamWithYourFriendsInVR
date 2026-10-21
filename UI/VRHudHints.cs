@@ -20,7 +20,7 @@ namespace ScamWithYourFriendsInVR.UI
         {
             if (hints == null || input == null) return;
             if (!ReferenceEquals(owner, hints)) { Restore(); owner = hints; }
-            if (waiting) ActionHint(hints, ref flightReleaseHint, "swyf-vr-flight-release", input.JumpHint, "Release + centre sticks");
+            if (waiting) ActionHint(hints, ref flightReleaseHint, "swyf-vr-flight-release", input.FlightReleaseHint, "Release + centre sticks");
             else { flightReleaseHint?.RemoveFromHierarchy(); flightReleaseHint = null; }
         }
 
@@ -31,7 +31,7 @@ namespace ScamWithYourFriendsInVR.UI
             if (!flying) { RemoveFlightHints(); return; }
             ActionHint(hints, ref flightMoveHint, "swyf-vr-flight-move", input.MoveHint, "Move FPV");
             ActionHint(hints, ref flightTurnHint, "swyf-vr-flight-turn", input.TurnHint, "Steer FPV");
-            ActionHint(hints, ref flightClimbHint, "swyf-vr-flight-climb", input.JumpHint, "Hold to climb");
+            ActionHint(hints, ref flightClimbHint, "swyf-vr-flight-climb", input.FlightClimbHint, "Hold to climb");
         }
 
         internal static void ApplyBag(VisualElement hints, VRInputManager input, bool occupied)

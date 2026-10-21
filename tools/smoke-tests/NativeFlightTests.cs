@@ -13,7 +13,10 @@ namespace ScamWithYourFriendsInVR.SmokeTests
     {
         private static Component flightFixture;
         private static Vector2 flightMove, flightTurn;
-        private static bool flightJump, flightAllowExplosion, flightHoldAfterDespawn;
+        private static bool flightJump, flightJumpDown, flightLeftTrigger, flightLeftTriggerDown, flightAllowExplosion, flightHoldAfterDespawn;
+        private static bool flightWorldProbe;
+        private static int flightWorldPresses;
+        private static void ObserveFlightWorldUse(bool __0) { if (flightWorldProbe && __0) flightWorldPresses++; }
         private static int flightForceCalls;
         private static Vector3 flightForce;
         private static int flightImpacts, flightImpactCommands;
@@ -35,6 +38,9 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             input.GetType().GetProperty("Move").SetValue(input, flightMove);
             input.GetType().GetProperty("Turn").SetValue(input, flightTurn);
             input.GetType().GetProperty("Jump").SetValue(input, flightJump);
+            input.GetType().GetProperty("JumpDown").SetValue(input, flightJumpDown);
+            input.GetType().GetProperty("LeftTrigger").SetValue(input, flightLeftTrigger);
+            input.GetType().GetProperty("LeftTriggerDown").SetValue(input, flightLeftTriggerDown);
         }
 
         private IEnumerator TestNativeFlight()
@@ -55,8 +61,15 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             void Input(string name, bool value) => manager.Input.GetType().GetProperty(name).SetValue(manager.Input, value);
             void Drive(Vector2 move, Vector2 turn, bool climb)
             {
-                flightMove = move; flightTurn = turn; flightJump = climb;
+                flightMove = move; flightTurn = turn; flightJumpDown = climb && !flightJump; flightJump = climb;
                 KeepFlightInput(manager.Input); controllerTick.Invoke(null, new[] { controller });
+                flightJumpDown = false; Input("JumpDown", false);
+            }
+            void TriggerClimb(bool held)
+            {
+                flightLeftTriggerDown = held && !flightLeftTrigger; flightLeftTrigger = held;
+                KeepFlightInput(manager.Input); controllerTick.Invoke(null, new[] { controller });
+                flightLeftTriggerDown = false; Input("LeftTriggerDown", false);
             }
             GameObject item = null, obstacle = null, menuObstacle = null;
             var effects = new List<GameObject>();
@@ -69,6 +82,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             var probe = new Harmony("com.swyf.vr.flightfixture");
             try
             {
+                probe.Patch(AccessTools.Method(adapter, "Interact"), prefix: new HarmonyMethod(typeof(LocalPairHarness), nameof(ObserveFlightWorldUse)));
                 item = Instantiate(prefab, interactor.transform.position + Vector3.up, Quaternion.identity);
                 flightFixture = item.GetComponent(type); flightAllowExplosion = false;
                 foreach (var method in AccessTools.GetDeclaredMethods(type).Where(m => m.Name == "ServerExplode"))
@@ -138,19 +152,34 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     Require(Vector3.Distance(manager.Rig.AuthoredEye, pilotEye) > 2, "Despawn fixture did not establish a remote aircraft view");
                     var polar = AccessTools.Property(adapter, "Polar").GetValue(null) as Transform;
                     Quaternion pilotRotation = polar.rotation;
-                    flightHoldAfterDespawn = true; Drive(Vector2.up, Vector2.right, true);
+                    flightHoldAfterDespawn = true; Drive(Vector2.up, Vector2.right, true); TriggerClimb(true);
                     NetworkServer.Destroy(item); item = null;
                     yield return null; yield return new WaitForEndOfFrame();
                     Require(Member(controller, "movementVector") is Vector2 heldMove && heldMove == Vector2.zero
                         && Member(controller, "isJumping") is bool heldJump && !heldJump && Quaternion.Angle(polar.rotation, pilotRotation) < .1f,
                         "Held flight controls became pilot movement, jump or snap-turn after aircraft destruction");
+                    flightWorldPresses = 0; flightWorldProbe = true;
+                    try
+                    {
+                        Input("LeftTriggerDown", true);
+                        AccessTools.Method(manager.Pointer.GetType(), "LateUpdate").Invoke(manager.Pointer, null);
+                    }
+                    finally { Input("LeftTriggerDown", false); flightWorldProbe = false; }
+                    Require(!manager.Pointer.HasPanelHit && flightWorldPresses == 0
+                        && !(bool)AccessTools.Field(manager.Pointer.GetType(), "leftWorldDown").GetValue(manager.Pointer),
+                        "Flight handoff routed held climb into a world interaction");
                     Type releaseHudType = Find("ScammerGameHudController");
                     var releaseHud = UnityEngine.Object.FindAnyObjectByType(releaseHudType) as Component;
                     AccessTools.Method(releaseHudType, "RefreshPlayerMenuHint").Invoke(releaseHud, null);
                     var releaseHints = Member(releaseHud, "playerMenuHint") as VisualElement;
-                    Require(releaseHints?.Q<Label>("swyf-vr-flight-release-key")?.text == manager.Input.JumpHint,
+                    Require(releaseHints?.Q<Label>("swyf-vr-flight-release-key")?.text == manager.Input.FlightReleaseHint,
                         "Flight handoff did not explain its neutral-release gate on the HUD");
                     Drive(Vector2.zero, Vector2.zero, false);
+                    Drive(Vector2.up, Vector2.right, false);
+                    Require(Member(controller, "movementVector") is Vector2 triggerHeldMove && triggerHeldMove == Vector2.zero
+                        && !(bool)Member(controller, "isJumping") && Quaternion.Angle(polar.rotation, pilotRotation) < .1f,
+                        "Held left-trigger climb released the pilot handoff gate");
+                    TriggerClimb(false); Drive(Vector2.zero, Vector2.zero, false);
                     Drive(Vector2.up, Vector2.zero, true);
                     Require(Member(controller, "movementVector") is Vector2 freshMove && freshMove.sqrMagnitude > .1f
                         && Member(controller, "isJumping") is bool freshJump && freshJump,
@@ -175,9 +204,22 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 var hints = Member(hud, "playerMenuHint") as VisualElement;
                 Require(hints?.Q<Label>("swyf-vr-flight-move-key")?.text == manager.Input.MoveHint
                     && hints.Q<Label>("swyf-vr-flight-turn-key")?.text == manager.Input.TurnHint
-                    && hints.Q<Label>("swyf-vr-flight-climb-key")?.text == manager.Input.JumpHint, "Native HUD lacks controller flight controls");
+                    && hints.Q<Label>("swyf-vr-flight-climb-key")?.text == manager.Input.FlightClimbHint, "Native HUD lacks controller flight controls");
                 float yaw = Convert.ToSingle(Member(flightFixture, "lookYawDegrees"));
                 float pitch = Convert.ToSingle(Member(flightFixture, "lookPitchDegrees"));
+                Drive(new Vector2(.25f, .75f), new Vector2(.5f, .25f), false); TriggerClimb(true);
+                deadline = Time.realtimeSinceStartup + 3;
+                while (!(Member(flightFixture, "NetworkverticalAccelerationActive") is bool triggerLift && triggerLift))
+                { Require(Time.realtimeSinceStartup < deadline, "Left trigger did not reach native FPV climb while both sticks are in use"); yield return new WaitForFixedUpdate(); }
+                Require(Member(flightFixture, "localMoveInput") is Vector2 triggerMove && triggerMove == flightMove
+                    && Convert.ToSingle(Member(flightFixture, "lookYawDegrees")) < yaw,
+                    "Left-trigger climb prevented simultaneous native movement/steering");
+                TriggerClimb(false); Drive(Vector2.zero, Vector2.zero, false);
+                deadline = Time.realtimeSinceStartup + 3;
+                while (Member(flightFixture, "NetworkverticalAccelerationActive") is bool triggerLift && triggerLift)
+                { Require(Time.realtimeSinceStartup < deadline, "Releasing left trigger left native FPV climb active"); yield return new WaitForFixedUpdate(); }
+                Logger.LogInfo("FLIGHT TRIGGER PASS: left trigger controls native climb/release with movement and steering available on both sticks");
+                yaw = Convert.ToSingle(Member(flightFixture, "lookYawDegrees")); pitch = Convert.ToSingle(Member(flightFixture, "lookPitchDegrees"));
                 Drive(Vector2.zero, new Vector2(.5f, .25f), true);
                 deadline = Time.realtimeSinceStartup + 3;
                 while (!(Member(flightFixture, "NetworkverticalAccelerationActive") is bool climb && climb))
@@ -192,6 +234,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 while (Member(flightFixture, "NetworkverticalAccelerationActive") is bool climb && climb)
                 { Require(Time.realtimeSinceStartup < deadline, "Releasing climb left native vertical acceleration active"); yield return new WaitForFixedUpdate(); }
                 Logger.LogInfo("FLIGHT STEER PASS: right stick drives native yaw/pitch; held climb and release synchronize native vertical acceleration");
+                TriggerClimb(true);
                 toggle.Invoke(null, null); paused = true;
                 yaw = Convert.ToSingle(Member(flightFixture, "lookYawDegrees"));
                 Drive(Vector2.up, Vector2.one, true);
@@ -228,17 +271,24 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 menuCollider.enabled = false; Destroy(menuObstacle); menuObstacle = null;
                 Logger.LogInfo("FLIGHT MENU PASS: controller changes native VR steering option through owned-aircraft geometry with menu occlusion enabled");
                 toggle.Invoke(null, null); paused = false;
+                Drive(Vector2.zero, Vector2.zero, true);
+                Require(!(bool)Member(flightFixture, "localIsJumpPressed"), "Held climb resumed after settings without a fresh press");
                 Input("HasInputFocus", false); Drive(Vector2.up, Vector2.one, true);
                 Require(Member(flightFixture, "localMoveInput") is Vector2 focusMove && focusMove == Vector2.zero
                     && !(bool)Member(flightFixture, "localIsJumpPressed") && Convert.ToSingle(Member(flightFixture, "lookYawDegrees")) == yaw,
                     "Focus loss allowed native flight movement/steering/climb");
-                Input("HasInputFocus", focused); Drive(Vector2.zero, Vector2.zero, false);
+                Input("HasInputFocus", focused); Drive(Vector2.zero, Vector2.zero, true);
+                Require(!(bool)Member(flightFixture, "localIsJumpPressed"), "Held climb resumed after focus returned without a fresh press");
                 AccessTools.Method(feedback, "Show").Invoke(null, null); feedbackOwned = true;
                 Drive(Vector2.up, Vector2.one, true);
                 Require(Member(flightFixture, "localMoveInput") is Vector2 modalMove && modalMove == Vector2.zero
                     && !(bool)Member(flightFixture, "localIsJumpPressed"), "Native feedback allowed flight movement/climb");
                 AccessTools.Method(feedback, "TryDismissWithEscape").Invoke(null, null); feedbackOwned = false;
-                Drive(Vector2.zero, Vector2.zero, false);
+                Drive(Vector2.zero, Vector2.zero, true);
+                Require(!(bool)Member(flightFixture, "localIsJumpPressed"), "Held climb resumed after feedback without a fresh press");
+                TriggerClimb(false); Drive(Vector2.zero, Vector2.zero, false); TriggerClimb(true);
+                Require((bool)Member(flightFixture, "localIsJumpPressed"), "Fresh left-trigger press did not restore climb after overlays");
+                TriggerClimb(false);
                 Logger.LogInfo("FLIGHT INPUT PASS: native movement, steering and climb stop behind settings, feedback and lost input focus");
                 Type controls = typeof(VRManager).Assembly.GetType("ScamWithYourFriendsInVR.Input.VRFlightControls", true);
                 Drive(Vector2.up, Vector2.zero, true);
@@ -311,7 +361,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             }
             finally
             {
-                flightMove = flightTurn = Vector2.zero; flightJump = false;
+                flightMove = flightTurn = Vector2.zero; flightJump = flightJumpDown = flightLeftTrigger = flightLeftTriggerDown = false;
                 KeepFlightInput(manager.Input);
                 flightHoldAfterDespawn = false;
                 Input("Trigger", false); Input("TriggerDown", false); Input("Jump", false); Input("HasInputFocus", focused); manager.Pointer.Cancel();

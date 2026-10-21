@@ -10,13 +10,14 @@ namespace ScamWithYourFriendsInVR.Input
         private static Component controller, inputOwner;
         private static Vector2 previousMove;
         private static bool previousJump, hasInput;
+        private static bool triggerClimb, buttonClimb;
         private static bool bodyReleaseNeeded;
         internal static bool WaitingForBodyRelease => bodyReleaseNeeded && Current == null;
 
         internal static bool SuppressBodyInput(VRInputManager input)
         {
             if (!bodyReleaseNeeded) return false;
-            if (Current != null || input.Move == Vector2.zero && input.Turn == Vector2.zero && !input.Jump)
+            if (Current != null || input.Move == Vector2.zero && input.Turn == Vector2.zero && !input.Jump && !input.LeftTrigger)
             { bodyReleaseNeeded = false; return false; }
             return true;
         }
@@ -61,7 +62,14 @@ namespace ScamWithYourFriendsInVR.Input
                 && !(GameAdapter.Read(current, "Networkexploded") is bool exploded && exploded);
             var input = VRManager.Instance.Input;
             Vector2 move = allowed ? input.Move : Vector2.zero;
-            bool jump = allowed && input.Jump;
+            // Climb uses a free index finger, leaving both thumbs available.
+            // Keep the native jump button as an alternative, but require fresh
+            // edges after an overlay, tracking/focus loss or session recovery.
+            if (!allowed || !input.LeftTrigger) triggerClimb = false;
+            else if (input.LeftTriggerDown) triggerClimb = true;
+            if (!allowed || !input.Jump) buttonClimb = false;
+            else if (input.JumpDown) buttonClimb = true;
+            bool jump = allowed && (triggerClimb || buttonClimb);
             if (!hasInput || move != previousMove)
                 (GameAdapter.Read(controller, "OnMoveInputChanged") as Action<Vector2>)?.Invoke(move);
             if (!hasInput || jump != previousJump)
@@ -85,6 +93,7 @@ namespace ScamWithYourFriendsInVR.Input
                 if (previousJump) (GameAdapter.Read(controller, "OnJumpInputChanged") as Action<bool>)?.Invoke(false);
             }
             controller = inputOwner = null; previousMove = Vector2.zero; previousJump = hasInput = false;
+            triggerClimb = buttonClimb = false;
         }
 
         internal static void Clear() { ClearInput(); vehicle.SetTarget(null); }

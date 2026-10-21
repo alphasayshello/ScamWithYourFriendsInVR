@@ -88,13 +88,13 @@ Left grip + left trigger holds the native pee action; release to stop. Left grip
 
 ## FPV flight
 
-Hold an eligible FPV aircraft and press **right trigger** to launch. The left stick applies movement, the right stick steers yaw/pitch, and holding **right A** adds upward thrust. Release A to stop that extra thrust. Vive wands use pad touch for movement/steering and right pad up for climb; original WMR uses its sticks and right pad up. The HUD shows the current controller keys.
+Hold an eligible FPV aircraft and press **right trigger** to launch. The left stick applies movement, the right stick steers yaw/pitch, and holding **left trigger** adds upward thrust, leaving both thumbs free for the sticks. Release the trigger to stop that extra thrust. Right A also works as an alternative. Vive wands use pad touch for movement/steering; Vive and original WMR can also use right pad up for climb. The HUD shows the current controller keys.
 
 Your view follows the aircraft camera with upright head tracking. Looking around does not steer the aircraft. Your grounded avatar's tracked pose pauses during flight and resumes afterward. Native crashes/explosions end flight under the game's normal rules; nearby blasts can still ragdoll the pilot.
 
 When flight ends, centre both sticks and release climb before walking, jumping or snap-turning. The HUD prompts you if a flight control is still held. This prevents a held steering/climb input from becoming an accidental ground action.
 
-Settings, feedback and lost VR focus stop flight input; the aircraft's existing physics continue. Occupied aircraft/bag geometry does not block the menu laser, including with menu occlusion enabled. Adjust **General → VR options → FPV steering** with the laser. The default is 90 degrees per second; `[Input] FlightSteeringSpeed` in the BepInEx config also accepts 15–180. Headset crash comfort, other aircraft and remote-client flight still need testing.
+Settings, feedback and lost VR focus stop flight input. Release and press climb again after returning; the aircraft's existing physics continue. Occupied aircraft/bag geometry does not block the menu laser, including with menu occlusion enabled. Adjust **General → VR options → FPV steering** with the laser. The default is 90 degrees per second; `[Input] FlightSteeringSpeed` in the BepInEx config also accepts 15–180. Headset crash comfort, other aircraft and remote-client flight still need testing.
 
 ## Ragdoll and recovery
 
