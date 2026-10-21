@@ -159,6 +159,9 @@ namespace ScamWithYourFriendsInVR.Camera
             Transform nextPlayer = inMenu ? null : subject?.transform;
             if (nextPlayer != player) { player = nextPlayer; Recenter(); }
             object ragdoll = GameAdapter.Read(subject, "RagdollManager");
+            Component hidingBag = GameAdapter.Read(ragdoll, "NetworkisHiding") as Component;
+            GameObject bagCamera = GameAdapter.Read(hidingBag, "bagCamera") as GameObject;
+            Transform bagEye = bagCamera != null ? bagCamera.transform : GameAdapter.Read(hidingBag, "bagCenter") as Transform;
             bool ragdolled = GameAdapter.Read(ragdoll, "IsRagdollActive") is bool down && down
                 || GameAdapter.Read(ragdoll, "IsHiding") is bool hiding && hiding;
             Type modeType = ReflectionTypes.Find("PlayerModeManager");
@@ -196,7 +199,7 @@ namespace ScamWithYourFriendsInVR.Camera
             float heightOffset = Plugin.Seated.Value || !floorOrigin ? Plugin.SeatedHeight.Value - center.y : 0;
             // A native chair moves the authored eye marker independently of the
             // standing capsule. Keep room-scale offsets relative to that marker.
-            Transform nativeEye = player != null ? (ragdolled ? GameAdapter.Call(ragdoll, "GetCurrentRagdollCameraTransform") as Transform
+            Transform nativeEye = player != null ? (bagEye != null ? bagEye : ragdolled ? GameAdapter.Call(ragdoll, "GetCurrentRagdollCameraTransform") as Transform
                 : GameAdapter.Read(viewController, "defaultCamTransform") as Transform ?? GameAdapter.Read(viewController, "cameraTransform") as Transform) : null;
             bool fallbackEye = false;
             Vector3 fallbackPosition = default;
@@ -257,6 +260,8 @@ namespace ScamWithYourFriendsInVR.Camera
             Vector3 start = new Vector3(anchor.x, desired.y, anchor.z);
             Vector3 delta = desired - start;
             HeadObstructed = false;
+            Component held = subject == localPlayer ? GameAdapter.Read(GameAdapter.Interactor, "CurrentHeldItem") as Component : null;
+            Component hip = subject == localPlayer ? GameAdapter.Read(GameAdapter.Interactor, "CurrentHipItem") as Component : null;
             if (player != null && delta.sqrMagnitude > 0.0001f)
             {
                 float allowed = delta.magnitude;
@@ -264,7 +269,7 @@ namespace ScamWithYourFriendsInVR.Camera
                 for (int i = 0; i < count; i++)
                 {
                     RaycastHit hit = obstructionHits[i];
-                    if (player != null && hit.collider.transform.IsChildOf(player)) continue;
+                    if (SelfCollider(hit.collider, player, held, hip, hidingBag)) continue;
                     allowed = Mathf.Min(allowed, Mathf.Max(0, hit.distance - 0.02f));
                     HeadObstructed = true;
                 }
@@ -274,7 +279,7 @@ namespace ScamWithYourFriendsInVR.Camera
             for (int i = 0; i < overlapCount; i++)
             {
                 Collider overlap = overlaps[i];
-                if (player != null && overlap.transform.IsChildOf(player)) continue;
+                if (SelfCollider(overlap, player, held, hip, hidingBag)) continue;
                 HeadObstructed = true;
                 break;
             }
@@ -296,6 +301,12 @@ namespace ScamWithYourFriendsInVR.Camera
                 + "; nativeEye=" + (nativeEye != null ? AuthoredEye.ToString() : "menu/fallback")
                 + "; placedHead=" + desired + "; player=" + player?.name + "; sitting=" + sitting);
         }
+
+        private static bool SelfCollider(Collider collider, Transform player, Component held, Component hip, Component hidingBag)
+            => player != null && collider.transform.IsChildOf(player)
+                || held != null && collider.transform.IsChildOf(held.transform)
+                || hip != null && collider.transform.IsChildOf(hip.transform)
+                || hidingBag != null && collider.transform.IsChildOf(hidingBag.transform);
 
         private void UpdateMenuCamera(bool active)
         {

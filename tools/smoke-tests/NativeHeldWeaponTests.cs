@@ -125,7 +125,8 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 teleport.Invoke(controller, new object[] { new Vector3(1050, 50, 1050), true }); manager.Rig.Recenter();
                 yield return new WaitForSecondsRealtime(.8f);
                 Require(!manager.Rig.HeadObstructed, "Held weapon fixture did not obtain a clear head position");
-                foreach (string name in new[] { "Shotgun", "Sniper" })
+                bool onlyBag = Environment.GetCommandLineArgs().Contains("--swyf-only-bag-tests");
+                foreach (string name in onlyBag ? Array.Empty<string>() : new[] { "Shotgun", "Sniper" })
                 {
                     GameObject prefab = prefabs.SingleOrDefault(p => p.name == name);
                     Require(prefab != null, "Native charged weapon prefab missing: " + name);
@@ -224,9 +225,15 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     NetworkServer.Destroy(item); item = null; heldWeaponFixture = null;
                     yield return null;
                 }
-                var javelin = TestNativeJavelin();
-                try { while (javelin.MoveNext()) yield return javelin.Current; }
-                finally { (javelin as IDisposable)?.Dispose(); }
+                if (!onlyBag)
+                {
+                    var javelin = TestNativeJavelin();
+                    try { while (javelin.MoveNext()) yield return javelin.Current; }
+                    finally { (javelin as IDisposable)?.Dispose(); }
+                }
+                var bag = TestNativeBag();
+                try { while (bag.MoveNext()) yield return bag.Current; }
+                finally { (bag as IDisposable)?.Dispose(); }
                 if (noMouse)
                 {
                     Type fallback = Find("ScamWithYourFriendsInVR.Input.VRMouseFallback");

@@ -31,17 +31,31 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             var input = Own(new GameObject("HUD captions fixture")).AddComponent<Input.VRInputManager>(); input.enabled = false;
             var first = HudFixture(); var second = HudFixture();
             void Layout(string side, Plugin.ControllerLayoutKind layout) => input.GetType().GetProperty(side + "Layout").SetValue(input, layout);
+            void Bag(VisualElement root, bool occupied) => typeof(VRManager).Assembly.GetType("ScamWithYourFriendsInVR.UI.VRHudHints", true)
+                .GetMethod("ApplyBag", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, new object[] { root, input, occupied });
             try
             {
                 Layout("Left", Plugin.ControllerLayoutKind.FaceButtons); Layout("Right", Plugin.ControllerLayoutKind.FaceButtons);
                 ApplyHudHints(first.Root, input);
                 Check(first.Players.text == "LEFT X" && first.Settings.text == "LEFT Y" && first.Recovery.text == "LEFT GRIP + RIGHT A", "Face-controller HUD captions are incorrect");
+                Bag(first.Root, true); Bag(first.Root, true);
+                Check(first.Root.Query<VisualElement>("swyf-vr-bag-exit").ToList().Count == 1
+                    && first.Root.Q<Label>("swyf-vr-bag-exit-key").text == "RIGHT A"
+                    && first.Root.Q<Label>("swyf-vr-bag-move-key").text == "LEFT STICK"
+                    && first.Root.Q<Label>("swyf-vr-bag-exit-key").pickingMode == PickingMode.Ignore, "Bag HUD captions duplicate, pick rays or show desktop keys");
                 Layout("Right", Plugin.ControllerLayoutKind.ViveWand); ApplyHudHints(first.Root, input);
+                Layout("Left", Plugin.ControllerLayoutKind.ViveWand); Bag(first.Root, true);
+                Check(first.Root.Q<Label>("swyf-vr-bag-exit-key").text == "RIGHT PAD UP" && first.Root.Q<Label>("swyf-vr-bag-move-key").text == "LEFT PAD", "Vive bag hint ignored controller layout");
+                Layout("Left", Plugin.ControllerLayoutKind.FaceButtons);
                 Check(first.Players.text == "LEFT X" && first.Recovery.text == "LEFT GRIP + RIGHT PAD UP", "Recovery caption ignored a mixed right controller");
                 Layout("Left", Plugin.ControllerLayoutKind.Wmr); Layout("Right", Plugin.ControllerLayoutKind.Wmr); ApplyHudHints(first.Root, input);
+                Bag(first.Root, true); Check(first.Root.Q<Label>("swyf-vr-bag-move-key").text == "LEFT STICK", "WMR bag hint replaced its independent stick with the pad");
+                Bag(first.Root, false); Check(first.Root.Q("swyf-vr-bag-exit") == null, "Bag exit left its VR HUD panels behind");
+                Bag(first.Root, true);
                 Check(first.Players.text == "LEFT PAD" && first.Settings.text == "MENU" && first.Recovery.text == "LEFT GRIP + RIGHT PAD UP", "WMR HUD captions are incorrect");
                 first.Recovery.text = "H"; ApplyHudHints(first.Root, input); RestoreHudHints();
                 Check(first.Players.text == "TAB" && first.Settings.text == "ESC" && first.Recovery.text == "H", "HUD restore lost original/rebound keyboard captions");
+                Check(first.Root.Q("swyf-vr-bag-exit") == null && first.Root.Q("swyf-vr-bag-move") == null, "HUD restore retained VR-only bag panels");
                 ApplyHudHints(first.Root, input); ApplyHudHints(second.Root, input);
                 Check(first.Players.text == "TAB" && first.Settings.text == "ESC" && first.Recovery.text == "H", "Replacing a HUD retained its old VR captions");
                 second.Settings.text = "external caption"; RestoreHudHints();

@@ -12,6 +12,37 @@ namespace ScamWithYourFriendsInVR.UI
         }
         private static readonly Dictionary<Label, Caption> captions = new Dictionary<Label, Caption>();
         private static VisualElement owner;
+        private static VisualElement bagMoveHint, bagExitHint;
+
+        internal static void ApplyBag(VisualElement hints, VRInputManager input, bool occupied)
+        {
+            if (hints == null || input == null) return;
+            if (!ReferenceEquals(owner, hints)) { Restore(); owner = hints; }
+            if (!occupied) { RemoveBagHints(); return; }
+            BagHint(hints, ref bagMoveHint, "swyf-vr-bag-move", input.MoveHint, "Move bag");
+            BagHint(hints, ref bagExitHint, "swyf-vr-bag-exit", input.JumpHint, "Exit bag");
+        }
+
+        private static void BagHint(VisualElement hints, ref VisualElement panel, string name, string key, string description)
+        {
+            if (panel == null || panel.parent != hints)
+            {
+                panel?.RemoveFromHierarchy();
+                panel = new VisualElement { name = name, pickingMode = PickingMode.Ignore };
+                panel.AddToClassList("player-menu-hint__panel");
+                var keyLabel = new Label { name = name + "-key", pickingMode = PickingMode.Ignore };
+                keyLabel.AddToClassList("player-menu-hint__key"); panel.Add(keyLabel);
+                var label = new Label(description) { pickingMode = PickingMode.Ignore };
+                label.AddToClassList("player-menu-hint__label"); panel.Add(label); hints.Add(panel);
+            }
+            Label caption = panel.Q<Label>(name + "-key");
+            if (caption.text != key) caption.text = key;
+        }
+
+        private static void RemoveBagHints()
+        {
+            bagMoveHint?.RemoveFromHierarchy(); bagExitHint?.RemoveFromHierarchy(); bagMoveHint = bagExitHint = null;
+        }
 
         internal static void Apply(VisualElement hints, VRInputManager input)
         {
@@ -37,6 +68,7 @@ namespace ScamWithYourFriendsInVR.UI
             foreach (var entry in captions)
                 if (entry.Key.text == entry.Value.Applied) entry.Key.text = entry.Value.Original;
             captions.Clear(); owner = null;
+            RemoveBagHints();
         }
     }
 }

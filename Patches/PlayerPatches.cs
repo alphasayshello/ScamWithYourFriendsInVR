@@ -85,7 +85,11 @@ namespace ScamWithYourFriendsInVR.Patches
             if (!Active) return;
             GameAdapter.RememberHud(__instance);
             if (GameAdapter.Read(__instance, "playerMenuHint") is UnityEngine.UIElements.VisualElement hints)
+            {
                 UI.VRHudHints.Apply(hints, VRManager.Instance.Input);
+                UI.VRHudHints.ApplyBag(hints, VRManager.Instance.Input,
+                    GameAdapter.Read(GameAdapter.Read(GameAdapter.LocalPlayer, "RagdollManager"), "IsHiding") is bool hiding && hiding);
+            }
         }
 
         private static void AfterMeshVisibility(object __instance)
@@ -100,6 +104,11 @@ namespace ScamWithYourFriendsInVR.Patches
         {
             if (!Active || !Local(__instance)) return;
             VRManager manager = VRManager.Instance;
+            Component bag = GameAdapter.Read(GameAdapter.Read(GameAdapter.LocalPlayer, "RagdollManager"), "NetworkisHiding") as Component;
+            bool bagInput = bag != null && manager.Interactive && !GameAdapter.InMainMenu && !GameAdapter.MonitorCaptured
+                && !GameAdapter.SettingsOpen && !GameAdapter.ModalOverlayOpen && !manager.Keyboard.Visible && !manager.Pointer.HasPanelHit
+                && !(GameAdapter.Read(GameAdapter.Static("TabMenu", "Instance"), "IsOpen") is bool playersOpen && playersOpen);
+            Input.VRBagControls.Update(__instance as Component, bag, bagInput);
             Vector2 move = Vector2.zero;
             Transform polar = GameAdapter.Polar;
             if (manager.Interactive && manager.Rig.Head != null && polar != null

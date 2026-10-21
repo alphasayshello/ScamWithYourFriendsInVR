@@ -88,6 +88,8 @@ Left grip + left trigger holds the native pee action; release to stop. Left grip
 
 ## Ragdoll and recovery
 
+To climb into a hideable bag, hold it and keep **left grip + right trigger** held through its native charge. Use the left stick to move the occupied bag and **right A** to exit; the normal short exit ragdoll still applies. Vive wands use the left pad for movement, and Vive/original WMR use right pad up to exit. The HUD shows these controls while you are inside. Settings and lost VR focus stop further movement input. The view follows the bag's camera marker, or its authored centre when that marker is absent.
+
 Right A also sends the native struggle/escape action when ragdolled or hiding. To use the native give-up/unstuck action, hold left grip **before** pressing and holding right A. Its normal game timer and recovery, respawn or jail rules still apply. Release either control to cancel. Menus, focus loss and VR shutdown also release the hold; closing a menu while the buttons remain held does not restart it.
 
 If a ragdoll camera marker is missing from the player prefab, the view follows its physical head, with native chest/hips as a backup. Basic simulated ragdoll/recovery checks pass; violent impacts, completed give-up outcomes, hiding variants and real-headset comfort still need acceptance.
