@@ -36,6 +36,9 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             probe.Patch(AccessTools.Method(ragdoll.GetType(), "CmdJumpedWhileRagdolled"), prefix: new HarmonyMethod(typeof(LocalPairHarness), nameof(ObserveStruggle)));
             ragdollProbe = ragdoll; struggleCommands = 0;
             bool paused = false;
+            Type feedbackType = Find("FeedbackUi"), hudType = Find("ScammerGameHudController");
+            Component modalHud = UnityEngine.Object.FindAnyObjectByType(hudType) as Component;
+            bool feedbackOwned = false, reviewOwned = false;
             void Input(string name, bool value) => manager.Input.GetType().GetProperty(name).SetValue(manager.Input, value);
             Multiplayer.PoseFrame Pose() => (Multiplayer.PoseFrame)AccessTools.Field(typeof(Multiplayer.PoseNetwork), "local").GetValue(Multiplayer.PoseNetwork.Instance);
             void GiveUpPress()
@@ -76,6 +79,21 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 yield return new WaitForSecondsRealtime(.15f);
                 Require((bool)Member(ragdoll, "localIsGiveUpPressed") && Convert.ToSingle(Member(ragdoll, "localGiveUpTimer")) > 0,
                     "Native give-up hold did not begin its normal charge");
+                Require(feedbackType != null && modalHud != null && !(bool)AccessTools.Property(feedbackType, "IsOpen").GetValue(null)
+                    && Member(modalHud, "runBreakdownVisible") is bool reviewVisible && !reviewVisible, "Ragdoll modal fixture found an existing overlay");
+                AccessTools.Method(feedbackType, "Show").Invoke(null, null); feedbackOwned = true;
+                Input("JumpDown", true); tick.Invoke(manager.BodyActions, null); Input("JumpDown", false);
+                Require(!(bool)Member(ragdoll, "localIsGiveUpPressed") && struggleCommands == 1, "Feedback left native give-up charging or allowed a struggle command");
+                AccessTools.Method(feedbackType, "TryDismissWithEscape").Invoke(null, null); feedbackOwned = false;
+                tick.Invoke(manager.BodyActions, null);
+                Require(!(bool)Member(ragdoll, "localIsGiveUpPressed"), "Closing feedback restarted held give-up");
+                GiveUpPress(); AccessTools.Method(hudType, "ShowRunBreakdown").Invoke(modalHud, null); reviewOwned = true;
+                Input("JumpDown", true); tick.Invoke(manager.BodyActions, null); Input("JumpDown", false);
+                Require(!(bool)Member(ragdoll, "localIsGiveUpPressed") && struggleCommands == 1, "Results left native give-up charging or allowed a struggle command");
+                AccessTools.Method(hudType, "HideRunBreakdown").Invoke(modalHud, null); reviewOwned = false; tick.Invoke(manager.BodyActions, null);
+                Require(!(bool)Member(ragdoll, "localIsGiveUpPressed"), "Closing results restarted held give-up");
+                Logger.LogInfo("RAGDOLL PASS: native feedback/results cancel give-up charging, block struggle input and do not restart held give-up when closed");
+                GiveUpPress();
                 toggle.Invoke(null, null); paused = true; tick.Invoke(manager.BodyActions, null);
                 Require(!(bool)Member(ragdoll, "localIsGiveUpPressed"), "Settings left give-up held");
                 toggle.Invoke(null, null); paused = false;
@@ -102,6 +120,8 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             }
             finally
             {
+                if (feedbackOwned) AccessTools.Method(feedbackType, "TryDismissWithEscape").Invoke(null, null);
+                if (reviewOwned) AccessTools.Method(hudType, "HideRunBreakdown").Invoke(modalHud, null);
                 injectGiveUp = false; Input("GiveUp", false); Input("GiveUpDown", false); Input("JumpDown", false); Input("HasInputFocus", true);
                 manager.BodyActions.Cancel(); manager.BodyActions.enabled = true;
                 if (paused) toggle.Invoke(null, null);

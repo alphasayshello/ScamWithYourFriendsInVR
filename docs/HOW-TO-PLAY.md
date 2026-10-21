@@ -22,6 +22,8 @@ The laser stays visible in menus and computers. During normal play it appears fo
 
 Menu/back closes an open VR keyboard, feedback overlay or results panel before changing the menu behind it. Use a fresh press for each layer; dismissing results does not also open settings.
 
+The laser stays visible while feedback or results are open, including when pointing away from the panel. Gameplay actions pause behind these overlays; a cancelled give-up hold needs a fresh press after closing them.
+
 After input focus or tracking is lost, release action buttons and centre the sticks before using them again. To grab again, release and squeeze grip. This prevents held controls from restarting actions when tracking returns.
 
 ### Vive wands and original Windows MR controllers

@@ -12,7 +12,7 @@ namespace ScamWithYourFriendsInVR.Input
         {
             var manager = VRManager.Instance;
             bool allowed = manager != null && manager.Interactive && !GameAdapter.InMainMenu && !GameAdapter.SettingsOpen
-                && !GameAdapter.MonitorCaptured && !manager.Keyboard.Visible
+                && !GameAdapter.MonitorCaptured && !GameAdapter.ModalOverlayOpen && !manager.Keyboard.Visible
                 && !(GameAdapter.Read(GameAdapter.Static("TabMenu", "Instance"), "IsOpen") is bool players && players);
             Component target = GameAdapter.Read(GameAdapter.LocalPlayer, "RagdollManager") as Component;
             bool giveUp = allowed && manager.Input.GiveUp && target != null;

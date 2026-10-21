@@ -129,6 +129,7 @@ namespace ScamWithYourFriendsInVR
             if (BodyActions != null) BodyActions.Cancel();
             NativeItemInput.Clear();
             VRHudHints.Restore();
+            GameAdapter.ClearUiState();
             if (UI != null) UI.Restore();
             if (Rig != null) Rig.Restore();
             harmony?.UnpatchSelf();

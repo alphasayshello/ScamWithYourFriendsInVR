@@ -76,6 +76,7 @@ namespace ScamWithYourFriendsInVR.Patches
         private static void AfterHudHints(object __instance)
         {
             if (!Active) return;
+            GameAdapter.RememberHud(__instance);
             if (GameAdapter.Read(__instance, "playerMenuHint") is UnityEngine.UIElements.VisualElement hints)
                 UI.VRHudHints.Apply(hints, VRManager.Instance.Input);
         }

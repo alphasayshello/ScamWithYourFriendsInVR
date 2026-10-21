@@ -140,8 +140,9 @@ namespace ScamWithYourFriendsInVR.UI
             {
                 Cancel(); GameAdapter.Back(); manager.UI.Place(); Hide(); return;
             }
+            bool modal = manager?.Interactive == true && GameAdapter.ModalOverlayOpen;
             if (manager == null || !manager.Interactive || manager.Rig.Head == null || !manager.Rig.Right.IsTracked
-                || manager.Rig.HeadObstructed && !GameAdapter.MonitorCaptured && !GameAdapter.SettingsOpen)
+                || manager.Rig.HeadObstructed && !GameAdapter.MonitorCaptured && !GameAdapter.SettingsOpen && !modal)
             {
                 Cancel(); Hide(); return;
             }
@@ -149,7 +150,7 @@ namespace ScamWithYourFriendsInVR.UI
             if (toolkitDown && (!ToolkitPressVisible() || (pressedWorldDocument != null
                 ? !pressedWorldDocument.isActiveAndEnabled
                 : pressedPanel == null || !pressedPanel.CanInteract))) CancelToolkit();
-            bool context = GameAdapter.InMainMenu || GameAdapter.SettingsOpen || GameAdapter.MonitorCaptured || manager.Keyboard.Visible
+            bool context = modal || GameAdapter.InMainMenu || GameAdapter.SettingsOpen || GameAdapter.MonitorCaptured || manager.Keyboard.Visible
                 || GameAdapter.Read(GameAdapter.Static("TabMenu", "Instance"), "IsOpen") is bool playersOpen && playersOpen;
             sampledRotation = manager.Rig.Right.Aim.rotation;
             if (!context && !HasPanelHit && !toolkitDown && !module.IsPressed) aimFilter.Reset();

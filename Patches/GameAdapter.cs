@@ -22,6 +22,12 @@ namespace ScamWithYourFriendsInVR.Patches
         private static readonly Dictionary<MemberKey, MemberInfo> members = new Dictionary<MemberKey, MemberInfo>();
         private static readonly Dictionary<MethodInfo, ParameterInfo[]> methodParameters = new Dictionary<MethodInfo, ParameterInfo[]>();
         private static readonly HashSet<string> failures = new HashSet<string>();
+        private static readonly WeakReference<Component> hud = new WeakReference<Component>(null);
+        private static Component CurrentHud => hud.TryGetTarget(out Component current) && current != null ? current : null;
+        internal static void RememberHud(object candidate) { if (candidate is Component component && component != null) hud.SetTarget(component); }
+        internal static void ClearUiState() => hud.SetTarget(null);
+        internal static bool ModalOverlayOpen => Static("FeedbackUi", "IsOpen") is bool feedback && feedback
+            || Read(CurrentHud, "runBreakdownVisible") is bool review && review;
         internal static Component LocalPlayer => Static("Metater.MetaPlayer", "LocalPlayerInstance") as Component;
         internal static Component Controller => Static("Metater.MetaPlayerController", "Instance") as Component;
         internal static Component ResolveViewPlayer(Component local)
@@ -156,10 +162,11 @@ namespace ScamWithYourFriendsInVR.Patches
                 return;
             }
             Type hudType = ReflectionTypes.Find("ScammerGameHudController");
-            object hud = hudType == null ? null : UnityEngine.Object.FindAnyObjectByType(hudType);
-            if (Read(hud, "runBreakdownVisible") is bool reviewOpen && reviewOpen)
+            object reviewHud = CurrentHud;
+            if (reviewHud == null && hudType != null) { reviewHud = UnityEngine.Object.FindAnyObjectByType(hudType); RememberHud(reviewHud); }
+            if (Read(reviewHud, "runBreakdownVisible") is bool reviewOpen && reviewOpen)
             {
-                Call(hud, "DismissRunBreakdownWithEscape");
+                Call(reviewHud, "DismissRunBreakdownWithEscape");
                 return;
             }
             object players = Static("TabMenu", "Instance");

@@ -20,6 +20,35 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             bool Review() => Member(hud, "runBreakdownVisible") is bool visible && visible;
             var toggle = AccessTools.Method(adapter, "TogglePause");
             var tick = AccessTools.Method(typeof(UI.VRPointer), "LateUpdate");
+            bool savedAlwaysPointer = Plugin.AlwaysShowPointer.Value;
+            void CheckModalBeam(string screen)
+            {
+                var aim = manager.Rig.Right.Aim;
+                Vector3 savedPosition = aim.position; Quaternion savedRotation = aim.rotation;
+                object interactor = AccessTools.Property(adapter, "Interactor").GetValue(null);
+                object target = Member(interactor, "currentInteractable"), pickup = Member(interactor, "currentScenePickup");
+                var write = AccessTools.Method(adapter, "Write");
+                try
+                {
+                    manager.Pointer.Cancel(); Plugin.AlwaysShowPointer.Value = false;
+                    write.Invoke(null, new[] { interactor, "currentInteractable", null });
+                    write.Invoke(null, new[] { interactor, "currentScenePickup", null });
+                    aim.SetPositionAndRotation(new Vector3(10000, 10000, 10000), Quaternion.LookRotation(Vector3.up));
+                    tick.Invoke(manager.Pointer, null);
+                    var beam = AccessTools.Field(typeof(UI.VRPointer), "line").GetValue(manager.Pointer) as LineRenderer;
+                    Require(!manager.Pointer.HasPanelHit && beam != null && beam.enabled,
+                        "Native " + screen + " overlay lost its controller laser when aiming away from UI");
+                }
+                finally
+                {
+                    Plugin.AlwaysShowPointer.Value = savedAlwaysPointer;
+                    aim.SetPositionAndRotation(savedPosition, savedRotation);
+                    write.Invoke(null, new[] { interactor, "currentInteractable", target });
+                    write.Invoke(null, new[] { interactor, "currentScenePickup", pickup });
+                    manager.Pointer.Cancel();
+                }
+                Logger.LogInfo("MENU LASER PASS: " + screen + " keeps the controller beam visible without a UI or world target");
+            }
             void PressMenu()
             {
                 manager.Input.GetType().GetProperty("MenuDown").SetValue(manager.Input, true);
@@ -32,10 +61,17 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 AccessTools.Method(hudType, "ShowRunBreakdown").Invoke(hud, null);
                 yield return null; yield return null;
                 Require(Review(), "Native results panel did not open");
+                CheckModalBeam("results");
                 PressMenu();
                 Require(!Review() && !Settings(), "Controller menu opened settings under results instead of dismissing results");
                 PressMenu(); Require(!Settings(), "Consumed results/back input opened settings again in the same frame");
                 Logger.LogInfo("MENU ROUTING PASS: controller menu dismisses native results and respects same-frame escape consumption");
+                yield return null;
+                AccessTools.Method(feedback, "Show").Invoke(null, null);
+                yield return null; yield return null;
+                Require(Feedback() && !Settings() && !Review(), "Standalone feedback overlay did not open");
+                CheckModalBeam("feedback");
+                PressMenu(); Require(!Feedback() && !Settings(), "Standalone feedback did not dismiss cleanly");
                 yield return null;
                 PressMenu(); yield return null;
                 Require(Settings(), "Fresh controller menu did not open settings after results dismissal");
@@ -60,6 +96,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             finally
             {
                 manager.Input.GetType().GetProperty("MenuDown").SetValue(manager.Input, false);
+                Plugin.AlwaysShowPointer.Value = savedAlwaysPointer;
                 manager.Pointer.Cancel();
                 if (Feedback()) AccessTools.Method(feedback, "TryDismissWithEscape").Invoke(null, null);
                 if (Review()) AccessTools.Method(hudType, "HideRunBreakdown").Invoke(hud, null);
