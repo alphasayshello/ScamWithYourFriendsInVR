@@ -33,11 +33,14 @@ namespace ScamWithYourFriendsInVR.Input
         public bool RightTracked { get; private set; }
         public bool HasInputFocus { get; private set; }
         private PropertyInfo focusKnown, focusValue;
-        private bool menu, recenter, secondary, players, fart;
+        private bool menu, recenter, secondary, leftPrimaryHeld;
         private bool recenterHeld;
         private float recenterStarted;
         private bool turnLatched;
         private bool rightPrimaryHeld, giveUpChord, giveUpCanceled;
+        private VRButtonReleaseGate triggerGate, gripGate, leftTriggerGate, rightPrimaryGate, secondaryGate;
+        private VRButtonReleaseGate leftPrimaryGate, leftSecondaryGate, leftMenuGate, rightMenuGate, recenterGate;
+        private VRStickReleaseGate moveGate, turnGate;
 
         private void Update()
         {
@@ -45,55 +48,81 @@ namespace ScamWithYourFriendsInVR.Input
             InputDevice head = InputDevices.GetDeviceAtXRNode(XRNode.Head);
             InputDevice left = InputDevices.GetDeviceAtXRNode(XRNode.LeftHand);
             InputDevice right = InputDevices.GetDeviceAtXRNode(XRNode.RightHand);
-            HeadTracked = Tracked(head);
-            RightTracked = Tracked(right);
             if (focusKnown == null)
             {
                 var type = ReflectionTypes.Find("ScamWithYourFriendsInVR.Provider.VRSessionFocusFeature");
                 focusKnown = type?.GetProperty("HasSessionState");
                 focusValue = type?.GetProperty("HasInputFocus");
             }
-            HasInputFocus = focusKnown?.GetValue(null) is bool known && known
-                ? focusValue.GetValue(null) is bool focused && focused : Application.isFocused;
+            bool focused = focusKnown?.GetValue(null) is bool known && known
+                ? focusValue.GetValue(null) is bool inputFocused && inputFocused : Application.isFocused;
+            bool headTracked = Tracked(head);
+            ApplyState(new VRRawInputState { HeadTracked = headTracked, Focused = focused,
+                Left = ReadHand(left, focused && headTracked), Right = ReadHand(right, focused && headTracked) }, Time.unscaledTime);
+        }
+
+        private static VRRawHandState ReadHand(InputDevice device, bool controlsActive)
+        {
+            var state = new VRRawHandState { Connected = device.isValid, Tracked = Tracked(device) };
+            if (!state.Connected || !controlsActive) return state;
+            state.HasTriggerButton = device.TryGetFeatureValue(CommonUsages.triggerButton, out state.TriggerButton);
+            state.HasGripButton = device.TryGetFeatureValue(CommonUsages.gripButton, out state.GripButton);
+            state.HasMenu = device.TryGetFeatureValue(CommonUsages.menuButton, out state.Menu);
+            state.HasPrimary = device.TryGetFeatureValue(CommonUsages.primaryButton, out state.Primary);
+            state.HasSecondary = device.TryGetFeatureValue(CommonUsages.secondaryButton, out state.Secondary);
+            state.HasStickClick = device.TryGetFeatureValue(CommonUsages.primary2DAxisClick, out state.StickClick);
+            state.HasTrigger = device.TryGetFeatureValue(CommonUsages.trigger, out state.TriggerValue);
+            state.HasGrip = device.TryGetFeatureValue(CommonUsages.grip, out state.GripValue);
+            state.HasStick = device.TryGetFeatureValue(CommonUsages.primary2DAxis, out state.Stick);
+            return state;
+        }
+
+        private void ApplyState(VRRawInputState state, float now)
+        {
+            HeadTracked = state.HeadTracked; HasInputFocus = state.Focused; RightTracked = state.Right.Tracked;
             bool active = HeadTracked && HasInputFocus;
-            Move = active && Tracked(left) ? Stick(left) : Vector2.zero;
-            Turn = active && RightTracked ? Stick(right) : Vector2.zero;
-            bool nextTrigger = active && RightTracked && Button(right, CommonUsages.triggerButton);
-            if (active && RightTracked && right.TryGetFeatureValue(CommonUsages.trigger, out float analogTrigger))
-                nextTrigger |= analogTrigger > (Trigger ? 0.45f : 0.6f);
-            bool nextGrip = active && RightTracked && Button(right, CommonUsages.gripButton);
-            if (active && RightTracked && right.TryGetFeatureValue(CommonUsages.grip, out float analogGrip))
-                nextGrip |= analogGrip > (Grip ? 0.45f : 0.6f);
+            bool leftActive = active && state.Left.Tracked, rightActive = active && state.Right.Tracked;
+            Move = Stick(moveGate.Read(state.Left.Stick, leftActive && state.Left.HasStick, Plugin.Deadzone.Value));
+            Turn = Stick(turnGate.Read(state.Right.Stick, rightActive && state.Right.HasStick, Plugin.Deadzone.Value));
+            bool rawTrigger = state.Right.HasTriggerButton && state.Right.TriggerButton || state.Right.HasTrigger && state.Right.TriggerValue > (Trigger || !triggerGate.Released ? .45f : .6f);
+            bool rawGrip = state.Right.HasGripButton && state.Right.GripButton || state.Right.HasGrip && state.Right.GripValue > (Grip || !gripGate.Released ? .45f : .6f);
+            bool nextTrigger = triggerGate.Read(rawTrigger, rightActive && (state.Right.HasTrigger || state.Right.HasTriggerButton));
+            bool gripPress = gripGate.Read(rawGrip, rightActive && (state.Right.HasGrip || state.Right.HasGripButton));
+            // A held grip remains a modifier, but acquisition needs a fresh edge.
+            // This preserves fresh punch/item input without auto-grabbing when
+            // controller tracking or application focus returns.
+            bool nextGrip = rightActive && rawGrip;
             TriggerDown = nextTrigger && !Trigger;
             TriggerUp = !nextTrigger && Trigger;
             Trigger = nextTrigger;
-            GripDown = nextGrip && !Grip;
+            GripDown = gripPress && !Grip;
             GripUp = !nextGrip && Grip;
             Grip = nextGrip;
-            bool nextMenu = active && (Button(left, CommonUsages.menuButton) || Button(right, CommonUsages.menuButton)
-                || Button(left, CommonUsages.secondaryButton));
+            bool leftMenu = leftMenuGate.Read(state.Left.Menu, active && state.Left.Connected && state.Left.HasMenu);
+            bool rightMenu = rightMenuGate.Read(state.Right.Menu, active && state.Right.Connected && state.Right.HasMenu);
+            bool leftSecondary = leftSecondaryGate.Read(state.Left.Secondary, active && state.Left.Connected && state.Left.HasSecondary);
+            bool nextMenu = leftMenu || rightMenu || leftSecondary;
             MenuDown = nextMenu && !menu;
             menu = nextMenu;
-            LeftGrip = active && Tracked(left) && (Button(left, CommonUsages.gripButton)
-                || left.TryGetFeatureValue(CommonUsages.grip, out float leftGrip) && leftGrip > .6f);
-            bool rightPrimary = active && RightTracked && Button(right, CommonUsages.primaryButton);
+            LeftGrip = leftActive && (state.Left.HasGripButton && state.Left.GripButton || state.Left.HasGrip && state.Left.GripValue > .6f);
+            bool rightPrimary = rightPrimaryGate.Read(state.Right.Primary, rightActive && state.Right.HasPrimary);
             UpdateBodyPrimary(rightPrimary);
-            bool nextLeftTrigger = active && Tracked(left) && (Button(left, CommonUsages.triggerButton)
-                || left.TryGetFeatureValue(CommonUsages.trigger, out float leftTrigger) && leftTrigger > (LeftTrigger ? .45f : .6f));
+            bool rawLeftTrigger = state.Left.HasTriggerButton && state.Left.TriggerButton || state.Left.HasTrigger && state.Left.TriggerValue > (LeftTrigger || !leftTriggerGate.Released ? .45f : .6f);
+            bool nextLeftTrigger = leftTriggerGate.Read(rawLeftTrigger, leftActive && (state.Left.HasTrigger || state.Left.HasTriggerButton));
             LeftTriggerDown = nextLeftTrigger && !LeftTrigger;
             LeftTrigger = nextLeftTrigger;
             Pee = LeftGrip && LeftTrigger;
-            bool nextFart = LeftGrip && Button(left, CommonUsages.primaryButton);
-            FartDown = nextFart && !fart; fart = nextFart;
-            bool nextPlayers = active && !LeftGrip && Button(left, CommonUsages.primaryButton);
-            PlayersDown = nextPlayers && !players;
-            players = nextPlayers;
-            bool nextRecenter = active && Button(left, CommonUsages.primary2DAxisClick);
-            if (nextRecenter && !recenterHeld) recenterStarted = Time.unscaledTime;
-            RecenterDown = nextRecenter && !recenter && Time.unscaledTime - recenterStarted >= .65f;
+            bool leftPrimary = leftPrimaryGate.Read(state.Left.Primary, leftActive && state.Left.HasPrimary);
+            bool leftPrimaryDown = leftPrimary && !leftPrimaryHeld;
+            FartDown = leftPrimaryDown && LeftGrip;
+            PlayersDown = leftPrimaryDown && !LeftGrip;
+            leftPrimaryHeld = leftPrimary;
+            bool nextRecenter = recenterGate.Read(state.Left.StickClick, leftActive && state.Left.HasStickClick);
+            if (nextRecenter && !recenterHeld) recenterStarted = now;
+            RecenterDown = nextRecenter && !recenter && now - recenterStarted >= .65f;
             recenter = nextRecenter && (recenter || RecenterDown);
             recenterHeld = nextRecenter;
-            bool nextSecondary = active && RightTracked && Button(right, CommonUsages.secondaryButton);
+            bool nextSecondary = secondaryGate.Read(state.Right.Secondary, rightActive && state.Right.HasSecondary);
             SecondaryDown = nextSecondary && !secondary;
             Secondary = nextSecondary;
             secondary = nextSecondary;
@@ -127,14 +156,8 @@ namespace ScamWithYourFriendsInVR.Input
             return device.isValid && device.TryGetFeatureValue(CommonUsages.isTracked, out bool tracked) && tracked;
         }
 
-        private static bool Button(InputDevice device, InputFeatureUsage<bool> usage)
+        private static Vector2 Stick(Vector2 value)
         {
-            return device.isValid && device.TryGetFeatureValue(usage, out bool value) && value;
-        }
-
-        private static Vector2 Stick(InputDevice device)
-        {
-            if (!device.TryGetFeatureValue(CommonUsages.primary2DAxis, out Vector2 value)) return Vector2.zero;
             float length = value.magnitude;
             float dead = Plugin.Deadzone.Value;
             return length <= dead ? Vector2.zero : value.normalized * Mathf.Clamp01((length - dead) / (1f - dead));

@@ -20,6 +20,8 @@ The laser stays visible in menus and computers. During normal play it appears fo
 
 **Left X** opens players. **Left Y** or the controller menu backs out of players, exits a captured computer, or toggles settings. Floating menus/HUD follow your view at **0.9 metres** by default. Adjust `[UI] PanelDistance` and `PanelWidth` if needed.
 
+After input focus or tracking is lost, release action buttons and centre the sticks before using them again. To grab again, release and squeeze grip. This prevents held controls from restarting actions when tracking returns.
+
 ## Computers
 
 1. Point at the computer's native interaction target and press the right trigger to enter it.
