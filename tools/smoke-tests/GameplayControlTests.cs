@@ -62,23 +62,34 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 Require(hint?.Q<Label>("player-menu-hint-label")?.parent.Q<Label>(className: "player-menu-hint__key")?.text == "LEFT X"
                     && hint.Q<Label>("settings-menu-hint-label")?.parent.Q<Label>(className: "player-menu-hint__key")?.text == "LEFT Y", "HUD kept desktop shortcut labels");
                 var layoutProperty = manager.Input.GetType().GetProperty("LeftLayout");
+                var rightLayoutProperty = manager.Input.GetType().GetProperty("RightLayout");
                 object savedLayout = layoutProperty.GetValue(manager.Input);
+                object savedRightLayout = rightLayoutProperty.GetValue(manager.Input);
+                var recoveryKey = hint.Q("recovery-hint")?.Q<Label>(className: "player-menu-hint__key");
+                Require(recoveryKey?.text == "LEFT GRIP + RIGHT A", "Native recovery hint kept its desktop key");
                 try
                 {
                     foreach (var layout in new[] { Plugin.ControllerLayoutKind.ViveWand, Plugin.ControllerLayoutKind.Wmr })
                     {
                         layoutProperty.SetValue(manager.Input, layout);
+                        rightLayoutProperty.SetValue(manager.Input, layout);
                         AccessTools.Method(hudType, "RefreshPlayerMenuHint").Invoke(hud, null);
                         Require(hint.Q<Label>("player-menu-hint-label").parent.Q<Label>(className: "player-menu-hint__key").text == "LEFT PAD"
                             && hint.Q<Label>("settings-menu-hint-label").parent.Q<Label>(className: "player-menu-hint__key").text == "MENU", "Native HUD kept face buttons for " + layout);
+                        Require(recoveryKey.text == "LEFT GRIP + RIGHT PAD UP", "Native recovery hint kept a missing face button for " + layout);
                     }
+                    AccessTools.Method(typeof(VRManager).Assembly.GetType("ScamWithYourFriendsInVR.UI.VRHudHints"), "Restore").Invoke(null, null);
+                    Require(hint.Q<Label>("player-menu-hint-label").parent.Q<Label>(className: "player-menu-hint__key").text == "TAB"
+                        && hint.Q<Label>("settings-menu-hint-label").parent.Q<Label>(className: "player-menu-hint__key").text == "ESC"
+                        && recoveryKey.text != "LEFT GRIP + RIGHT PAD UP", "Native HUD did not restore desktop captions");
                 }
                 finally
                 {
                     layoutProperty.SetValue(manager.Input, savedLayout);
+                    rightLayoutProperty.SetValue(manager.Input, savedRightLayout);
                     AccessTools.Method(hudType, "RefreshPlayerMenuHint").Invoke(hud, null);
                 }
-                Logger.LogInfo("GAMEPLAY PASS: native HUD shows Quest and Vive/WMR players/settings shortcuts and restores the current layout");
+                Logger.LogInfo("GAMEPLAY PASS: native HUD shows layout-specific players/settings/recovery shortcuts, restores desktop captions and resumes VR hints");
             }
             finally
             {

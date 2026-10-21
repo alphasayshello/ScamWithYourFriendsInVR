@@ -20,6 +20,8 @@ namespace ScamWithYourFriendsInVR.SmokeTests
         {
             if (!Environment.GetCommandLineArgs().Contains("--swyf-vr-smoke-tests")) yield break;
             yield return null;
+            try { TestHudHints(); Logger.LogInfo("SMOKE PASS: controller HUD/recovery captions, mixed layouts, keyboard rebinding, owner replacement and conditional restoration"); }
+            catch (Exception ex) { Logger.LogError("SMOKE FAIL: HUD hints: " + ex.GetBaseException()); }
             try { TestControllerLayouts(); Logger.LogInfo("SMOKE PASS: Vive/WMR pad action ownership, focus recovery, native controls, locomotion and controller hints"); }
             catch (Exception ex) { Logger.LogError("SMOKE FAIL: controller layouts: " + ex.GetBaseException()); }
             try { TestInputRecovery(); Logger.LogInfo("SMOKE PASS: focus/head/controller recovery requires released buttons and centred sticks, preserves grip modifiers and connected menu access"); }
@@ -358,6 +360,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             PanelSettings nativeSettings = null;
             RenderTexture nativeTexture = null;
             VRPanelSurface borrowed = null;
+            Label lifecyclePlayers = null, lifecycleSettings = null, lifecycleRecovery = null;
             VRManager manager = VRManager.Instance;
             try
             {
@@ -399,6 +402,10 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 borrowed = (VRPanelSurface)typeof(VRPanelSurface).GetMethod("Borrow", BindingFlags.Static | BindingFlags.NonPublic)
                     .Invoke(null, new object[] { nativeRenderer, nativePresenter.GetComponent<MeshFilter>().sharedMesh, 0, nativeMaterial, "_MainTex", nativeDocument });
                 manager.UI.Panels.Add(borrowed);
+                var hints = HudFixture();
+                lifecyclePlayers = hints.Players; lifecycleSettings = hints.Settings; lifecycleRecovery = hints.Recovery;
+                ApplyHudHints(hints.Root, manager.Input);
+                Check(lifecyclePlayers.text != "TAB" && lifecycleRecovery.text != "G", "Lifecycle fixture did not acquire VR HUD captions");
                 Logger.LogInfo("SMOKE INFO: mock session active; canvases=" + manager.UI.Canvases.Count + "; panels=" + manager.UI.Panels.Count);
                 xrManager.GetType().GetMethod("StopSubsystems").Invoke(xrManager, null);
             }
@@ -412,6 +419,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             try
             {
                 Check(!manager.Ready, "Runtime stop left the session ready");
+                Check(lifecyclePlayers.text == "TAB" && lifecycleSettings.text == "ESC" && lifecycleRecovery.text == "G", "Runtime stop retained VR HUD captions");
                 Check(manager.Rig == null || manager.Rig.Head == null, "Runtime stop retained the camera binding");
                 Check(camera == null || Mathf.Approximately(camera.nearClipPlane, near) && (!builtInStereo || camera.stereoTargetEye == stereo), "Camera settings were not restored");
                 Check(camera == null || camera.cullingMask == cullingMask, "VR UI layer retained in camera culling mask after shutdown");

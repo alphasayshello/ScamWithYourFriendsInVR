@@ -44,8 +44,10 @@ namespace ScamWithYourFriendsInVR.Input
         private VRControllerIdentity leftIdentity, rightIdentity;
         private VRPadBindings leftPad, rightPad;
         public Plugin.ControllerLayoutKind LeftLayout { get; private set; }
+        public Plugin.ControllerLayoutKind RightLayout { get; private set; }
         public string PlayersHint => LeftLayout == Plugin.ControllerLayoutKind.ViveWand || LeftLayout == Plugin.ControllerLayoutKind.Wmr ? "LEFT PAD" : "LEFT X";
         public string SettingsHint => LeftLayout == Plugin.ControllerLayoutKind.ViveWand || LeftLayout == Plugin.ControllerLayoutKind.Wmr ? "MENU" : "LEFT Y";
+        public string GiveUpHint => RightLayout == Plugin.ControllerLayoutKind.ViveWand || RightLayout == Plugin.ControllerLayoutKind.Wmr ? "LEFT GRIP + RIGHT PAD UP" : "LEFT GRIP + RIGHT A";
 
         private void Update()
         {
@@ -93,6 +95,7 @@ namespace ScamWithYourFriendsInVR.Input
             bool active = HeadTracked && HasInputFocus;
             leftPad.Apply(ref state.Left, true, active); rightPad.Apply(ref state.Right, false, active);
             LeftLayout = state.Left.Layout;
+            RightLayout = state.Right.Layout;
             bool leftActive = active && state.Left.Tracked, rightActive = active && state.Right.Tracked;
             Move = Stick(moveGate.Read(state.Left.Stick, leftActive && state.Left.HasStick, Plugin.Deadzone.Value));
             Turn = Stick(turnGate.Read(state.Right.Stick, rightActive && state.Right.HasStick, Plugin.Deadzone.Value));

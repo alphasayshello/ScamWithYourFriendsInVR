@@ -77,14 +77,7 @@ namespace ScamWithYourFriendsInVR.Patches
         {
             if (!Active) return;
             if (GameAdapter.Read(__instance, "playerMenuHint") is UnityEngine.UIElements.VisualElement hints)
-            {
-                var players = hints.Q<UnityEngine.UIElements.Label>("player-menu-hint-label")?.parent;
-                var settings = hints.Q<UnityEngine.UIElements.Label>("settings-menu-hint-label")?.parent;
-                var playersKey = players?.Q<UnityEngine.UIElements.Label>(className: "player-menu-hint__key");
-                var settingsKey = settings?.Q<UnityEngine.UIElements.Label>(className: "player-menu-hint__key");
-                if (playersKey != null) playersKey.text = VRManager.Instance.Input.PlayersHint;
-                if (settingsKey != null) settingsKey.text = VRManager.Instance.Input.SettingsHint;
-            }
+                UI.VRHudHints.Apply(hints, VRManager.Instance.Input);
         }
 
         private static void AfterMeshVisibility(object __instance)
