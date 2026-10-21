@@ -10,6 +10,8 @@ Connect your headset to the PC runtime first. For Quest through Steam Link, reac
 
 Move with the left stick and snap turn with the right stick. Your head controls where you look; the revised standing body follows head yaw separately from tracking-origin rotation. Physical steps move the native collision body, with a small allowance for leaning. Walls still block the body. Large tracking jumps trigger recalibration rather than a sudden body move.
 
+Full stick/pad travel now activates native sprint in the direction you are moving; partial travel walks. Auto sprint is on by default and also drives the native fast-climb state on ladders. It releases when you ease off, open a menu or lose input focus. Change **General → VR options → Auto sprint** at any time, or set `[Input] AutoSprint = false` in the BepInEx config to leave ordinary PC sprint input in charge. `[Input] SprintThreshold` defaults to `0.85`; sprint stops `0.15` below the entry threshold so small stick movements do not keep toggling it. Recenter and action-button mappings are unchanged.
+
 Standing room movement is disabled while seated or when native gameplay input is blocked. The revised alignment requires headset acceptance, including chairs, stairs and reconnects. Use `[Comfort] Seated = true` for seated height compensation; this is separate from sitting in an in-game chair.
 
 ## Menus and HUD
@@ -60,7 +62,7 @@ Open the colour swatch to drag the hue strip and saturation/value square, then c
 
 The gallery reopens saved art; Canvas starts a blank drawing. Duplicate Image makes another file, and Delete Image removes the selected artwork and selects a surviving one. Painting keeps the game's normal save behaviour. A physical PC keyboard is still needed for text and shortcuts.
 
-From day five, use Paint�s Print button to send the current drawing to the floor-two printer. It stays busy until its output is collected. Leave the computer and pick up the printed drawing with right grip. While holding it, aim the right controller and press right B to attach it to a nearby flat surface with room for the whole page, or right trigger to throw it. You can pick up placed artwork again. Placement range, ownership and valid-surface rules still come from the game.
+From day five, use Paint’s Print button to send the current drawing to the floor-two printer. It stays busy until its output is collected. Leave the computer and pick up the printed drawing with right grip. While holding it, aim the right controller and press right B to attach it to a nearby flat surface with room for the whole page, or right trigger to throw it. You can pick up placed artwork again. Placement range, ownership and valid-surface rules still come from the game.
 
 In Camera, click **Show** to open its controls. The shutter takes a picture from the desk webcam. Select a gallery thumbnail to view a saved picture, choose **Live** to return to the webcam, or use the trash button to delete the selected picture. Closing Camera stops its preview rendering.
 
@@ -78,7 +80,7 @@ Remote photos have fit/fill controls. Audio and video use play/pause buttons, a 
 
 ## Interact and fight
 
-Use right grip for native pickup/hold interactions, then release to drop. While holding an item, right trigger sends its native primary action, including food/tool use. Right B sends the native secondary action away from UI; hold and release it for actions that need a held button. With empty hands, right grip + trigger punches. Aim the right controller: both the hit ray and native punch animation target follow it, including the direction sent through the game�s normal animation command.
+Use right grip for native pickup/hold interactions, then release to drop. While holding an item, right trigger sends its native primary action, including food/tool use. Right B sends the native secondary action away from UI; hold and release it for actions that need a held button. With empty hands, right grip + trigger punches. Aim the right controller: both the hit ray and native punch animation target follow it, including the direction sent through the game’s normal animation command.
 
 For charged weapons such as the shotgun and sniper, keep the right trigger held until the game fires. Release early to cancel charging. Opening settings or losing VR input focus cancels the charge too; release and press again to start a new shot. Shotgun spread follows the controller's orientation as well as its aim direction.
 
@@ -98,7 +100,7 @@ While holding an extension ladder, press right trigger to extend or retract it. 
 
 Head tracking stays free while the native ladder controls your body's position. Physical leaning or turning does not walk or rotate that body off the ladder. Settings and lost focus stop further stick input; the native climb motor still decelerates normally. A jump held across a menu does not automatically dismount when it closes. After dismount or ladder removal, centre both sticks and release jump before walking, jumping or snap-turning; the HUD prompts you while a control remains held.
 
-Simulated checks cover the extension ladder, input recovery and occupied ladder disable/removal. Other ladder variants, fast-climb/sprint controls, occupied retraction, remote clients and headset handling still need checking.
+Simulated checks cover the extension ladder, input recovery and occupied ladder disable/removal. Other ladder variants, occupied retraction, remote clients and headset handling still need checking.
 
 ## FPV flight
 

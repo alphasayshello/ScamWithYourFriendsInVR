@@ -23,7 +23,7 @@ namespace ScamWithYourFriendsInVR.Patches
             if (pressedGetter == null) { Plugin.Log.LogWarning("Native input callbacks unavailable."); return; }
             foreach (var binding in new[] { ("PlayerInteractor", "OnAttack"), ("PlayerInteractor", "OnBlock"),
                 ("PlayerInteractor", "OnTertiaryInteract"), ("PlayerInteractor", "OnSecondaryInteract"), ("PlayerFartManager", "OnFart"),
-                ("PlayerRagdollManager", "OnJump"), ("PlayerRagdollManager", "OnGiveUp") })
+                ("Metater.MetaPlayerController", "OnSprint"), ("PlayerRagdollManager", "OnJump"), ("PlayerRagdollManager", "OnGiveUp") })
             {
                 Type owner = ReflectionTypes.Find(binding.Item1);
                 string name = binding.Item2;
@@ -43,6 +43,7 @@ namespace ScamWithYourFriendsInVR.Patches
             Input.VRBagControls.Clear();
             Input.VRFlightControls.Clear();
             Input.VRLadderControls.Clear();
+            Input.VRSprintControls.Clear();
             callbacks.Clear();
             Input.VRMouseFallback.Release();
         }

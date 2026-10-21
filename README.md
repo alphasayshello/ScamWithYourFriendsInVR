@@ -35,7 +35,7 @@ The table below uses Quest buttons. [Vive wand and original WMR alternatives](do
 
 | Quest input | Action |
 | --- | --- |
-| Left stick | Move; scroll when pointing at UI |
+| Left stick | Move; full travel auto sprints; scroll when pointing at UI |
 | Right stick left/right | Snap turn |
 | Right trigger | Click, hold/drag, interact, or use a held item |
 | Right grip | Pick up / hold; release to drop |

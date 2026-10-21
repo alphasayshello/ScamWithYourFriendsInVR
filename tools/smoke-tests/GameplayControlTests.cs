@@ -11,6 +11,9 @@ namespace ScamWithYourFriendsInVR.SmokeTests
     {
         private IEnumerator TestGameplayControls()
         {
+            var sprint = TestNativeSprint();
+            try { while (sprint.MoveNext()) yield return sprint.Current; }
+            finally { (sprint as IDisposable)?.Dispose(); }
             var manager = VRManager.Instance;
             var player = Mirror.NetworkClient.localPlayer;
             Type adapter = typeof(VRManager).Assembly.GetType("ScamWithYourFriendsInVR.Patches.GameAdapter");

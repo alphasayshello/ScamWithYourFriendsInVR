@@ -116,15 +116,17 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 while (!NetworkClient.ready || NetworkClient.localPlayer == null || VRManager.Instance?.Rig?.Head == null)
                 { Require(Time.realtimeSinceStartup < readyDeadline, "Focused test host did not become ready"); yield return null; }
                 yield return new WaitForSecondsRealtime(1.5f);
+                bool settingsOnly = Environment.GetCommandLineArgs().Contains("--swyf-only-settings-tests");
+                bool sprint = Environment.GetCommandLineArgs().Contains("--swyf-only-sprint-tests");
                 bool heldWeapons = Environment.GetCommandLineArgs().Contains("--swyf-only-held-weapon-tests");
-                IEnumerator test = singleMenus ? TestMenuRouting() : singleProfile ? ProfileModFrames() : singleCombat ? heldWeapons ? TestNativeHeldWeapons() : TestCombatTransitions() : TestNativeRagdoll();
+                IEnumerator test = singleMenus ? settingsOnly ? TestSettingsRender() : TestMenuRouting() : singleProfile ? ProfileModFrames() : singleCombat ? sprint ? TestNativeSprint() : heldWeapons ? TestNativeHeldWeapons() : TestCombatTransitions() : TestNativeRagdoll();
                 try
                 {
                     while (true)
                     {
                         bool more;
                         try { more = test.MoveNext(); }
-                        catch (Exception ex) { Logger.LogError((singleMenus ? "MENU ROUTING FAIL: " : singleProfile ? "PROFILE FAIL: " : singleCombat ? heldWeapons ? "HELD WEAPON FAIL: " : "COMBAT TRANSITION FAIL: " : "RAGDOLL FAIL: ") + ex.GetBaseException()); break; }
+                        catch (Exception ex) { Logger.LogError((singleMenus ? "MENU ROUTING FAIL: " : singleProfile ? "PROFILE FAIL: " : singleCombat ? sprint ? "SPRINT FAIL: " : heldWeapons ? "HELD WEAPON FAIL: " : "COMBAT TRANSITION FAIL: " : "RAGDOLL FAIL: ") + ex.GetBaseException()); break; }
                         if (!more) break;
                         yield return test.Current;
                     }

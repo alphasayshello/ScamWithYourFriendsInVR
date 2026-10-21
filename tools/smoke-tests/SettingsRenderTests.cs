@@ -63,10 +63,19 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                         Require(vrOptions != null && doc.rootVisualElement.Query<VisualElement>("swyf-vr-options").ToList().Count == 1,
                             "VR options missing or duplicated in native General settings");
                         bool originalDesktop = Plugin.PhysicalDesktop.Value;
+                        bool originalSprint = Plugin.AutoSprint.Value;
                         float originalDistance = Plugin.PanelDistance.Value;
                         float originalSteering = Plugin.FlightSteeringSpeed.Value;
                         try
                         {
+                            var sprintChange = ClickAppControl(panelSurface, vrOptions.Q<Button>("swyf-vr-auto-sprint"));
+                            try { while (sprintChange.MoveNext()) yield return sprintChange.Current; }
+                            finally { (sprintChange as IDisposable)?.Dispose(); }
+                            Require(Plugin.AutoSprint.Value != originalSprint, "Controller did not change auto sprint in VR options");
+                            sprintChange = ClickAppControl(panelSurface, vrOptions.Q<Button>("swyf-vr-auto-sprint"));
+                            try { while (sprintChange.MoveNext()) yield return sprintChange.Current; }
+                            finally { (sprintChange as IDisposable)?.Dispose(); }
+                            Require(Plugin.AutoSprint.Value == originalSprint, "Controller did not restore auto sprint option");
                             foreach (string id in new[] { "swyf-vr-desktop", "swyf-vr-desktop", "swyf-vr-ui-distance", "swyf-vr-flight-steering" })
                             {
                                 var change = ClickAppControl(panelSurface, vrOptions.Q<Button>(id));
@@ -76,9 +85,9 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                             Require(Plugin.PhysicalDesktop.Value == originalDesktop && Mathf.Abs(Plugin.PanelDistance.Value - originalDistance) > .01f,
                                 "VR settings buttons did not change and restore native configuration");
                             Require(Mathf.Abs(Plugin.FlightSteeringSpeed.Value - originalSteering) > .01f, "VR steering setting did not change through the controller");
-                            Logger.LogInfo("SETTINGS PASS: VR options controller clicks change desktop placement, menu distance and flight steering without config editing");
+                            Logger.LogInfo("SETTINGS PASS: VR options controller clicks change desktop placement, menu distance, auto sprint and flight steering without config editing");
                         }
-                        finally { Plugin.PhysicalDesktop.Value = originalDesktop; Plugin.PanelDistance.Value = originalDistance; Plugin.FlightSteeringSpeed.Value = originalSteering; manager.UI.Place(); }
+                        finally { Plugin.AutoSprint.Value = originalSprint; Plugin.PhysicalDesktop.Value = originalDesktop; Plugin.PanelDistance.Value = originalDistance; Plugin.FlightSteeringSpeed.Value = originalSteering; manager.UI.Place(); }
                         Transform head = manager.Rig.Head.transform;
                         Vector3 headPosition = head.position;
                         Quaternion headRotation = head.rotation;

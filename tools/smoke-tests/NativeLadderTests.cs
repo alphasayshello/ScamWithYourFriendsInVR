@@ -135,6 +135,8 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 Drive(Vector2.up);
                 Require(Member(ladderFixture, "moveInput") is Vector2 move && move.y > .9f,
                     "VR forward stick did not reach native ladder movement event");
+                if (Plugin.AutoSprint.Value)
+                    Require((bool)Member(ladderFixture, "isSprinting"), "Full VR stick did not reach native fast-climb sprint event");
                 Vector3 before = NetworkClient.localPlayer.transform.position;
                 float headBeforeClimb = manager.Rig.Head.transform.position.y;
                 deadline = Time.realtimeSinceStartup + 3;

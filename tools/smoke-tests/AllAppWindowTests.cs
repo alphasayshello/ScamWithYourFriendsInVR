@@ -33,6 +33,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
         {
             KeepFlightInput(__instance);
             KeepLadderInput(__instance);
+            KeepSprintInput(__instance);
             if (injectBagGrip) __instance.GetType().GetProperty("LeftGrip").SetValue(__instance, true);
             if (bagFixture != null) __instance.GetType().GetProperty("Move").SetValue(__instance, bagMove);
             if (holdInjectedSecondary)

@@ -156,6 +156,8 @@ namespace ScamWithYourFriendsInVR.Patches
             Input.VRLadderControls.Update(__instance as Component, ladder, specialInput);
             bool releaseBody = Input.VRFlightControls.SuppressBodyInput(manager.Input);
             releaseBody |= Input.VRLadderControls.SuppressBodyInput(manager.Input);
+            Input.VRSprintControls.Update(__instance as Component, specialInput && GameplayInput && !releaseBody
+                && bag == null && Input.VRFlightControls.Current == null);
             Vector2 move = Vector2.zero;
             Transform polar = GameAdapter.Polar;
             if (manager.Interactive && manager.Rig.Head != null && polar != null

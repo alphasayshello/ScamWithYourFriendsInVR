@@ -19,7 +19,8 @@ namespace ScamWithYourFriendsInVR
         public static ConfigEntry<bool> Seated;
         public static ConfigEntry<float> SeatedHeight, SnapAngle, Deadzone, PanelDistance, PanelWidth;
         public static ConfigEntry<int> CollisionMask;
-        public static ConfigEntry<float> FlightSteeringSpeed;
+        public static ConfigEntry<float> FlightSteeringSpeed, SprintThreshold;
+        public static ConfigEntry<bool> AutoSprint;
         public static ConfigEntry<string> RuntimeBundle;
         public static ConfigEntry<PlayerMode> Mode;
         public static ConfigEntry<ControllerLayoutKind> ControllerLayout;
@@ -49,6 +50,8 @@ namespace ScamWithYourFriendsInVR
             SeatedHeight = Config.Bind("Comfort", "SeatedEyeHeight", 1.65f, new ConfigDescription("Meters", new AcceptableValueRange<float>(0.8f, 2.2f)));
             SnapAngle = Config.Bind("Comfort", "SnapDegrees", 30f, new ConfigDescription("Degrees per stick deflection", new AcceptableValueRange<float>(10f, 90f)));
             Deadzone = Config.Bind("Input", "StickDeadzone", 0.2f, new ConfigDescription("Radial deadzone", new AcceptableValueRange<float>(0.05f, 0.8f)));
+            AutoSprint = Config.Bind("Input", "AutoSprint", true, "Sprint with full stick/pad travel; partial travel walks. Applies to native walking and ladder climbing. Disable in VR options to retain ordinary PC sprint input.");
+            SprintThreshold = Config.Bind("Input", "SprintThreshold", .85f, new ConfigDescription("Stick/pad travel needed to start VR auto sprint. It stops 0.15 below this threshold to avoid flicker near the boundary.", new AcceptableValueRange<float>(.5f, 1f)));
             FlightSteeringSpeed = Config.Bind("Input", "FlightSteeringSpeed", 90f, new ConfigDescription("FPV right-stick steering speed in degrees per second. Head movement looks around independently; aircraft pitch/roll are not imposed on the headset.", new AcceptableValueRange<float>(15f, 180f)));
             ControllerLayout = Config.Bind("Input", "ControllerLayout", ControllerLayoutKind.Auto, "Auto recognises the bundled Vive wand and Windows MR OpenXR profiles. FaceButtons keeps Quest/Index-style controls. ViveWand/Wmr use pad clicks for missing face buttons. Restart after changing this override.");
             PanelDistance = Config.Bind("UI", "PanelDistance", .9f, new ConfigDescription("Distance in metres for floating HUD and menus; physical computer screens keep their desk position", new AcceptableValueRange<float>(0.5f, 3f)));
