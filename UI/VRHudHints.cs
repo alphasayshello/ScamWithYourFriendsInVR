@@ -15,6 +15,24 @@ namespace ScamWithYourFriendsInVR.UI
         private static VisualElement bagMoveHint, bagExitHint;
         private static VisualElement flightMoveHint, flightTurnHint, flightClimbHint;
         private static VisualElement flightReleaseHint;
+        private static VisualElement ladderMoveHint, ladderExitHint, ladderReleaseHint;
+
+        internal static void ApplyLadder(VisualElement hints, VRInputManager input, bool climbing, bool waiting)
+        {
+            if (hints == null || input == null) return;
+            if (!ReferenceEquals(owner, hints)) { Restore(); owner = hints; }
+            if (climbing)
+            {
+                ActionHint(hints, ref ladderMoveHint, "swyf-vr-ladder-move", input.MoveHint, "Up / down ladder");
+                ActionHint(hints, ref ladderExitHint, "swyf-vr-ladder-exit", input.JumpHint, "Dismount");
+            }
+            else
+            {
+                ladderMoveHint?.RemoveFromHierarchy(); ladderExitHint?.RemoveFromHierarchy(); ladderMoveHint = ladderExitHint = null;
+            }
+            if (waiting) ActionHint(hints, ref ladderReleaseHint, "swyf-vr-ladder-release", input.JumpHint, "Release + centre sticks");
+            else { ladderReleaseHint?.RemoveFromHierarchy(); ladderReleaseHint = null; }
+        }
 
         internal static void ApplyFlightRelease(VisualElement hints, VRInputManager input, bool waiting)
         {
@@ -97,6 +115,8 @@ namespace ScamWithYourFriendsInVR.UI
             RemoveBagHints();
             RemoveFlightHints();
             flightReleaseHint?.RemoveFromHierarchy(); flightReleaseHint = null;
+            ladderMoveHint?.RemoveFromHierarchy(); ladderExitHint?.RemoveFromHierarchy(); ladderReleaseHint?.RemoveFromHierarchy();
+            ladderMoveHint = ladderExitHint = ladderReleaseHint = null;
         }
     }
 }

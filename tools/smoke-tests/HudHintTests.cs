@@ -37,9 +37,16 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 .GetMethod("ApplyFlight", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, new object[] { root, input, flying });
             void Release(VisualElement root, bool waiting) => typeof(VRManager).Assembly.GetType("ScamWithYourFriendsInVR.UI.VRHudHints", true)
                 .GetMethod("ApplyFlightRelease", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, new object[] { root, input, waiting });
+            void Ladder(VisualElement root, bool climbing, bool waiting = false) => typeof(VRManager).Assembly.GetType("ScamWithYourFriendsInVR.UI.VRHudHints", true)
+                .GetMethod("ApplyLadder", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, new object[] { root, input, climbing, waiting });
             try
             {
                 Layout("Left", Plugin.ControllerLayoutKind.FaceButtons); Layout("Right", Plugin.ControllerLayoutKind.FaceButtons);
+                Ladder(first.Root, true); Ladder(first.Root, true);
+                Check(first.Root.Query<VisualElement>("swyf-vr-ladder-move").ToList().Count == 1
+                    && first.Root.Q<Label>("swyf-vr-ladder-move-key").text == "LEFT STICK"
+                    && first.Root.Q<Label>("swyf-vr-ladder-exit-key").text == "RIGHT A"
+                    && first.Root.Q("swyf-vr-ladder-exit").pickingMode == PickingMode.Ignore, "Ladder HUD keys duplicate or steal pointer input");
                 Flight(first.Root, true); Flight(first.Root, true);
                 Check(first.Root.Query<VisualElement>("swyf-vr-flight-climb").ToList().Count == 1
                     && first.Root.Q<Label>("swyf-vr-flight-move-key").text == "LEFT STICK"
@@ -63,6 +70,10 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 Layout("Left", Plugin.ControllerLayoutKind.Wmr); Layout("Right", Plugin.ControllerLayoutKind.Wmr); ApplyHudHints(first.Root, input);
                 Flight(first.Root, true);
                 Check(first.Root.Q<Label>("swyf-vr-flight-turn-key").text == "RIGHT STICK", "WMR flight steering hint lost its independent stick");
+                Ladder(first.Root, false, true);
+                Check(first.Root.Q("swyf-vr-ladder-move") == null && first.Root.Q<Label>("swyf-vr-ladder-release-key").text == "RIGHT PAD UP",
+                    "Alternate ladder release HUD key incorrect");
+                Ladder(first.Root, true);
                 Flight(first.Root, false); Check(first.Root.Q("swyf-vr-flight-turn") == null, "Flight end retained its HUD keys"); Flight(first.Root, true);
                 Release(first.Root, true); Release(first.Root, true);
                 Check(first.Root.Query<VisualElement>("swyf-vr-flight-release").ToList().Count == 1
@@ -75,6 +86,8 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 Check(first.Players.text == "TAB" && first.Settings.text == "ESC" && first.Recovery.text == "H", "HUD restore lost original/rebound keyboard captions");
                 Check(first.Root.Q("swyf-vr-bag-exit") == null && first.Root.Q("swyf-vr-bag-move") == null, "HUD restore retained VR-only bag panels");
                 Check(first.Root.Q("swyf-vr-flight-move") == null && first.Root.Q("swyf-vr-flight-climb") == null, "HUD restore retained VR-only flight panels");
+                Check(first.Root.Q("swyf-vr-ladder-move") == null && first.Root.Q("swyf-vr-ladder-exit") == null
+                    && first.Root.Q("swyf-vr-ladder-release") == null, "HUD restore retained ladder controls");
                 Check(first.Root.Q("swyf-vr-flight-release") == null, "HUD restore retained the flight-release prompt");
                 ApplyHudHints(first.Root, input); ApplyHudHints(second.Root, input);
                 Check(first.Players.text == "TAB" && first.Settings.text == "ESC" && first.Recovery.text == "H", "Replacing a HUD retained its old VR captions");

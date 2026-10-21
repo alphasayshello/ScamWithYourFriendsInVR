@@ -125,10 +125,11 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 teleport.Invoke(controller, new object[] { new Vector3(1050, 50, 1050), true }); manager.Rig.Recenter();
                 yield return new WaitForSecondsRealtime(.8f);
                 Require(!manager.Rig.HeadObstructed, "Held weapon fixture did not obtain a clear head position");
+                bool onlyLadder = Environment.GetCommandLineArgs().Contains("--swyf-only-ladder-tests");
                 bool onlyArtwork = Environment.GetCommandLineArgs().Contains("--swyf-only-artwork-tests");
                 bool onlyBag = Environment.GetCommandLineArgs().Contains("--swyf-only-bag-tests");
                 bool onlyFlight = Environment.GetCommandLineArgs().Contains("--swyf-only-flight-tests");
-                foreach (string name in onlyBag || onlyFlight || onlyArtwork ? Array.Empty<string>() : new[] { "Shotgun", "Sniper" })
+                foreach (string name in onlyBag || onlyFlight || onlyArtwork || onlyLadder ? Array.Empty<string>() : new[] { "Shotgun", "Sniper" })
                 {
                     GameObject prefab = prefabs.SingleOrDefault(p => p.name == name);
                     Require(prefab != null, "Native charged weapon prefab missing: " + name);
@@ -227,29 +228,35 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     NetworkServer.Destroy(item); item = null; heldWeaponFixture = null;
                     yield return null;
                 }
-                if (!onlyBag && !onlyFlight && !onlyArtwork)
+                if (!onlyBag && !onlyFlight && !onlyArtwork && !onlyLadder)
                 {
                     var javelin = TestNativeJavelin();
                     try { while (javelin.MoveNext()) yield return javelin.Current; }
                     finally { (javelin as IDisposable)?.Dispose(); }
                 }
-                if (!onlyFlight && !onlyArtwork)
+                if (!onlyFlight && !onlyArtwork && !onlyLadder)
                 {
                     var bag = TestNativeBag();
                     try { while (bag.MoveNext()) yield return bag.Current; }
                     finally { (bag as IDisposable)?.Dispose(); }
                 }
-                if (!onlyBag && !onlyArtwork)
+                if (!onlyBag && !onlyArtwork && !onlyLadder)
                 {
                     var flight = TestNativeFlight();
                     try { while (flight.MoveNext()) yield return flight.Current; }
                     finally { (flight as IDisposable)?.Dispose(); }
                 }
-                if (!onlyBag && !onlyFlight)
+                if (!onlyBag && !onlyFlight && !onlyLadder)
                 {
                     var artwork = TestNativePrintedDrawing();
                     try { while (artwork.MoveNext()) yield return artwork.Current; }
                     finally { (artwork as IDisposable)?.Dispose(); }
+                }
+                if (!onlyBag && !onlyFlight && !onlyArtwork)
+                {
+                    var ladder = TestNativeLadder();
+                    try { while (ladder.MoveNext()) yield return ladder.Current; }
+                    finally { (ladder as IDisposable)?.Dispose(); }
                 }
                 if (noMouse)
                 {

@@ -38,7 +38,14 @@ namespace ScamWithYourFriendsInVR.Patches
             }
         }
 
-        internal static void Clear() { Input.VRBagControls.Clear(); Input.VRFlightControls.Clear(); callbacks.Clear(); Input.VRMouseFallback.Release(); }
+        internal static void Clear()
+        {
+            Input.VRBagControls.Clear();
+            Input.VRFlightControls.Clear();
+            Input.VRLadderControls.Clear();
+            callbacks.Clear();
+            Input.VRMouseFallback.Release();
+        }
 
         internal static void Send(Component target, bool secondary, bool value)
             => SendNamed(target, secondary ? "OnBlock" : "OnAttack", value);

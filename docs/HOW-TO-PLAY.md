@@ -92,6 +92,14 @@ Left trigger interacts with the world under your right-hand aim, so you can open
 
 Left grip + left trigger holds the native pee action; release to stop. Left grip + left X requests a fart, or the native cone boost when an eligible agent has a traffic cone in the hip slot. Left grip + right B swaps the agent hand/hip slots. Left grip + right trigger sends the native extra held-item action; releasing its modifier ends that action. Food-related poop effects retain the game's existing rules and jump triggers; no debug/cheat poop shortcut is enabled. Curry consumption and its timed poop/gassy effect pass simulated checks. VR jump now reaches the native jump event and activates the curry boost. Hip swap, nonfinal cone boost activation, cooldowns and effect spawning pass simulated checks. Full boost trajectories, final cone use/ragdoll, other foods and full combat acceptance are still outstanding.
 
+## Ladders
+
+While holding an extension ladder, press right trigger to extend or retract it. Drop it, point at its climb interaction and press right trigger to mount. Use the left stick up/down to climb and **right A** to dismount. Vive/original WMR use right pad up instead of A; the HUD shows your controller controls.
+
+Head tracking stays free while the native ladder controls your body's position. Physical leaning or turning does not walk or rotate that body off the ladder. Settings and lost focus stop further stick input; the native climb motor still decelerates normally. A jump held across a menu does not automatically dismount when it closes. After dismount or ladder removal, centre both sticks and release jump before walking, jumping or snap-turning; the HUD prompts you while a control remains held.
+
+Simulated checks cover the extension ladder, input recovery and occupied ladder disable/removal. Other ladder variants, fast-climb/sprint controls, occupied retraction, remote clients and headset handling still need checking.
+
 ## FPV flight
 
 Hold an eligible FPV aircraft and press **right trigger** to launch. The left stick applies movement, the right stick steers yaw/pitch, and holding **left trigger** adds upward thrust, leaving both thumbs free for the sticks. Release the trigger to stop that extra thrust. Right A also works as an alternative. Vive wands use pad touch for movement/steering; Vive and original WMR can also use right pad up for climb. The HUD shows the current controller keys.

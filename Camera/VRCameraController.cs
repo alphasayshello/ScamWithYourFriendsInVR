@@ -256,7 +256,7 @@ namespace ScamWithYourFriendsInVR.Camera
             lastBodyYaw = yaw;
             Quaternion yawRotation = Quaternion.Euler(0, trackingYaw, 0);
             bool bodyInput = player != null && subject == localPlayer && !GameAdapter.AvatarUnavailable(localPlayer)
-                && !sitting && manager.Interactive && GameAdapter.Allowed(GameAdapter.Interactor);
+                && !sitting && VRLadderControls.Current == null && manager.Interactive && GameAdapter.Allowed(GameAdapter.Interactor);
             if (bodyInput)
             {
                 Vector3 moved = VRRoomScaleBody.Follow(body, yawRotation, position - center);
