@@ -13,6 +13,8 @@ namespace ScamWithYourFriendsInVR.Patches
         internal static void Install(Harmony harmony)
         {
             NativeItemInput.Install(harmony);
+            Input.VRFlightControls.Initialize();
+            Patch(harmony, "FpvInteractable", "OnFlyerChanged", null, null, nameof(AfterFlyerChanged));
             Patch(harmony, "Metater.MetaPlayerController", "Update", nameof(BeforeController));
             Patch(harmony, "Metater.MetaPlayerController", "OnMove", nameof(BeforeMove));
             Patch(harmony, "Metater.MetaPlayerController", "ProcessLookInput", nameof(BeforeLook),
@@ -67,6 +69,14 @@ namespace ScamWithYourFriendsInVR.Patches
         private static bool Active => VRManager.Instance != null && VRManager.Instance.Ready;
 
         private static void AfterFrameLimit() => VRPerformance.RememberFlatFramePacing();
+        private static void AfterFlyerChanged(Component __instance, object __1)
+        {
+            Input.VRFlightControls.FlyerChanged(__instance, __1);
+            // The native ownership callback refreshes visibility before this
+            // postfix knows the new view context. Reapply its full-body state.
+            if (GameAdapter.Read(__1, "isLocalPlayer") is bool local && local)
+                GameAdapter.Call(GameAdapter.Controller, "UpdateMeshRendererVisibility", false);
+        }
         private static bool GameplayInput => Active && VRManager.Instance.Interactive && GameAdapter.Allowed(GameAdapter.Interactor)
             && !GameAdapter.InMainMenu && !GameAdapter.MonitorCaptured && !GameAdapter.SettingsOpen
             && !(GameAdapter.Read(GameAdapter.Static("TabMenu", "Instance"), "IsOpen") is bool open && open);
@@ -89,12 +99,17 @@ namespace ScamWithYourFriendsInVR.Patches
                 UI.VRHudHints.Apply(hints, VRManager.Instance.Input);
                 UI.VRHudHints.ApplyBag(hints, VRManager.Instance.Input,
                     GameAdapter.Read(GameAdapter.Read(GameAdapter.LocalPlayer, "RagdollManager"), "IsHiding") is bool hiding && hiding);
+                Component flight = Input.VRFlightControls.Current;
+                UI.VRHudHints.ApplyFlight(hints, VRManager.Instance.Input, flight != null
+                    && !(GameAdapter.Read(flight, "Networkexploded") is bool exploded && exploded));
+                UI.VRHudHints.ApplyFlightRelease(hints, VRManager.Instance.Input, Input.VRFlightControls.WaitingForBodyRelease);
             }
         }
 
         private static void AfterMeshVisibility(object __instance)
         {
             if (!Active || !Local(__instance) || GameAdapter.InMainMenu) return;
+            if (Input.VRFlightControls.Current != null) return;
             if (GameAdapter.Read(GameAdapter.LocalPlayer, "isSpectating") is bool spectating && spectating) return;
             if (GameAdapter.Read(__instance, "meshRendererToggles") is Array toggles)
                 foreach (object toggle in toggles) GameAdapter.Call(toggle, "ShowBodyWithoutHead");
@@ -105,14 +120,16 @@ namespace ScamWithYourFriendsInVR.Patches
             if (!Active || !Local(__instance)) return;
             VRManager manager = VRManager.Instance;
             Component bag = GameAdapter.Read(GameAdapter.Read(GameAdapter.LocalPlayer, "RagdollManager"), "NetworkisHiding") as Component;
-            bool bagInput = bag != null && manager.Interactive && !GameAdapter.InMainMenu && !GameAdapter.MonitorCaptured
+            bool specialInput = manager.Interactive && !GameAdapter.InMainMenu && !GameAdapter.MonitorCaptured
                 && !GameAdapter.SettingsOpen && !GameAdapter.ModalOverlayOpen && !manager.Keyboard.Visible && !manager.Pointer.HasPanelHit
                 && !(GameAdapter.Read(GameAdapter.Static("TabMenu", "Instance"), "IsOpen") is bool playersOpen && playersOpen);
-            Input.VRBagControls.Update(__instance as Component, bag, bagInput);
+            Input.VRBagControls.Update(__instance as Component, bag, bag != null && specialInput);
+            Input.VRFlightControls.Update(__instance as Component, Input.VRFlightControls.Current, specialInput);
+            bool releaseBody = Input.VRFlightControls.SuppressBodyInput(manager.Input);
             Vector2 move = Vector2.zero;
             Transform polar = GameAdapter.Polar;
             if (manager.Interactive && manager.Rig.Head != null && polar != null
-                && !GameAdapter.MonitorCaptured && !manager.Keyboard.Visible && !manager.Pointer.HasPanelHit && GameplayInput)
+                && !releaseBody && !GameAdapter.MonitorCaptured && !manager.Keyboard.Visible && !manager.Pointer.HasPanelHit && GameplayInput)
             {
                 Vector2 stick = manager.Input.Move;
                 Quaternion relative = Quaternion.Euler(0, manager.Rig.Head.transform.eulerAngles.y - polar.eulerAngles.y, 0);
@@ -128,7 +145,7 @@ namespace ScamWithYourFriendsInVR.Patches
             }
             GameAdapter.Write(__instance, "movementVector", move);
             if (GameplayInput && !manager.Keyboard.Visible && manager.Input.FartDown) GameAdapter.FartBoost();
-            bool jump = GameplayInput && !manager.Keyboard.Visible && !manager.Pointer.HasPanelHit && manager.Input.Jump;
+            bool jump = GameplayInput && !releaseBody && !manager.Keyboard.Visible && !manager.Pointer.HasPanelHit && manager.Input.Jump;
             if (GameAdapter.Read(__instance, "isJumping") is bool previous && previous != jump)
             {
                 GameAdapter.Write(__instance, "isJumping", jump);

@@ -33,9 +33,19 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             void Layout(string side, Plugin.ControllerLayoutKind layout) => input.GetType().GetProperty(side + "Layout").SetValue(input, layout);
             void Bag(VisualElement root, bool occupied) => typeof(VRManager).Assembly.GetType("ScamWithYourFriendsInVR.UI.VRHudHints", true)
                 .GetMethod("ApplyBag", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, new object[] { root, input, occupied });
+            void Flight(VisualElement root, bool flying) => typeof(VRManager).Assembly.GetType("ScamWithYourFriendsInVR.UI.VRHudHints", true)
+                .GetMethod("ApplyFlight", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, new object[] { root, input, flying });
+            void Release(VisualElement root, bool waiting) => typeof(VRManager).Assembly.GetType("ScamWithYourFriendsInVR.UI.VRHudHints", true)
+                .GetMethod("ApplyFlightRelease", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, new object[] { root, input, waiting });
             try
             {
                 Layout("Left", Plugin.ControllerLayoutKind.FaceButtons); Layout("Right", Plugin.ControllerLayoutKind.FaceButtons);
+                Flight(first.Root, true); Flight(first.Root, true);
+                Check(first.Root.Query<VisualElement>("swyf-vr-flight-climb").ToList().Count == 1
+                    && first.Root.Q<Label>("swyf-vr-flight-move-key").text == "LEFT STICK"
+                    && first.Root.Q<Label>("swyf-vr-flight-turn-key").text == "RIGHT STICK"
+                    && first.Root.Q<Label>("swyf-vr-flight-climb-key").text == "RIGHT A"
+                    && first.Root.Q<Label>("swyf-vr-flight-turn-key").pickingMode == PickingMode.Ignore, "Flight HUD keys duplicate or steal pointer input");
                 ApplyHudHints(first.Root, input);
                 Check(first.Players.text == "LEFT X" && first.Settings.text == "LEFT Y" && first.Recovery.text == "LEFT GRIP + RIGHT A", "Face-controller HUD captions are incorrect");
                 Bag(first.Root, true); Bag(first.Root, true);
@@ -45,10 +55,18 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     && first.Root.Q<Label>("swyf-vr-bag-exit-key").pickingMode == PickingMode.Ignore, "Bag HUD captions duplicate, pick rays or show desktop keys");
                 Layout("Right", Plugin.ControllerLayoutKind.ViveWand); ApplyHudHints(first.Root, input);
                 Layout("Left", Plugin.ControllerLayoutKind.ViveWand); Bag(first.Root, true);
+                Flight(first.Root, true);
+                Check(first.Root.Q<Label>("swyf-vr-flight-turn-key").text == "RIGHT PAD" && first.Root.Q<Label>("swyf-vr-flight-climb-key").text == "RIGHT PAD UP", "Vive flight HUD keys incorrect");
                 Check(first.Root.Q<Label>("swyf-vr-bag-exit-key").text == "RIGHT PAD UP" && first.Root.Q<Label>("swyf-vr-bag-move-key").text == "LEFT PAD", "Vive bag hint ignored controller layout");
                 Layout("Left", Plugin.ControllerLayoutKind.FaceButtons);
                 Check(first.Players.text == "LEFT X" && first.Recovery.text == "LEFT GRIP + RIGHT PAD UP", "Recovery caption ignored a mixed right controller");
                 Layout("Left", Plugin.ControllerLayoutKind.Wmr); Layout("Right", Plugin.ControllerLayoutKind.Wmr); ApplyHudHints(first.Root, input);
+                Flight(first.Root, true);
+                Check(first.Root.Q<Label>("swyf-vr-flight-turn-key").text == "RIGHT STICK", "WMR flight steering hint lost its independent stick");
+                Flight(first.Root, false); Check(first.Root.Q("swyf-vr-flight-turn") == null, "Flight end retained its HUD keys"); Flight(first.Root, true);
+                Release(first.Root, true); Release(first.Root, true);
+                Check(first.Root.Query<VisualElement>("swyf-vr-flight-release").ToList().Count == 1
+                    && first.Root.Q<Label>("swyf-vr-flight-release-key").text == "RIGHT PAD UP", "Flight-release HUD key incorrect or duplicated");
                 Bag(first.Root, true); Check(first.Root.Q<Label>("swyf-vr-bag-move-key").text == "LEFT STICK", "WMR bag hint replaced its independent stick with the pad");
                 Bag(first.Root, false); Check(first.Root.Q("swyf-vr-bag-exit") == null, "Bag exit left its VR HUD panels behind");
                 Bag(first.Root, true);
@@ -56,6 +74,8 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 first.Recovery.text = "H"; ApplyHudHints(first.Root, input); RestoreHudHints();
                 Check(first.Players.text == "TAB" && first.Settings.text == "ESC" && first.Recovery.text == "H", "HUD restore lost original/rebound keyboard captions");
                 Check(first.Root.Q("swyf-vr-bag-exit") == null && first.Root.Q("swyf-vr-bag-move") == null, "HUD restore retained VR-only bag panels");
+                Check(first.Root.Q("swyf-vr-flight-move") == null && first.Root.Q("swyf-vr-flight-climb") == null, "HUD restore retained VR-only flight panels");
+                Check(first.Root.Q("swyf-vr-flight-release") == null, "HUD restore retained the flight-release prompt");
                 ApplyHudHints(first.Root, input); ApplyHudHints(second.Root, input);
                 Check(first.Players.text == "TAB" && first.Settings.text == "ESC" && first.Recovery.text == "H", "Replacing a HUD retained its old VR captions");
                 second.Settings.text = "external caption"; RestoreHudHints();

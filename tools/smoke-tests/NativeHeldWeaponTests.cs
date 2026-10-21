@@ -126,7 +126,8 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 yield return new WaitForSecondsRealtime(.8f);
                 Require(!manager.Rig.HeadObstructed, "Held weapon fixture did not obtain a clear head position");
                 bool onlyBag = Environment.GetCommandLineArgs().Contains("--swyf-only-bag-tests");
-                foreach (string name in onlyBag ? Array.Empty<string>() : new[] { "Shotgun", "Sniper" })
+                bool onlyFlight = Environment.GetCommandLineArgs().Contains("--swyf-only-flight-tests");
+                foreach (string name in onlyBag || onlyFlight ? Array.Empty<string>() : new[] { "Shotgun", "Sniper" })
                 {
                     GameObject prefab = prefabs.SingleOrDefault(p => p.name == name);
                     Require(prefab != null, "Native charged weapon prefab missing: " + name);
@@ -225,15 +226,24 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     NetworkServer.Destroy(item); item = null; heldWeaponFixture = null;
                     yield return null;
                 }
-                if (!onlyBag)
+                if (!onlyBag && !onlyFlight)
                 {
                     var javelin = TestNativeJavelin();
                     try { while (javelin.MoveNext()) yield return javelin.Current; }
                     finally { (javelin as IDisposable)?.Dispose(); }
                 }
-                var bag = TestNativeBag();
-                try { while (bag.MoveNext()) yield return bag.Current; }
-                finally { (bag as IDisposable)?.Dispose(); }
+                if (!onlyFlight)
+                {
+                    var bag = TestNativeBag();
+                    try { while (bag.MoveNext()) yield return bag.Current; }
+                    finally { (bag as IDisposable)?.Dispose(); }
+                }
+                if (!onlyBag)
+                {
+                    var flight = TestNativeFlight();
+                    try { while (flight.MoveNext()) yield return flight.Current; }
+                    finally { (flight as IDisposable)?.Dispose(); }
+                }
                 if (noMouse)
                 {
                     Type fallback = Find("ScamWithYourFriendsInVR.Input.VRMouseFallback");

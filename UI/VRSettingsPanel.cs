@@ -48,6 +48,8 @@ namespace ScamWithYourFriendsInVR.UI
                 () => Plugin.AlwaysShowPointer.Value = !Plugin.AlwaysShowPointer.Value);
             Add(section, "turn", () => "SNAP TURN: " + Plugin.SnapAngle.Value.ToString("0") + " degrees",
                 () => Plugin.SnapAngle.Value = Next(Plugin.SnapAngle.Value, 30, 45, 60));
+            Add(section, "flight-steering", () => "FPV STEERING: " + Plugin.FlightSteeringSpeed.Value.ToString("0") + " degrees / sec",
+                () => Plugin.FlightSteeringSpeed.Value = Next(Plugin.FlightSteeringSpeed.Value, 45, 90, 135, 180));
             Add(section, "resolution", () => Plugin.BalancedVR.Value
                     ? "SCENE RESOLUTION: " + Mathf.RoundToInt(Plugin.SceneRenderScale.Value * 100) + "%"
                     : "SCENE RESOLUTION: BALANCED VR DISABLED",

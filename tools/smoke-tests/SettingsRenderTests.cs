@@ -64,9 +64,10 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                             "VR options missing or duplicated in native General settings");
                         bool originalDesktop = Plugin.PhysicalDesktop.Value;
                         float originalDistance = Plugin.PanelDistance.Value;
+                        float originalSteering = Plugin.FlightSteeringSpeed.Value;
                         try
                         {
-                            foreach (string id in new[] { "swyf-vr-desktop", "swyf-vr-desktop", "swyf-vr-ui-distance" })
+                            foreach (string id in new[] { "swyf-vr-desktop", "swyf-vr-desktop", "swyf-vr-ui-distance", "swyf-vr-flight-steering" })
                             {
                                 var change = ClickAppControl(panelSurface, vrOptions.Q<Button>(id));
                                 try { while (change.MoveNext()) yield return change.Current; }
@@ -74,9 +75,10 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                             }
                             Require(Plugin.PhysicalDesktop.Value == originalDesktop && Mathf.Abs(Plugin.PanelDistance.Value - originalDistance) > .01f,
                                 "VR settings buttons did not change and restore native configuration");
-                            Logger.LogInfo("SETTINGS PASS: VR options controller clicks change desktop placement and menu distance without config editing");
+                            Require(Mathf.Abs(Plugin.FlightSteeringSpeed.Value - originalSteering) > .01f, "VR steering setting did not change through the controller");
+                            Logger.LogInfo("SETTINGS PASS: VR options controller clicks change desktop placement, menu distance and flight steering without config editing");
                         }
-                        finally { Plugin.PhysicalDesktop.Value = originalDesktop; Plugin.PanelDistance.Value = originalDistance; manager.UI.Place(); }
+                        finally { Plugin.PhysicalDesktop.Value = originalDesktop; Plugin.PanelDistance.Value = originalDistance; Plugin.FlightSteeringSpeed.Value = originalSteering; manager.UI.Place(); }
                         Transform head = manager.Rig.Head.transform;
                         Vector3 headPosition = head.position;
                         Quaternion headRotation = head.rotation;

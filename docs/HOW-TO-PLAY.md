@@ -86,6 +86,16 @@ Left trigger interacts with the world under your right-hand aim, so you can open
 
 Left grip + left trigger holds the native pee action; release to stop. Left grip + left X requests a fart, or the native cone boost when an eligible agent has a traffic cone in the hip slot. Left grip + right B swaps the agent hand/hip slots. Left grip + right trigger sends the native extra held-item action; releasing its modifier ends that action. Food-related poop effects retain the game's existing rules and jump triggers; no debug/cheat poop shortcut is enabled. Curry consumption and its timed poop/gassy effect pass simulated checks. VR jump now reaches the native jump event and activates the curry boost. Hip swap, nonfinal cone boost activation, cooldowns and effect spawning pass simulated checks. Full boost trajectories, final cone use/ragdoll, other foods and full combat acceptance are still outstanding.
 
+## FPV flight
+
+Hold an eligible FPV aircraft and press **right trigger** to launch. The left stick applies movement, the right stick steers yaw/pitch, and holding **right A** adds upward thrust. Release A to stop that extra thrust. Vive wands use pad touch for movement/steering and right pad up for climb; original WMR uses its sticks and right pad up. The HUD shows the current controller keys.
+
+Your view follows the aircraft camera with upright head tracking. Looking around does not steer the aircraft. Your grounded avatar's tracked pose pauses during flight and resumes afterward. Native crashes/explosions end flight under the game's normal rules; nearby blasts can still ragdoll the pilot.
+
+When flight ends, centre both sticks and release climb before walking, jumping or snap-turning. The HUD prompts you if a flight control is still held. This prevents a held steering/climb input from becoming an accidental ground action.
+
+Settings, feedback and lost VR focus stop flight input; the aircraft's existing physics continue. Occupied aircraft/bag geometry does not block the menu laser, including with menu occlusion enabled. Adjust **General → VR options → FPV steering** with the laser. The default is 90 degrees per second; `[Input] FlightSteeringSpeed` in the BepInEx config also accepts 15–180. Headset crash comfort, other aircraft and remote-client flight still need testing.
+
 ## Ragdoll and recovery
 
 To climb into a hideable bag, hold it and keep **left grip + right trigger** held through its native charge. Use the left stick to move the occupied bag and **right A** to exit; the normal short exit ragdoll still applies. Vive wands use the left pad for movement, and Vive/original WMR use right pad up to exit. The HUD shows these controls while you are inside. Settings and lost VR focus stop further movement input. The view follows the bag's camera marker, or its authored centre when that marker is absent.

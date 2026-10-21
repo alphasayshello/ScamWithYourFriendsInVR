@@ -39,6 +39,7 @@ namespace ScamWithYourFriendsInVR.Camera
         private bool hasEyeOffset;
         private float anchorSettlesUntil;
         private bool hadPoseContext, lastAgent, lastRagdolled;
+        private Component lastFlight;
         public Vector3 AuthoredEye { get; private set; }
         private readonly VRAvatarEyeAnchor avatarEyes = new VRAvatarEyeAnchor();
         private readonly RaycastHit[] obstructionHits = new RaycastHit[64];
@@ -155,6 +156,12 @@ namespace ScamWithYourFriendsInVR.Camera
             }
             Component localPlayer = GameAdapter.LocalPlayer;
             Component subject = GameAdapter.ResolveViewPlayer(localPlayer);
+            Component flight = subject == localPlayer ? VRFlightControls.Current : null;
+            GameObject flightCamera = GameAdapter.Read(flight, "cameraGameObject") as GameObject;
+            Transform flightEye = flightCamera != null ? flightCamera.transform : null;
+            // A destroyed Unity object compares equal to null. Its former
+            // flight offset must still be discarded when ownership disappears.
+            if (!ReferenceEquals(lastFlight, flight)) { lastFlight = flight; Recenter(); }
             Component viewController = GameAdapter.Read(subject, "controller") as Component ?? GameAdapter.Controller;
             Transform nextPlayer = inMenu ? null : subject?.transform;
             if (nextPlayer != player) { player = nextPlayer; Recenter(); }
@@ -194,12 +201,13 @@ namespace ScamWithYourFriendsInVR.Camera
                 anchor = player.position;
                 if (body != null && body.enabled) anchor.y = body.bounds.min.y;
                 yaw = (GameAdapter.Read(viewController, "polarTransform") as Transform ?? player).eulerAngles.y;
+                if (flightEye != null) yaw = flightEye.eulerAngles.y;
             }
             else anchor.y -= !Plugin.Seated.Value && floorOrigin ? center.y : Plugin.SeatedHeight.Value;
             float heightOffset = Plugin.Seated.Value || !floorOrigin ? Plugin.SeatedHeight.Value - center.y : 0;
             // A native chair moves the authored eye marker independently of the
             // standing capsule. Keep room-scale offsets relative to that marker.
-            Transform nativeEye = player != null ? (bagEye != null ? bagEye : ragdolled ? GameAdapter.Call(ragdoll, "GetCurrentRagdollCameraTransform") as Transform
+            Transform nativeEye = player != null ? (flightEye != null ? flightEye : bagEye != null ? bagEye : ragdolled ? GameAdapter.Call(ragdoll, "GetCurrentRagdollCameraTransform") as Transform
                 : GameAdapter.Read(viewController, "defaultCamTransform") as Transform ?? GameAdapter.Read(viewController, "cameraTransform") as Transform) : null;
             bool fallbackEye = false;
             Vector3 fallbackPosition = default;
@@ -220,12 +228,12 @@ namespace ScamWithYourFriendsInVR.Camera
                 // Avoid feeding an already tracked camera back into its origin.
                 anchor = fallbackEye ? fallbackPosition : nativeEye == Head.transform || nativeEye.IsChildOf(Head.transform)
                     ? (savedParent != null ? savedParent.TransformPoint(savedPosition) : savedPosition) : nativeEye.position;
-                if (!ragdolled && avatarEyes.TryPosition(player, out Vector3 eyePosition)
+                if (!ragdolled && flightEye == null && avatarEyes.TryPosition(player, out Vector3 eyePosition)
                     && VRAvatarEyeAnchor.NearAuthoredEye(player, eyePosition, anchor)) anchor = eyePosition;
-                if (!hasEyeOffset || ragdolled || Time.unscaledTime < anchorSettlesUntil)
+                if (!hasEyeOffset || ragdolled || flightEye != null || Time.unscaledTime < anchorSettlesUntil)
                 {
                     Vector3 candidateOffset = anchor - player.position;
-                    if (ragdolled || sitting || VRAvatarEyeAnchor.ValidStandingOffset(player, candidateOffset))
+                    if (ragdolled || sitting || flightEye != null || VRAvatarEyeAnchor.ValidStandingOffset(player, candidateOffset))
                     { eyeOffset = candidateOffset; hasEyeOffset = true; }
                     else if (!VRAvatarEyeAnchor.ValidStandingOffset(player, eyeOffset))
                     {
@@ -269,7 +277,7 @@ namespace ScamWithYourFriendsInVR.Camera
                 for (int i = 0; i < count; i++)
                 {
                     RaycastHit hit = obstructionHits[i];
-                    if (SelfCollider(hit.collider, player, held, hip, hidingBag)) continue;
+                    if (SelfCollider(hit.collider, player, held, hip, hidingBag != null ? hidingBag : flight)) continue;
                     allowed = Mathf.Min(allowed, Mathf.Max(0, hit.distance - 0.02f));
                     HeadObstructed = true;
                 }
@@ -279,7 +287,7 @@ namespace ScamWithYourFriendsInVR.Camera
             for (int i = 0; i < overlapCount; i++)
             {
                 Collider overlap = overlaps[i];
-                if (SelfCollider(overlap, player, held, hip, hidingBag)) continue;
+                if (SelfCollider(overlap, player, held, hip, hidingBag != null ? hidingBag : flight)) continue;
                 HeadObstructed = true;
                 break;
             }

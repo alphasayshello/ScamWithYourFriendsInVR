@@ -163,12 +163,14 @@ namespace ScamWithYourFriendsInVR.UI
             Ray ray = new Ray(manager.Rig.Right.Aim.position + direction * BeamOffset, direction);
             float nearest = 10f;
             Transform player = GameAdapter.LocalPlayer?.transform;
+            Component occupied = Input.VRFlightControls.Current
+                ?? GameAdapter.Read(GameAdapter.Read(GameAdapter.LocalPlayer, "RagdollManager"), "NetworkisHiding") as Component;
             bool occludeFloating = Plugin.OccludeFloatingUI.Value;
             int hitCount = occludeFloating ? Physics.RaycastNonAlloc(ray, worldHits, 10f, ~(1 << 2), QueryTriggerInteraction.Ignore) : 0;
             for (int i = 0; i < hitCount; i++)
             {
                 RaycastHit wall = worldHits[i];
-                if (player != null && wall.collider.transform.IsChildOf(player)) continue;
+                if (SelfOccluder(wall.collider, player, occupied)) continue;
                 nearest = Mathf.Min(nearest, wall.distance + 0.01f);
             }
             VRPanelSurface panelHit = null;
@@ -224,7 +226,7 @@ namespace ScamWithYourFriendsInVR.UI
                 for (int i = 0; i < nativeHits; i++)
                 {
                     Collider obstacle = worldHits[i].collider;
-                    if (player != null && obstacle.transform.IsChildOf(player)) continue;
+                    if (SelfOccluder(obstacle, player, occupied)) continue;
                     if (surface.OwnsCollider(obstacle)) continue;
                     if (worldHits[i].distance + 0.02f < distance) { blocked = true; break; }
                 }
@@ -237,7 +239,7 @@ namespace ScamWithYourFriendsInVR.UI
             for (int i = 0; i < nativeHits; i++)
             {
                 Collider obstacle = worldHits[i].collider;
-                if (player != null && obstacle.transform.IsChildOf(player)) continue;
+                if (SelfOccluder(obstacle, player, occupied)) continue;
                 if (obstacle.GetComponentInParent<UIDocument>() != null) continue;
                 nativeLimit = Mathf.Min(nativeLimit, worldHits[i].distance + 0.02f);
             }
@@ -557,6 +559,10 @@ namespace ScamWithYourFriendsInVR.UI
             hoverElement = null;
             HasPanelHit = false;
         }
+
+        private static bool SelfOccluder(Collider collider, Transform player, Component occupied)
+            => player != null && collider.transform.IsChildOf(player)
+                || occupied != null && collider.transform.IsChildOf(occupied.transform);
 
         private void Hide() { if (line != null) line.enabled = false; if (dot != null) dot.SetActive(false); }
         internal void ResetAim() => aimFilter.Reset();

@@ -19,6 +19,7 @@ namespace ScamWithYourFriendsInVR
         public static ConfigEntry<bool> Seated;
         public static ConfigEntry<float> SeatedHeight, SnapAngle, Deadzone, PanelDistance, PanelWidth;
         public static ConfigEntry<int> CollisionMask;
+        public static ConfigEntry<float> FlightSteeringSpeed;
         public static ConfigEntry<string> RuntimeBundle;
         public static ConfigEntry<PlayerMode> Mode;
         public static ConfigEntry<ControllerLayoutKind> ControllerLayout;
@@ -48,6 +49,7 @@ namespace ScamWithYourFriendsInVR
             SeatedHeight = Config.Bind("Comfort", "SeatedEyeHeight", 1.65f, new ConfigDescription("Meters", new AcceptableValueRange<float>(0.8f, 2.2f)));
             SnapAngle = Config.Bind("Comfort", "SnapDegrees", 30f, new ConfigDescription("Degrees per stick deflection", new AcceptableValueRange<float>(10f, 90f)));
             Deadzone = Config.Bind("Input", "StickDeadzone", 0.2f, new ConfigDescription("Radial deadzone", new AcceptableValueRange<float>(0.05f, 0.8f)));
+            FlightSteeringSpeed = Config.Bind("Input", "FlightSteeringSpeed", 90f, new ConfigDescription("FPV right-stick steering speed in degrees per second. Head movement looks around independently; aircraft pitch/roll are not imposed on the headset.", new AcceptableValueRange<float>(15f, 180f)));
             ControllerLayout = Config.Bind("Input", "ControllerLayout", ControllerLayoutKind.Auto, "Auto recognises the bundled Vive wand and Windows MR OpenXR profiles. FaceButtons keeps Quest/Index-style controls. ViveWand/Wmr use pad clicks for missing face buttons. Restart after changing this override.");
             PanelDistance = Config.Bind("UI", "PanelDistance", .9f, new ConfigDescription("Distance in metres for floating HUD and menus; physical computer screens keep their desk position", new AcceptableValueRange<float>(0.5f, 3f)));
             PanelWidth = Config.Bind("UI", "PanelWidth", 1.6f, new ConfigDescription("Meters", new AcceptableValueRange<float>(0.4f, 3f)));

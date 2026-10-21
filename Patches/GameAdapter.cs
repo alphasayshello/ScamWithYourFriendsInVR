@@ -37,6 +37,7 @@ namespace ScamWithYourFriendsInVR.Patches
                 ? Read(local, "LocalSpectatedPlayer") as Component ?? local : local;
         internal static bool AvatarUnavailable(Component local)
             => Read(local, "isSpectating") is bool spectating && spectating
+                || local == LocalPlayer && Input.VRFlightControls.Current != null
                 || Read(Read(local, "RagdollManager"), "IsRagdollActive") is bool ragdolled && ragdolled
                 || Read(Read(local, "RagdollManager"), "IsHiding") is bool hiding && hiding;
         internal static Component Interactor => Static("PlayerInteractor", "LocalPlayerInstance") as Component;
