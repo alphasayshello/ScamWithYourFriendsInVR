@@ -4,7 +4,7 @@
 
 ## Before you launch
 
-Connect your headset to the PC runtime first. For Quest through Steam Link, reach SteamVR before launching. Run one game client for normal headset testing. Face forward in a clear area and hold left stick click for about **0.65 seconds** to recenter.
+Connect your headset to the PC runtime first. For Quest through Steam Link, reach SteamVR before launching. Run one game client for normal headset testing. Face forward in a clear area and hold left stick click for about **0.65 seconds** to recenter. Vive wand users can open settings and choose **General → VR options → Recenter view** instead.
 
 ## Move and look
 
@@ -21,6 +21,22 @@ The laser stays visible in menus and computers. During normal play it appears fo
 **Left X** opens players. **Left Y** or the controller menu backs out of players, exits a captured computer, or toggles settings. Floating menus/HUD follow your view at **0.9 metres** by default. Adjust `[UI] PanelDistance` and `PanelWidth` if needed.
 
 After input focus or tracking is lost, release action buttons and centre the sticks before using them again. To grab again, release and squeeze grip. This prevents held controls from restarting actions when tracking returns.
+
+### Vive wands and original Windows MR controllers
+
+The bundled OpenXR controller names select these layouts automatically. Quest, Index, Vive Cosmos and WMR controllers with face buttons retain the face-button controls above. If your runtime reports a different controller name, set `[Input] ControllerLayout` in `BepInEx/config/com.swyf.vr.cfg` to `ViveWand` or `Wmr`, then restart. `Auto` is the default; `FaceButtons` forces the usual Quest-style layout. These alternatives pass simulated input checks; physical Vive/WMR testing remains outstanding.
+
+| Action | Vive wand | Original WMR |
+| --- | --- | --- |
+| Move / scroll | Touch left pad without pressing | Left stick |
+| Snap turn | Touch right pad left/right without pressing | Right stick left/right |
+| Players / fart with left grip held | Click left pad | Click left pad |
+| Jump / give up with left grip held | Click upper half of right pad | Click upper half of right pad |
+| Context click / secondary action | Click lower half of right pad | Click lower half of right pad |
+| Settings / back / exit computer | Controller menu | Controller menu |
+| Recenter | Settings → General → VR options | Hold left stick click |
+
+Trigger and grip keep their normal interaction/grab functions. A pad click keeps the action chosen when pressed until you release it. Vive pad presses pause movement/scrolling/turning so they do not also move you while using an action; lift your thumb or return the pad to centre before moving again. WMR keeps its separate thumbsticks available.
 
 ## Computers
 

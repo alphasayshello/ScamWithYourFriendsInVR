@@ -41,6 +41,7 @@
 - VR options inside General settings provide larger controls for recentering, desktop placement, seated comfort, menu distance, aiming, laser visibility, turning and scene resolution.
 - Focus/head/controller recovery now requires released action buttons and centred sticks, preventing automatic firing, grabs, jumps, menu toggles or snap turns from held input. Simulated input frames cover analog release thresholds, unavailable control values, connected menu access during pose loss and fresh-input recovery. Real SteamVR overlay and tracking-loss feel still need checking.
 - The fart/players choice stays with the fresh left-X press. Releasing or adding its grip modifier while X stays held no longer opens players or starts another action.
+- Vive wand and original WMR layouts now provide pad alternatives for players, fart, jump/give-up and secondary/context-click actions. Pad presses keep their original action until release; Vive action clicks suppress simultaneous movement/turning, and WMR retains its separate sticks. HUD hints follow the selected layout. Automatic profile-name detection and a configuration override are included. Physical controllers and headset usability still need checking.
 - Camera ownership now follows the spectated player; tracked arms release control during ragdoll, hiding and spectating. These transitions still need full gameplay checking.
 - Moving around your room now moves the collision body while keeping the headset aligned. Leaning, walls, stairs and in-game chairs need more checking.
 - The computer camera app uses the desk webcam independently of the headset camera. Its shutter, saved photo pixels, gallery/Live switching, photo deletion and preview shutdown pass simulated checks. Watermarks, clipboard sharing and headset usability still need checking.
@@ -58,7 +59,7 @@
 - Consistently smooth performance, especially in busy scenes.
 - Violent ragdoll/final cone impacts, completed give-up outcomes, hiding variants, spectating, tracking loss and every seated/standing transition.
 - Headset/controller compatibility beyond the setup already tried.
-- Alternate action bindings for Vive wands and original WMR controllers, whose profiles lack the face buttons used by the current controls.
+- Hardware verification of the new Vive wand/original WMR alternate controls, including runtime-reported controller names, touchpad behaviour and menu availability.
 - Headset acceptance of the updated Steam game using Unity 6000.3.26f1 and Input System 1.20.0.
 
 ## Not included right now

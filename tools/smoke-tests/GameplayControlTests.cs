@@ -61,7 +61,24 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 var hint = Member(hud, "playerMenuHint") as VisualElement;
                 Require(hint?.Q<Label>("player-menu-hint-label")?.parent.Q<Label>(className: "player-menu-hint__key")?.text == "LEFT X"
                     && hint.Q<Label>("settings-menu-hint-label")?.parent.Q<Label>(className: "player-menu-hint__key")?.text == "LEFT Y", "HUD kept desktop shortcut labels");
-                Logger.LogInfo("GAMEPLAY PASS: native HUD shows controller players/settings shortcuts");
+                var layoutProperty = manager.Input.GetType().GetProperty("LeftLayout");
+                object savedLayout = layoutProperty.GetValue(manager.Input);
+                try
+                {
+                    foreach (var layout in new[] { Plugin.ControllerLayoutKind.ViveWand, Plugin.ControllerLayoutKind.Wmr })
+                    {
+                        layoutProperty.SetValue(manager.Input, layout);
+                        AccessTools.Method(hudType, "RefreshPlayerMenuHint").Invoke(hud, null);
+                        Require(hint.Q<Label>("player-menu-hint-label").parent.Q<Label>(className: "player-menu-hint__key").text == "LEFT PAD"
+                            && hint.Q<Label>("settings-menu-hint-label").parent.Q<Label>(className: "player-menu-hint__key").text == "MENU", "Native HUD kept face buttons for " + layout);
+                    }
+                }
+                finally
+                {
+                    layoutProperty.SetValue(manager.Input, savedLayout);
+                    AccessTools.Method(hudType, "RefreshPlayerMenuHint").Invoke(hud, null);
+                }
+                Logger.LogInfo("GAMEPLAY PASS: native HUD shows Quest and Vive/WMR players/settings shortcuts and restores the current layout");
             }
             finally
             {

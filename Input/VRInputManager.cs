@@ -41,6 +41,11 @@ namespace ScamWithYourFriendsInVR.Input
         private VRButtonReleaseGate triggerGate, gripGate, leftTriggerGate, rightPrimaryGate, secondaryGate;
         private VRButtonReleaseGate leftPrimaryGate, leftSecondaryGate, leftMenuGate, rightMenuGate, recenterGate;
         private VRStickReleaseGate moveGate, turnGate;
+        private VRControllerIdentity leftIdentity, rightIdentity;
+        private VRPadBindings leftPad, rightPad;
+        public Plugin.ControllerLayoutKind LeftLayout { get; private set; }
+        public string PlayersHint => LeftLayout == Plugin.ControllerLayoutKind.ViveWand || LeftLayout == Plugin.ControllerLayoutKind.Wmr ? "LEFT PAD" : "LEFT X";
+        public string SettingsHint => LeftLayout == Plugin.ControllerLayoutKind.ViveWand || LeftLayout == Plugin.ControllerLayoutKind.Wmr ? "MENU" : "LEFT Y";
 
         private void Update()
         {
@@ -58,12 +63,12 @@ namespace ScamWithYourFriendsInVR.Input
                 ? focusValue.GetValue(null) is bool inputFocused && inputFocused : Application.isFocused;
             bool headTracked = Tracked(head);
             ApplyState(new VRRawInputState { HeadTracked = headTracked, Focused = focused,
-                Left = ReadHand(left, focused && headTracked), Right = ReadHand(right, focused && headTracked) }, Time.unscaledTime);
+                Left = ReadHand(left, focused && headTracked, leftIdentity.Read(left)), Right = ReadHand(right, focused && headTracked, rightIdentity.Read(right)) }, Time.unscaledTime);
         }
 
-        private static VRRawHandState ReadHand(InputDevice device, bool controlsActive)
+        private static VRRawHandState ReadHand(InputDevice device, bool controlsActive, Plugin.ControllerLayoutKind layout)
         {
-            var state = new VRRawHandState { Connected = device.isValid, Tracked = Tracked(device) };
+            var state = new VRRawHandState { Connected = device.isValid, Tracked = Tracked(device), Layout = layout };
             if (!state.Connected || !controlsActive) return state;
             state.HasTriggerButton = device.TryGetFeatureValue(CommonUsages.triggerButton, out state.TriggerButton);
             state.HasGripButton = device.TryGetFeatureValue(CommonUsages.gripButton, out state.GripButton);
@@ -74,6 +79,11 @@ namespace ScamWithYourFriendsInVR.Input
             state.HasTrigger = device.TryGetFeatureValue(CommonUsages.trigger, out state.TriggerValue);
             state.HasGrip = device.TryGetFeatureValue(CommonUsages.grip, out state.GripValue);
             state.HasStick = device.TryGetFeatureValue(CommonUsages.primary2DAxis, out state.Stick);
+            if (layout == Plugin.ControllerLayoutKind.Wmr)
+            {
+                state.HasPad = device.TryGetFeatureValue(CommonUsages.secondary2DAxis, out state.Pad);
+                state.HasPadClick = device.TryGetFeatureValue(CommonUsages.secondary2DAxisClick, out state.PadClick);
+            }
             return state;
         }
 
@@ -81,6 +91,8 @@ namespace ScamWithYourFriendsInVR.Input
         {
             HeadTracked = state.HeadTracked; HasInputFocus = state.Focused; RightTracked = state.Right.Tracked;
             bool active = HeadTracked && HasInputFocus;
+            leftPad.Apply(ref state.Left, true, active); rightPad.Apply(ref state.Right, false, active);
+            LeftLayout = state.Left.Layout;
             bool leftActive = active && state.Left.Tracked, rightActive = active && state.Right.Tracked;
             Move = Stick(moveGate.Read(state.Left.Stick, leftActive && state.Left.HasStick, Plugin.Deadzone.Value));
             Turn = Stick(turnGate.Read(state.Right.Stick, rightActive && state.Right.HasStick, Plugin.Deadzone.Value));

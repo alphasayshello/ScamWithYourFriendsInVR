@@ -82,8 +82,8 @@ namespace ScamWithYourFriendsInVR.Patches
                 var settings = hints.Q<UnityEngine.UIElements.Label>("settings-menu-hint-label")?.parent;
                 var playersKey = players?.Q<UnityEngine.UIElements.Label>(className: "player-menu-hint__key");
                 var settingsKey = settings?.Q<UnityEngine.UIElements.Label>(className: "player-menu-hint__key");
-                if (playersKey != null) playersKey.text = "LEFT X";
-                if (settingsKey != null) settingsKey.text = "LEFT Y";
+                if (playersKey != null) playersKey.text = VRManager.Instance.Input.PlayersHint;
+                if (settingsKey != null) settingsKey.text = VRManager.Instance.Input.SettingsHint;
             }
         }
 

@@ -20,6 +20,8 @@ namespace ScamWithYourFriendsInVR.SmokeTests
         {
             if (!Environment.GetCommandLineArgs().Contains("--swyf-vr-smoke-tests")) yield break;
             yield return null;
+            try { TestControllerLayouts(); Logger.LogInfo("SMOKE PASS: Vive/WMR pad action ownership, focus recovery, native controls, locomotion and controller hints"); }
+            catch (Exception ex) { Logger.LogError("SMOKE FAIL: controller layouts: " + ex.GetBaseException()); }
             try { TestInputRecovery(); Logger.LogInfo("SMOKE PASS: focus/head/controller recovery requires released buttons and centred sticks, preserves grip modifiers and connected menu access"); }
             catch (Exception ex) { Logger.LogError("SMOKE FAIL: input recovery: " + ex.GetBaseException()); }
             try { TestBodyButton(); Logger.LogInfo("SMOKE PASS: jump/give-up press ownership, modifier changes and cancellation"); }

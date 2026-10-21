@@ -49,6 +49,7 @@ Press left Y / menu, choose **General**, then use the **VR OPTIONS** controls at
 | Section / key | Default | Purpose |
 | --- | --- | --- |
 | `General / Mode` | `VR` | Headset mode or normal PC mode |
+| `Input / ControllerLayout` | `Auto` | Recognise bundled profiles; override with `FaceButtons`, `ViveWand` or `Wmr` and restart |
 | `UI / PanelDistance` | `0.9` | Floating UI distance, metres |
 | `UI / PanelWidth` | `1.6` | Floating UI width, metres |
 | `UI / PhysicalDesktop` | `true` | Keep the desktop attached to its desk monitor |

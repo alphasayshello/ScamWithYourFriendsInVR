@@ -13,6 +13,7 @@ namespace ScamWithYourFriendsInVR
     public sealed class Plugin : BaseUnityPlugin
     {
         public enum PlayerMode { VR, PC }
+        public enum ControllerLayoutKind { Auto, FaceButtons, ViveWand, Wmr }
         public const string Id = "com.swyf.vr";
         public static ManualLogSource Log;
         public static ConfigEntry<bool> Seated;
@@ -20,6 +21,7 @@ namespace ScamWithYourFriendsInVR
         public static ConfigEntry<int> CollisionMask;
         public static ConfigEntry<string> RuntimeBundle;
         public static ConfigEntry<PlayerMode> Mode;
+        public static ConfigEntry<ControllerLayoutKind> ControllerLayout;
         public static ConfigEntry<bool> SyncPoses, DirectHandshake;
         public static ConfigEntry<int> PoseRate;
         public static ConfigEntry<bool> OccludeFloatingUI;
@@ -46,6 +48,7 @@ namespace ScamWithYourFriendsInVR
             SeatedHeight = Config.Bind("Comfort", "SeatedEyeHeight", 1.65f, new ConfigDescription("Meters", new AcceptableValueRange<float>(0.8f, 2.2f)));
             SnapAngle = Config.Bind("Comfort", "SnapDegrees", 30f, new ConfigDescription("Degrees per stick deflection", new AcceptableValueRange<float>(10f, 90f)));
             Deadzone = Config.Bind("Input", "StickDeadzone", 0.2f, new ConfigDescription("Radial deadzone", new AcceptableValueRange<float>(0.05f, 0.8f)));
+            ControllerLayout = Config.Bind("Input", "ControllerLayout", ControllerLayoutKind.Auto, "Auto recognises the bundled Vive wand and Windows MR OpenXR profiles. FaceButtons keeps Quest/Index-style controls. ViveWand/Wmr use pad clicks for missing face buttons. Restart after changing this override.");
             PanelDistance = Config.Bind("UI", "PanelDistance", .9f, new ConfigDescription("Distance in metres for floating HUD and menus; physical computer screens keep their desk position", new AcceptableValueRange<float>(0.5f, 3f)));
             PanelWidth = Config.Bind("UI", "PanelWidth", 1.6f, new ConfigDescription("Meters", new AcceptableValueRange<float>(0.4f, 3f)));
             OccludeFloatingUI = Config.Bind("UI", "OccludeFloatingUI", false, "Let world geometry block floating menu rays. Off keeps floating menus usable when near a desk or wall.");

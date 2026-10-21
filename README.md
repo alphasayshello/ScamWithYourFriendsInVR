@@ -31,6 +31,8 @@ This is a PC VR mod, not a standalone Quest app. The stock game strips required 
 
 ## Controls at a glance
 
+The table below uses Quest buttons. [Vive wand and original WMR alternatives](docs/HOW-TO-PLAY.md#vive-wands-and-original-windows-mr-controllers) use pad clicks for the missing face buttons.
+
 | Quest input | Action |
 | --- | --- |
 | Left stick | Move; scroll when pointing at UI |

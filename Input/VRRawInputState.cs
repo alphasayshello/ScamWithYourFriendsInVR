@@ -4,6 +4,9 @@ namespace ScamWithYourFriendsInVR.Input
 {
     internal struct VRRawHandState
     {
+        internal Plugin.ControllerLayoutKind Layout;
+        internal bool HasPad, HasPadClick, PadClick;
+        internal Vector2 Pad;
         internal bool Connected, Tracked, TriggerButton, GripButton, Menu, Primary, Secondary, StickClick;
         internal bool HasTrigger, HasGrip, HasTriggerButton, HasGripButton, HasMenu, HasPrimary, HasSecondary, HasStickClick, HasStick;
         internal float TriggerValue, GripValue;
