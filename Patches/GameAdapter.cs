@@ -142,8 +142,26 @@ namespace ScamWithYourFriendsInVR.Patches
 
         internal static void Back()
         {
+            if (Static("KolkataMonitorInputState", "WasEscapeConsumedThisFrame") is bool consumed && consumed) return;
             VRManager manager = VRManager.Instance;
             if (manager?.Keyboard != null && manager.Keyboard.Visible) { manager.Keyboard.Close(); return; }
+            if (Static("FeedbackUi", "IsOpen") is bool feedbackOpen && feedbackOpen)
+            {
+                try
+                {
+                    Type feedback = ReflectionTypes.Find("FeedbackUi");
+                    if (feedback != null) AccessTools.Method(feedback, "TryDismissWithEscape")?.Invoke(null, null);
+                }
+                catch (Exception ex) { Report("Feedback back", ex); }
+                return;
+            }
+            Type hudType = ReflectionTypes.Find("ScammerGameHudController");
+            object hud = hudType == null ? null : UnityEngine.Object.FindAnyObjectByType(hudType);
+            if (Read(hud, "runBreakdownVisible") is bool reviewOpen && reviewOpen)
+            {
+                Call(hud, "DismissRunBreakdownWithEscape");
+                return;
+            }
             object players = Static("TabMenu", "Instance");
             if (Read(players, "IsOpen") is bool playersOpen && playersOpen) { Write(players, "IsOpen", false); return; }
             if (MonitorCaptured)

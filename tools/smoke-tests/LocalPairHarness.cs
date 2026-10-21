@@ -15,7 +15,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
     [DefaultExecutionOrder(30550)]
     public sealed partial class LocalPairHarness : BaseUnityPlugin
     {
-        private bool host, client, active, queued, placed, singleComputer, singleRagdoll, singleCombat, singleRecording, singleScam, singleProfile;
+        private bool host, client, active, queued, placed, singleComputer, singleRagdoll, singleCombat, singleRecording, singleScam, singleProfile, singleMenus;
         private string readyFile;
         private Harmony patches;
         private float nextReport, placedAt, connectedAt;
@@ -45,7 +45,8 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             singleRecording = args.Contains("--swyf-single-recording-tests");
             singleScam = args.Contains("--swyf-single-scam-tests");
             singleProfile = args.Contains("--swyf-single-profile-tests");
-            singleComputer = args.Contains("--swyf-single-computer-tests") || singleRagdoll || singleCombat || singleRecording || singleScam || singleProfile;
+            singleMenus = args.Contains("--swyf-single-menu-tests");
+            singleComputer = args.Contains("--swyf-single-computer-tests") || singleRagdoll || singleCombat || singleRecording || singleScam || singleProfile || singleMenus;
             host = args.Contains("--swyf-pair-host") || singleComputer; client = args.Contains("--swyf-pair-client");
             active = host || client;
             if (!active) return;
@@ -109,21 +110,21 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 : AccessTools.Method(initializer.GetType(), "EnqueueClient").Invoke(initializer, new object[] { "127.0.0.1", "", Port, false });
             queued = result is bool accepted && accepted;
             Logger.LogInfo("PAIR: automatic " + (host ? "host" : "join") + " queued=" + queued);
-            if ((singleRagdoll || singleCombat || singleProfile) && queued)
+            if ((singleRagdoll || singleCombat || singleProfile || singleMenus) && queued)
             {
                 float readyDeadline = Time.realtimeSinceStartup + 90;
                 while (!NetworkClient.ready || NetworkClient.localPlayer == null || VRManager.Instance?.Rig?.Head == null)
                 { Require(Time.realtimeSinceStartup < readyDeadline, "Focused test host did not become ready"); yield return null; }
                 yield return new WaitForSecondsRealtime(1.5f);
                 bool heldWeapons = Environment.GetCommandLineArgs().Contains("--swyf-only-held-weapon-tests");
-                IEnumerator test = singleProfile ? ProfileModFrames() : singleCombat ? heldWeapons ? TestNativeHeldWeapons() : TestCombatTransitions() : TestNativeRagdoll();
+                IEnumerator test = singleMenus ? TestMenuRouting() : singleProfile ? ProfileModFrames() : singleCombat ? heldWeapons ? TestNativeHeldWeapons() : TestCombatTransitions() : TestNativeRagdoll();
                 try
                 {
                     while (true)
                     {
                         bool more;
                         try { more = test.MoveNext(); }
-                        catch (Exception ex) { Logger.LogError((singleProfile ? "PROFILE FAIL: " : singleCombat ? heldWeapons ? "HELD WEAPON FAIL: " : "COMBAT TRANSITION FAIL: " : "RAGDOLL FAIL: ") + ex.GetBaseException()); break; }
+                        catch (Exception ex) { Logger.LogError((singleMenus ? "MENU ROUTING FAIL: " : singleProfile ? "PROFILE FAIL: " : singleCombat ? heldWeapons ? "HELD WEAPON FAIL: " : "COMBAT TRANSITION FAIL: " : "RAGDOLL FAIL: ") + ex.GetBaseException()); break; }
                         if (!more) break;
                         yield return test.Current;
                     }

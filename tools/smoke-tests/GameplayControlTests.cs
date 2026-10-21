@@ -90,6 +90,9 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     AccessTools.Method(hudType, "RefreshPlayerMenuHint").Invoke(hud, null);
                 }
                 Logger.LogInfo("GAMEPLAY PASS: native HUD shows layout-specific players/settings/recovery shortcuts, restores desktop captions and resumes VR hints");
+                var menus = TestMenuRouting();
+                try { while (menus.MoveNext()) yield return menus.Current; }
+                finally { (menus as IDisposable)?.Dispose(); }
             }
             finally
             {
