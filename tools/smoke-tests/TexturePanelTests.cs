@@ -130,6 +130,26 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             yield return null;
             Check(surface == null && meshObject != null && renderer != null && renderer.enabled && settings.targetTexture == texture,
                 "Removing a borrowed panel destroyed its native game object or texture");
+            var scanner = Own(new GameObject("SWYF incremental presenter scan probe")).AddComponent<VRUIPatcher>(); scanner.enabled = false;
+            var pending = typeof(VRUIPatcher).GetField("presenterScan", instance);
+            var cursor = typeof(VRUIPatcher).GetField("presenterScanCursor", instance);
+            var documents = (System.Collections.Generic.List<UIDocument>)typeof(VRUIPatcher).GetField("textureDocuments", instance).GetValue(scanner);
+            documents.Add(doc);
+            var doomed = Own(new GameObject("SWYF destroyed scan entry", typeof(MeshRenderer)));
+            var snapshot = new MeshRenderer[513]; snapshot[0] = doomed.GetComponent<MeshRenderer>(); snapshot[snapshot.Length - 1] = renderer;
+            Destroy(doomed); yield return null;
+            pending.SetValue(scanner, snapshot); cursor.SetValue(scanner, 0);
+            var advance = typeof(VRUIPatcher).GetMethod("DiscoverTexturePresenters", instance);
+            doc.enabled = false; advance.Invoke(scanner, null);
+            Check((int)cursor.GetValue(scanner) > 0 && (int)cursor.GetValue(scanner) < snapshot.Length && scanner.Panels.Count == 0,
+                "Presenter discovery consumed the entire snapshot in one call or bound an inactive document");
+            doc.enabled = true; yield return null;
+            for (int i = 0; i < 8 && pending.GetValue(scanner) != null; i++) advance.Invoke(scanner, null);
+            Check(pending.GetValue(scanner) == null && scanner.Panels.Count == 1 && scanner.Panels[0].NativePresenter,
+                "Incremental discovery did not resume and bind its late native presenter");
+            pending.SetValue(scanner, snapshot); scanner.Restore();
+            Check(pending.GetValue(scanner) == null && renderer.enabled && renderer.sharedMaterial == material && settings.targetTexture == texture,
+                "Cancelling discovery retained a snapshot or changed native presenter ownership");
             doc.enabled = false; renderer.enabled = false;
         }
     }

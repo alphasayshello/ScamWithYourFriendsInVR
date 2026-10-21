@@ -18,8 +18,12 @@ namespace ScamWithYourFriendsInVR.UI
         private UnityEngine.Camera eventCamera;
         private float nextScan;
         private float nextTextureScan;
+        private MeshRenderer[] presenterScan;
+        private int presenterScanCursor;
         private readonly List<UIDocument> textureDocuments = new List<UIDocument>();
         private readonly List<Material> presenterMaterials = new List<Material>();
+        private readonly List<PresenterDocument> presenterDocuments = new List<PresenterDocument>();
+        private struct PresenterDocument { internal UIDocument Document; internal PanelSettings Settings; internal RenderTexture Texture; }
         private static readonly string[] textureProperties = { "_BaseMap", "_MainTex" };
         private bool placed;
         private bool monitorCaptured;
@@ -85,6 +89,7 @@ namespace ScamWithYourFriendsInVR.UI
             if (lastHead != manager.Rig.Head || menu != lastMenu) { lastHead = manager.Rig.Head; lastMenu = menu; placed = false; }
             if (captured != monitorCaptured) { monitorCaptured = captured; placed = false; }
             if (!placed || manager.Input.RecenterDown) Place();
+            if (presenterScan != null) DiscoverTexturePresenters();
             if (!placed || Time.unscaledTime < nextScan) return;
             nextScan = Time.unscaledTime + 0.5f;
             PruneDestroyedGraphics();
@@ -135,10 +140,11 @@ namespace ScamWithYourFriendsInVR.UI
                 surface.AddDocument(document);
                 Panels.Add(surface);
             }
-            if (textureDocuments.Count > 0 && Time.unscaledTime >= nextTextureScan)
+            if (textureDocuments.Count > 0 && presenterScan == null && Time.unscaledTime >= nextTextureScan)
             {
                 nextTextureScan = Time.unscaledTime + 2;
-                DiscoverTexturePresenters();
+                presenterScan = FindObjectsByType<MeshRenderer>(FindObjectsSortMode.None);
+                presenterScanCursor = 0;
             }
             foreach (VRPanelSurface panel in Panels)
             {
@@ -149,9 +155,20 @@ namespace ScamWithYourFriendsInVR.UI
 
         private void DiscoverTexturePresenters()
         {
-            foreach (MeshRenderer renderer in FindObjectsByType<MeshRenderer>(FindObjectsSortMode.None))
+            if (presenterScan == null) return;
+            presenterDocuments.Clear();
+            foreach (UIDocument document in textureDocuments)
             {
-                if (!renderer.enabled || !renderer.gameObject.activeInHierarchy) continue;
+                if (document == null || !document.isActiveAndEnabled) continue;
+                PanelSettings settings = document.panelSettings;
+                if (settings != null && settings.targetTexture != null)
+                    presenterDocuments.Add(new PresenterDocument { Document = document, Settings = settings, Texture = settings.targetTexture });
+            }
+            int end = Mathf.Min(presenterScan.Length, presenterScanCursor + 512);
+            while (presenterScanCursor < end)
+            {
+                MeshRenderer renderer = presenterScan[presenterScanCursor++];
+                if (renderer == null || !renderer.enabled || !renderer.gameObject.activeInHierarchy) continue;
                 Mesh mesh = renderer.GetComponent<MeshFilter>()?.sharedMesh;
                 if (mesh == null || !mesh.isReadable || mesh.vertexCount > 10000) continue;
                 renderer.GetSharedMaterials(presenterMaterials);
@@ -163,27 +180,28 @@ namespace ScamWithYourFriendsInVR.UI
                     {
                         if (!material.HasProperty(property) || !(material.GetTexture(property) is RenderTexture texture)) continue;
                         bool matched = false;
-                        foreach (UIDocument document in textureDocuments)
+                        foreach (PresenterDocument target in presenterDocuments)
                         {
-                            if (document.panelSettings.targetTexture != texture) continue;
+                            if (target.Texture != texture) continue;
                             matched = true;
                             VRPanelSurface surface = Panels.Find(p => p != null && p.MatchesPresenter(renderer, slot, property)
-                                && p.Settings == document.panelSettings && p.Texture == texture);
+                                && p.Settings == target.Settings && p.Texture == texture);
                             if (surface == null)
                             {
                                 try
                                 {
-                                    surface = VRPanelSurface.Borrow(renderer, mesh, slot, material, property, document);
+                                    surface = VRPanelSurface.Borrow(renderer, mesh, slot, material, property, target.Document);
                                     Panels.Add(surface);
                                 }
                                 catch (System.Exception ex) { Patches.GameAdapter.Report("Texture panel " + renderer.name, ex); continue; }
                             }
-                            surface.AddDocument(document);
+                            surface.AddDocument(target.Document);
                         }
                         if (matched) break;
                     }
                 }
             }
+            if (presenterScanCursor >= presenterScan.Length) { presenterScan = null; presenterScanCursor = 0; }
         }
 
         private void Convert(Canvas canvas)
@@ -297,11 +315,18 @@ namespace ScamWithYourFriendsInVR.UI
             foreach (VRPanelSurface panel in Panels) if (panel != null) panel.Remove();
             Panels.Clear(); panelSettings.Clear();
             textureDocuments.Clear();
+            ResetPresenterScan();
         }
 
-        private void SceneChanged(Scene oldScene, Scene newScene) { placed = false; }
+        private void ResetPresenterScan()
+        {
+            presenterScan = null; presenterScanCursor = 0; nextTextureScan = 0;
+            presenterDocuments.Clear(); presenterMaterials.Clear();
+        }
+        private void SceneChanged(Scene oldScene, Scene newScene) { placed = false; ResetPresenterScan(); }
         private void SceneUnloaded(Scene scene)
         {
+            ResetPresenterScan();
             for (int i = canvases.Count - 1; i >= 0; i--)
             {
                 CanvasState state = canvases[i];
