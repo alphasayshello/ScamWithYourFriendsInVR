@@ -41,6 +41,14 @@ namespace ScamWithYourFriendsInVR.Patches
                 try { harmony.Patch(ray, transpiler: new HarmonyMethod(typeof(PlayerPatches), nameof(InteractionRay))); }
                 catch (Exception ex) { GameAdapter.Report("HandleInteractionRay patch", ex); }
             }
+            if (type != null)
+                foreach (string name in new[] { "GetPunchAimDirection", "TryGetLocalPunchAimTarget" })
+                {
+                    MethodInfo punch = AccessTools.Method(type, name);
+                    if (punch == null) continue; // Older native versions may lack the arm-target helper.
+                    try { harmony.Patch(punch, transpiler: new HarmonyMethod(typeof(PlayerPatches), nameof(PunchAim))); }
+                    catch (Exception ex) { GameAdapter.Report("Punch aim " + name, ex); }
+                }
             Type javelin = ReflectionTypes.Find("JavelinInteractable");
             MethodInfo targetRay = javelin == null ? null : AccessTools.Method(javelin, "TryRaycastTarget");
             if (targetRay != null)
@@ -201,6 +209,34 @@ namespace ScamWithYourFriendsInVR.Patches
         private static Vector3 RayForward(Transform value) => Redirect(value) ? VRManager.Instance.Rig.Right.Aim.forward : value.forward;
         private static Vector3 RayRight(Transform value) => Redirect(value) ? VRManager.Instance.Rig.Right.Aim.right : value.right;
         private static Vector3 RayUp(Transform value) => Redirect(value) ? VRManager.Instance.Rig.Right.Aim.up : value.up;
+
+        private static Vector3 PunchForward(Transform value, object owner)
+            => ReferenceEquals(owner, GameAdapter.Interactor) ? RayForward(value) : value.forward;
+        private static Ray PunchViewportRay(UnityEngine.Camera camera, Vector3 viewport, object owner)
+            => ReferenceEquals(owner, GameAdapter.Interactor) && Redirect(camera.transform)
+                ? new Ray(VRManager.Instance.Rig.Right.Aim.position, VRManager.Instance.Rig.Right.Aim.forward)
+                : camera.ViewportPointToRay(viewport);
+
+        private static IEnumerable<CodeInstruction> PunchAim(IEnumerable<CodeInstruction> instructions, MethodBase __originalMethod)
+        {
+            MethodInfo forward = AccessTools.PropertyGetter(typeof(Transform), "forward");
+            MethodInfo viewport = AccessTools.Method(typeof(UnityEngine.Camera), "ViewportPointToRay", new[] { typeof(Vector3) });
+            bool target = __originalMethod.Name == "TryGetLocalPunchAimTarget";
+            int reads = 0;
+            foreach (CodeInstruction instruction in instructions)
+            {
+                if (instruction.Calls(target ? viewport : forward))
+                {
+                    yield return new CodeInstruction(OpCodes.Ldarg_0).MoveLabelsFrom(instruction).MoveBlocksFrom(instruction);
+                    instruction.opcode = OpCodes.Call;
+                    instruction.operand = AccessTools.Method(typeof(PlayerPatches), target ? nameof(PunchViewportRay) : nameof(PunchForward));
+                    reads++;
+                }
+                yield return instruction;
+            }
+            if (target ? reads != 1 : reads == 0)
+                throw new InvalidOperationException("Native punch camera reads changed: " + __originalMethod.Name);
+        }
 
         private static bool RedirectHeldTarget(Transform value, Component owner)
             => owner != null && Redirect(value) && GameAdapter.Read(GameAdapter.Interactor, "CurrentHeldItem") is Component held

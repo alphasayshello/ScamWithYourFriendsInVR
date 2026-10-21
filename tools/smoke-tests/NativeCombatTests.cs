@@ -10,7 +10,14 @@ namespace ScamWithYourFriendsInVR.SmokeTests
     public sealed partial class LocalPairHarness
     {
         private static Component combatWeapon;
-        private static int combatRays;
+        private static int combatRays, combatAnimationCommands;
+        private static float combatAnimationDirectionError;
+        private static void ObservePunchAnimation(object __instance, bool __1, Vector3 __3)
+        {
+            if (!__1 || __instance is not Component player || player.gameObject != Mirror.NetworkClient.localPlayer.gameObject) return;
+            combatAnimationCommands++;
+            combatAnimationDirectionError = Mathf.Max(combatAnimationDirectionError, Vector3.Angle(__3, VRManager.Instance.Rig.Right.Aim.forward));
+        }
         private static float combatOriginError, combatDirectionError;
         private static Collider combatTargetCollider;
         private static Mirror.NetworkIdentity combatVictim;
@@ -97,9 +104,65 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             }
         }
 
+        private void TestNativePunchAim()
+        {
+            var manager = VRManager.Instance;
+            var interactor = Mirror.NetworkClient.localPlayer.GetComponent(Find("PlayerInteractor"));
+            var camera = Member(interactor, "playerCamera") as UnityEngine.Camera;
+            Require(camera != null, "Native punch camera unavailable");
+            var direction = AccessTools.Method(interactor.GetType(), "GetPunchAimDirection");
+            var target = AccessTools.Method(interactor.GetType(), "TryGetLocalPunchAimTarget");
+            var aim = manager.Rig.Right.Aim;
+            Vector3 savedPosition = aim.position; Quaternion savedRotation = aim.rotation;
+            bool focused = manager.Input.HasInputFocus, tracked = manager.Rig.Right.IsTracked;
+            GameObject obstacle = null;
+            Vector3 Target()
+            {
+                object[] args = { Vector3.zero };
+                Require((bool)target.Invoke(interactor, args), "Native punch target query failed");
+                return (Vector3)args[0];
+            }
+            try
+            {
+                aim.SetPositionAndRotation(camera.transform.position + Vector3.up * 1000, Quaternion.LookRotation(Vector3.right));
+                Require(Vector3.Angle((Vector3)direction.Invoke(interactor, null), aim.forward) < .01f,
+                    "Native punch direction still follows headset instead of controller");
+                int mask = ((LayerMask)Member(interactor, "punchAimRaycastMask")).value;
+                int layer = Enumerable.Range(0, 32).First(i => (mask & (1 << i)) != 0);
+                float reach = Mathf.Max(.1f, Convert.ToSingle(Member(interactor, "punchAimRayDistance")));
+                obstacle = GameObject.CreatePrimitive(PrimitiveType.Cube); obstacle.layer = layer;
+                obstacle.name = "SWYF controller punch aim probe";
+                obstacle.transform.position = aim.position + aim.forward * (reach * .5f);
+                obstacle.transform.localScale = Vector3.one * Mathf.Min(.1f, reach * .1f);
+                Physics.SyncTransforms();
+                var ray = new Ray(aim.position, aim.forward);
+                Require(obstacle.GetComponent<Collider>().Raycast(ray, out RaycastHit hit, reach), "Native punch target probe not on controller ray");
+                Require(Vector3.Distance(Target(), hit.point) < .001f,
+                    "Native punch arm target does not use controller ray or preserve nearest collider targeting");
+                manager.Input.GetType().GetProperty("HasInputFocus").SetValue(manager.Input, false);
+                Vector3 fallbackTarget = Target();
+                Require(Vector3.Angle((Vector3)direction.Invoke(interactor, null), camera.transform.forward) < .01f,
+                    "Unfocused native punch did not retain camera fallback");
+                manager.Input.GetType().GetProperty("HasInputFocus").SetValue(manager.Input, focused);
+                manager.Rig.Right.GetType().GetProperty("IsTracked").SetValue(manager.Rig.Right, false);
+                Require(Vector3.Angle((Vector3)direction.Invoke(interactor, null), camera.transform.forward) < .01f
+                    && Vector3.Distance(Target(), fallbackTarget) < .001f,
+                    "Untracked native punch retained controller direction/target");
+                Logger.LogInfo("PUNCH AIM PASS: native direction and nearest arm target follow controller; lost focus/tracking retain camera fallback");
+            }
+            finally
+            {
+                manager.Input.GetType().GetProperty("HasInputFocus").SetValue(manager.Input, focused);
+                manager.Rig.Right.GetType().GetProperty("IsTracked").SetValue(manager.Rig.Right, tracked);
+                aim.SetPositionAndRotation(savedPosition, savedRotation);
+                if (obstacle != null) Destroy(obstacle);
+            }
+        }
+
         private IEnumerator TestNativeCombat(bool inputOnly = false)
         {
             var manager = VRManager.Instance;
+            TestNativePunchAim();
             Type adapter = typeof(VRManager).Assembly.GetType("ScamWithYourFriendsInVR.Patches.GameAdapter");
             var attack = AccessTools.Method(adapter, "Attack");
             var toggle = AccessTools.Method(adapter, "TogglePause");
@@ -122,6 +185,9 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             probe.Patch(rayMethod, prefix: new HarmonyMethod(typeof(LocalPairHarness), nameof(ObserveCombatRay)));
             probe.Patch(AccessTools.Method(weaponType, "FireRay"), prefix: new HarmonyMethod(typeof(LocalPairHarness), nameof(AimCombatTarget)));
             probe.Patch(AccessTools.Method(weaponType, "CmdRagdollTarget"), prefix: new HarmonyMethod(typeof(LocalPairHarness), nameof(ObserveDamageCommand)));
+            probe.Patch(AccessTools.Method(Find("Metater.MetaPlayer"), "CmdAttackAnim"),
+                prefix: new HarmonyMethod(typeof(LocalPairHarness), nameof(ObservePunchAnimation)));
+            combatAnimationCommands = 0; combatAnimationDirectionError = 0;
             combatRays = 0; combatOriginError = combatDirectionError = 0;
             bool paused = false;
             void Input(string key, bool value) => manager.Input.GetType().GetProperty(key).SetValue(manager.Input, value);
@@ -185,6 +251,8 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 { Require(Time.realtimeSinceStartup < deadline, "Native punch input never fired"); yield return null; }
                 attack.Invoke(null, new object[] { false });
                 Require(combatOriginError < .001f && combatDirectionError < .01f, "Native punch ray did not use controller aim");
+                Require(combatAnimationCommands > 0 && combatAnimationDirectionError < .01f,
+                    "Native punch animation command did not carry controller aim to remote peers");
                 int firstCount = combatRays;
                 double cooldown = Convert.ToDouble(nextFire.Invoke(combatWeapon, null));
                 Require(cooldown > Mirror.NetworkTime.time, "Native punch did not schedule its cooldown");
