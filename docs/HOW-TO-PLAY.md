@@ -24,6 +24,8 @@ Menu/back closes an open VR keyboard, feedback overlay or results panel before c
 
 The laser stays visible while feedback or results are open, including when pointing away from the panel. Gameplay actions pause behind these overlays; a cancelled give-up hold needs a fresh press after closing them.
 
+If an overlay opens during a button press or slider drag, that interaction is cancelled. Release the trigger before using the new overlay, then press again. Closing it does not resume the old drag or turn your next click into a double click.
+
 After input focus or tracking is lost, release action buttons and centre the sticks before using them again. To grab again, release and squeeze grip. This prevents held controls from restarting actions when tracking returns.
 
 ### Vive wands and original Windows MR controllers

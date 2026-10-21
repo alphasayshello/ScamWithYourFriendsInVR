@@ -26,8 +26,10 @@ namespace ScamWithYourFriendsInVR.Patches
         private static Component CurrentHud => hud.TryGetTarget(out Component current) && current != null ? current : null;
         internal static void RememberHud(object candidate) { if (candidate is Component component && component != null) hud.SetTarget(component); }
         internal static void ClearUiState() => hud.SetTarget(null);
-        internal static bool ModalOverlayOpen => Static("FeedbackUi", "IsOpen") is bool feedback && feedback
-            || Read(CurrentHud, "runBreakdownVisible") is bool review && review;
+        internal enum ModalLayer { None, Results, Feedback }
+        internal static ModalLayer ActiveModal => Static("FeedbackUi", "IsOpen") is bool feedback && feedback ? ModalLayer.Feedback
+            : Read(CurrentHud, "runBreakdownVisible") is bool review && review ? ModalLayer.Results : ModalLayer.None;
+        internal static bool ModalOverlayOpen => ActiveModal != ModalLayer.None;
         internal static Component LocalPlayer => Static("Metater.MetaPlayer", "LocalPlayerInstance") as Component;
         internal static Component Controller => Static("Metater.MetaPlayerController", "Instance") as Component;
         internal static Component ResolveViewPlayer(Component local)

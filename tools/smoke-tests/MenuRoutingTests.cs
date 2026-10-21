@@ -92,6 +92,14 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 yield return null; PressMenu();
                 Require(!Review() && !Settings(), "Second fresh back did not dismiss results without opening settings");
                 Logger.LogInfo("MENU ROUTING PASS: nested native feedback/results dismiss one layer per fresh menu press; no feedback submission or run completion is invoked");
+                yield return null;
+                foreach (bool results in new[] { false, true })
+                {
+                    var capture = TestModalCapture(results);
+                    try { while (capture.MoveNext()) yield return capture.Current; }
+                    finally { (capture as IDisposable)?.Dispose(); }
+                    yield return null;
+                }
             }
             finally
             {

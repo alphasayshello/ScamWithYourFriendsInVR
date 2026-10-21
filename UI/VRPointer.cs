@@ -32,6 +32,8 @@ namespace ScamWithYourFriendsInVR.UI
         private int toolkitButton;
         private bool attackRequiresGrip = true, secondaryHeld;
         private bool primaryTertiary, secondaryHipSwap;
+        private GameAdapter.ModalLayer modalLayer;
+        private bool modalPrimaryBlocked, modalSecondaryBlocked;
         private VisualElement clickRoot, clickTarget;
         private UnityEngine.UIElements.Button clickButton;
         private bool observedClick, observedButton;
@@ -134,19 +136,21 @@ namespace ScamWithYourFriendsInVR.UI
             VRManager manager = VRManager.Instance;
             if (manager != null && manager.Interactive && manager.Input.PlayersDown)
             {
-                Cancel(); GameAdapter.TogglePlayers(); manager.UI.Place(); Hide(); return;
+                Cancel(); GameAdapter.TogglePlayers(); UpdateModalOwnership(manager); manager.UI.Place(); Hide(); return;
             }
             if (manager != null && manager.Interactive && manager.Input.MenuDown)
             {
-                Cancel(); GameAdapter.Back(); manager.UI.Place(); Hide(); return;
+                Cancel(); GameAdapter.Back(); UpdateModalOwnership(manager); manager.UI.Place(); Hide(); return;
             }
-            bool modal = manager?.Interactive == true && GameAdapter.ModalOverlayOpen;
+            bool modal = manager?.Interactive == true && UpdateModalOwnership(manager);
             if (manager == null || !manager.Interactive || manager.Rig.Head == null || !manager.Rig.Right.IsTracked
                 || manager.Rig.HeadObstructed && !GameAdapter.MonitorCaptured && !GameAdapter.SettingsOpen && !modal)
             {
                 Cancel(); Hide(); return;
             }
             EnsureModule();
+            bool primaryDown = manager.Input.TriggerDown && !modalPrimaryBlocked;
+            bool secondaryDown = manager.Input.SecondaryDown && !modalSecondaryBlocked;
             if (toolkitDown && (!ToolkitPressVisible() || (pressedWorldDocument != null
                 ? !pressedWorldDocument.isActiveAndEnabled
                 : pressedPanel == null || !pressedPanel.CanInteract))) CancelToolkit();
@@ -281,12 +285,12 @@ namespace ScamWithYourFriendsInVR.UI
             bool toolkitHit = panelHit != null || worldDocumentHit != null;
             if (toolkitHit && Mathf.Abs(scroll) > 0.01f) Scroll(elementHit, lastPanelPosition, scroll);
             if (module.TryDragPosition(ray, out Vector2 dragPosition)) graphicPosition = dragPosition;
-            module.Tick(graphic, graphicPosition, manager.Input.TriggerDown && !toolkitHit && !toolkitDown,
+            module.Tick(graphic, graphicPosition, primaryDown && !toolkitHit && !toolkitDown,
                 manager.Input.TriggerUp || toolkitDown, !toolkitHit ? scroll : 0);
-            if (!toolkitDown && !module.IsPressed && toolkitHit && (manager.Input.TriggerDown || manager.Input.SecondaryDown))
+            if (!toolkitDown && !module.IsPressed && toolkitHit && (primaryDown || secondaryDown))
             {
                 pressedPanel = panelHit; pressedElement = elementHit; toolkitDown = true;
-                toolkitButton = manager.Input.TriggerDown ? 0 : 1;
+                toolkitButton = primaryDown ? 0 : 1;
                 pressedWorldDocument = worldDocumentHit;
                 if (toolkitButton == 0) BeginClickWatch(elementHit); else EndClickWatch();
                 Send3D(elementHit, EventType.MouseDown, lastPanelPosition, toolkitButton, true);
@@ -295,7 +299,7 @@ namespace ScamWithYourFriendsInVR.UI
 
             if (attacking && (attackRequiresGrip && !manager.Input.Grip || primaryTertiary && !manager.Input.LeftGrip
                 || !manager.Input.Trigger || HasPanelHit || context)) StopAttack();
-            if (manager.Input.TriggerDown && !HasPanelHit && !context && !toolkitDown)
+            if (primaryDown && !HasPanelHit && !context && !toolkitDown)
             {
                 if (manager.Input.LeftGrip || manager.Input.Grip || GameAdapter.Read(GameAdapter.Interactor, "CurrentHeldItem") is Component heldItem && heldItem != null)
                 {
@@ -318,7 +322,7 @@ namespace ScamWithYourFriendsInVR.UI
             { if (!worldDown) GameAdapter.Interact(true); leftWorldDown = true; }
             grab.Tick(HasPanelHit || context || toolkitDown);
             if (secondaryHeld && (!manager.Input.Secondary || secondaryHipSwap && !manager.Input.LeftGrip || HasPanelHit || context)) StopSecondary();
-            if (manager.Input.SecondaryDown && !HasPanelHit && !context && !toolkitDown)
+            if (secondaryDown && !HasPanelHit && !context && !toolkitDown)
             {
                 secondaryHipSwap = manager.Input.LeftGrip; secondaryHeld = true;
                 if (secondaryHipSwap) GameAdapter.SwapHip(true); else GameAdapter.SecondaryUse(true);
@@ -334,6 +338,26 @@ namespace ScamWithYourFriendsInVR.UI
             dot.SetActive(line.enabled && visualHit);
             if (visualHit) dot.transform.localScale = Vector3.one * Mathf.Clamp(visualDistance * .008f, .003f, .012f);
             line.SetPosition(0, ray.origin); line.SetPosition(1, ray.GetPoint(visualDistance)); dot.transform.position = endpoint;
+            UpdateModalOwnership(manager);
+        }
+
+        private bool UpdateModalOwnership(VRManager manager)
+        {
+            GameAdapter.ModalLayer next = GameAdapter.ActiveModal;
+            if (next != modalLayer)
+            {
+                CancelToolkit(); module?.CancelForOwnerChange(); browserScroll.Reset();
+                StopAttack(); StopSecondary();
+                if (worldDown || leftWorldDown) GameAdapter.Interact(false);
+                worldDown = leftWorldDown = false;
+                lastClicked = null; lastClickTime = 0; clickCount = 0; lastClickButton = -1;
+                modalPrimaryBlocked = manager.Input.Trigger || manager.Input.TriggerDown;
+                modalSecondaryBlocked = manager.Input.Secondary || manager.Input.SecondaryDown;
+                modalLayer = next;
+            }
+            if (!manager.Input.Trigger && !manager.Input.TriggerDown) modalPrimaryBlocked = false;
+            if (!manager.Input.Secondary && !manager.Input.SecondaryDown) modalSecondaryBlocked = false;
+            return next != GameAdapter.ModalLayer.None;
         }
 
         private void OnEnable() => Application.onBeforeRender += BeforeRender;
@@ -624,6 +648,7 @@ namespace ScamWithYourFriendsInVR.UI
         }
 
         internal void Cancel() { Release(null, false); if (data != null) HandlePointerExitAndEnter(data, null); }
+        internal void CancelForOwnerChange() { Cancel(); if (data != null) { data.clickTime = 0; data.clickCount = 0; } }
         protected override void OnDisable() { Cancel(); base.OnDisable(); }
     }
 }
