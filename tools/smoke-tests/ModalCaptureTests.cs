@@ -9,6 +9,13 @@ namespace ScamWithYourFriendsInVR.SmokeTests
 {
     public sealed partial class LocalPairHarness
     {
+        private static object modalCaptureFeedback;
+        private static int modalCaptureReportAttempts;
+        private static bool BlockModalCaptureReport(object __instance)
+        {
+            if (!ReferenceEquals(__instance, modalCaptureFeedback)) return true;
+            modalCaptureReportAttempts++; return false;
+        }
         private IEnumerator TestModalCapture(bool results)
         {
             var manager = VRManager.Instance;
@@ -21,9 +28,15 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             bool Feedback() => (bool)AccessTools.Property(feedback, "IsOpen").GetValue(null);
             void Input(string name, bool value) => manager.Input.GetType().GetProperty(name).SetValue(manager.Input, value);
             VisualElement host = null, container = null;
+            var guard = new Harmony("com.swyf.vr.modalcapturefeedbackguard");
             Require(!Settings() && !Feedback() && hud != null && !(bool)Member(hud, "runBreakdownVisible"), "Modal capture needs closed native overlays");
             try
             {
+                Type formType = Find("FeedbackForm");
+                modalCaptureFeedback = UnityEngine.Object.FindAnyObjectByType(formType);
+                Require(modalCaptureFeedback != null && AccessTools.Method(formType, "SendReport") != null, "Owned feedback submission guard is unavailable");
+                modalCaptureReportAttempts = 0;
+                guard.Patch(AccessTools.Method(formType, "SendReport"), prefix: new HarmonyMethod(typeof(LocalPairHarness), nameof(BlockModalCaptureReport)));
                 if (results) AccessTools.Method(hudType, "ShowRunBreakdown").Invoke(hud, null);
                 else toggle.Invoke(null, null);
                 yield return new WaitForSecondsRealtime(.8f);
@@ -77,6 +90,11 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                         holdInjectedTrigger = true; Input("Trigger", true); tick.Invoke(manager.Pointer, null);
                         Require(!(bool)Member(manager.Pointer, "toolkitDown"), "Held trigger reacquired an overlay press without a fresh edge");
                         holdInjectedTrigger = false; Input("Trigger", false); Input("TriggerUp", true); tick.Invoke(manager.Pointer, null); Input("TriggerUp", false);
+                        float beforeFreshAttempt = slider.value;
+                        Input("Trigger", true); Input("TriggerDown", true); tick.Invoke(manager.Pointer, null); Input("TriggerDown", false);
+                        Input("Trigger", false); Input("TriggerUp", true); tick.Invoke(manager.Pointer, null); Input("TriggerUp", false);
+                        Require(clicks == 0 && (control != slider || Mathf.Approximately(slider.value, beforeFreshAttempt)) && modalCaptureReportAttempts == 0,
+                            "A fresh press reached an underlying control while feedback was still open");
                     }
                     finally { (press as IDisposable)?.Dispose(); }
                     AccessTools.Method(feedback, "TryDismissWithEscape").Invoke(null, null);
@@ -97,6 +115,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 if (Feedback()) AccessTools.Method(feedback, "TryDismissWithEscape").Invoke(null, null);
                 if (results) AccessTools.Method(hudType, "HideRunBreakdown").Invoke(hud, null);
                 if (Settings()) toggle.Invoke(null, null);
+                guard.UnpatchSelf(); modalCaptureFeedback = null;
             }
         }
     }

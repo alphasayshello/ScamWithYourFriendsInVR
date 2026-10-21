@@ -10,6 +10,10 @@ namespace ScamWithYourFriendsInVR.SmokeTests
     {
         private IEnumerator TestMenuRouting()
         {
+            float readyDeadline = Time.realtimeSinceStartup + 90;
+            while (Member(Instance("LoadingScreenManager"), "targetGo") is GameObject loading && loading.activeInHierarchy
+                || Find("NetworkingInitializer")?.GetProperty("IsNetworkTransitionInProgress")?.GetValue(null) is bool transition && transition)
+            { Require(Time.realtimeSinceStartup < readyDeadline, "Native loading overlay did not clear before menu checks"); yield return null; }
             var manager = VRManager.Instance;
             Type adapter = typeof(VRManager).Assembly.GetType("ScamWithYourFriendsInVR.Patches.GameAdapter", true);
             Type hudType = Find("ScammerGameHudController"), feedback = Find("FeedbackUi");
