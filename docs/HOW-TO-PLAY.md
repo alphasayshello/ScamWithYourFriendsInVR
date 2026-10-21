@@ -76,6 +76,8 @@ Use right grip for native pickup/hold interactions, then release to drop. While 
 
 For charged weapons such as the shotgun and sniper, keep the right trigger held until the game fires. Release early to cancel charging. Opening settings or losing VR input focus cancels the charge too; release and press again to start a new shot. Shotgun spread follows the controller's orientation as well as its aim direction.
 
+For a javelin, aim the right controller at a surface and press the right trigger. The missile target follows your controller instead of where your head is looking. The game's normal valid-target requirement and single-use behaviour still apply.
+
 You can aim and fire with the controllers even when no PC mouse is connected. No extra setup is needed for this.
 
 Physical controller movement supplies inherited release speed. Snap turns, rig repositioning and recentering no longer count as a hand swing; recentering keeps your grip-held item held. The game's normal drop impulse and velocity limit still apply.

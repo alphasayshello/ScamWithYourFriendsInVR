@@ -175,6 +175,12 @@ The origin/spread phase intercepts only this owned weapon's final ray-hit effect
 
 The fixture does not establish weapon-specific damage, ragdoll, PvP, projectile behaviour, other weapons or headset handling. Queued native animation/audio commands are allowed to reach the host before fixture items are destroyed. The existing unarmed test separately checks a real nonlethal NPC damage command.
 
+## native javelin targeting
+
+The held-weapon group also picks up a native single-missile JavelinInteractable prefab and places an isolated collider along controller aim, away from head-camera aim. The native target query must hit that collider. The pre-fix build failed this query because TryRaycastTarget read Camera.main position/forward directly. Production adapts exactly those two reads and redirects only the local player's current held item with active VR focus/head/right-controller tracking. Changed method structure rejects the transpiler instead of guessing at new reads.
+
+Inactive VR, lost focus, lost right tracking and a separate unheld prefab must match an independent native camera raycast. These gates are changed/restored synchronously without shutting down XR. A controller trigger then goes through native item input, Update, target selection, CmdShootMissile, synchronized wasShot and held-item release; exactly one local launch and one command must retain the controller-selected point. Only fixture-owned missile instantiation and the large local recoil are intercepted. Missile trajectories, explosions, actual recoil, multi-missile behaviour, saved rewards and PvP are not established. All owned items/colliders, hooks and input state are cleaned up.
+
 ## controller-only mouse compatibility
 
 `-Weapons -NoMouse`, or `-Computer -Grip -NoMouse` for the broader suite, adds `--swyf-no-desktop-mouse-tests`. Only the private weapon fixture removes its game's registered mouse devices, retaining their original objects and current selection for restoration. It requires zero registered mice before waiting for normal VR input sampling. The mod must create exactly one current compatibility mouse, then the unchanged native shotgun/sniper charge, cancellation, aiming and cooldown checks must pass. The baseline failed inside native shotgun firing when Mouse.current was absent.

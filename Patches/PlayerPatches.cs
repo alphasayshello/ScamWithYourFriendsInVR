@@ -39,6 +39,13 @@ namespace ScamWithYourFriendsInVR.Patches
                 try { harmony.Patch(ray, transpiler: new HarmonyMethod(typeof(PlayerPatches), nameof(InteractionRay))); }
                 catch (Exception ex) { GameAdapter.Report("HandleInteractionRay patch", ex); }
             }
+            Type javelin = ReflectionTypes.Find("JavelinInteractable");
+            MethodInfo targetRay = javelin == null ? null : AccessTools.Method(javelin, "TryRaycastTarget");
+            if (targetRay != null)
+            {
+                try { harmony.Patch(targetRay, transpiler: new HarmonyMethod(typeof(PlayerPatches), nameof(HeldTargetRay))); }
+                catch (Exception ex) { GameAdapter.Report("Javelin targeting patch", ex); }
+            }
         }
 
         internal static void Patch(Harmony harmony, string typeName, string methodName, string prefix,
@@ -168,6 +175,34 @@ namespace ScamWithYourFriendsInVR.Patches
         private static Vector3 RayForward(Transform value) => Redirect(value) ? VRManager.Instance.Rig.Right.Aim.forward : value.forward;
         private static Vector3 RayRight(Transform value) => Redirect(value) ? VRManager.Instance.Rig.Right.Aim.right : value.right;
         private static Vector3 RayUp(Transform value) => Redirect(value) ? VRManager.Instance.Rig.Right.Aim.up : value.up;
+
+        private static bool RedirectHeldTarget(Transform value, Component owner)
+            => owner != null && Redirect(value) && GameAdapter.Read(GameAdapter.Interactor, "CurrentHeldItem") is Component held
+                && held != null && held.gameObject == owner.gameObject;
+        private static Vector3 HeldTargetPosition(Transform value, Component owner)
+            => RedirectHeldTarget(value, owner) ? VRManager.Instance.Rig.Right.Aim.position : value.position;
+        private static Vector3 HeldTargetForward(Transform value, Component owner)
+            => RedirectHeldTarget(value, owner) ? VRManager.Instance.Rig.Right.Aim.forward : value.forward;
+
+        private static IEnumerable<CodeInstruction> HeldTargetRay(IEnumerable<CodeInstruction> instructions)
+        {
+            MethodInfo position = AccessTools.PropertyGetter(typeof(Transform), "position");
+            MethodInfo forward = AccessTools.PropertyGetter(typeof(Transform), "forward");
+            int positions = 0, directions = 0;
+            foreach (CodeInstruction instruction in instructions)
+            {
+                string replacement = null;
+                if (instruction.Calls(position)) { replacement = nameof(HeldTargetPosition); positions++; }
+                else if (instruction.Calls(forward)) { replacement = nameof(HeldTargetForward); directions++; }
+                if (replacement != null)
+                {
+                    yield return new CodeInstruction(OpCodes.Ldarg_0).MoveLabelsFrom(instruction).MoveBlocksFrom(instruction);
+                    instruction.opcode = OpCodes.Call; instruction.operand = AccessTools.Method(typeof(PlayerPatches), replacement);
+                }
+                yield return instruction;
+            }
+            if (positions != 1 || directions != 1) throw new InvalidOperationException("Javelin target camera reads changed; expected one position and direction");
+        }
 
         private static IEnumerable<CodeInstruction> WeaponRays(IEnumerable<CodeInstruction> instructions)
         {

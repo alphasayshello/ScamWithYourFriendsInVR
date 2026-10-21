@@ -224,6 +224,9 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     NetworkServer.Destroy(item); item = null; heldWeaponFixture = null;
                     yield return null;
                 }
+                var javelin = TestNativeJavelin();
+                try { while (javelin.MoveNext()) yield return javelin.Current; }
+                finally { (javelin as IDisposable)?.Dispose(); }
                 if (noMouse)
                 {
                     Type fallback = Find("ScamWithYourFriendsInVR.Input.VRMouseFallback");
