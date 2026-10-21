@@ -49,6 +49,15 @@ namespace ScamWithYourFriendsInVR.Patches
                     try { harmony.Patch(punch, transpiler: new HarmonyMethod(typeof(PlayerPatches), nameof(PunchAim))); }
                     catch (Exception ex) { GameAdapter.Report("Punch aim " + name, ex); }
                 }
+            Type drawing = ReflectionTypes.Find("JwPrintedDrawing");
+            if (drawing != null)
+                foreach (string name in new[] { "OnPlacePressed", "OnThrowPressed" })
+                {
+                    MethodInfo method = AccessTools.Method(drawing, name);
+                    if (method == null) continue;
+                    try { harmony.Patch(method, transpiler: new HarmonyMethod(typeof(PlayerPatches), nameof(HeldTargetRay))); }
+                    catch (Exception ex) { GameAdapter.Report("Printed drawing aim " + name, ex); }
+                }
             Type javelin = ReflectionTypes.Find("JavelinInteractable");
             MethodInfo targetRay = javelin == null ? null : AccessTools.Method(javelin, "TryRaycastTarget");
             if (targetRay != null)
@@ -246,7 +255,7 @@ namespace ScamWithYourFriendsInVR.Patches
         private static Vector3 HeldTargetForward(Transform value, Component owner)
             => RedirectHeldTarget(value, owner) ? VRManager.Instance.Rig.Right.Aim.forward : value.forward;
 
-        private static IEnumerable<CodeInstruction> HeldTargetRay(IEnumerable<CodeInstruction> instructions)
+        private static IEnumerable<CodeInstruction> HeldTargetRay(IEnumerable<CodeInstruction> instructions, MethodBase __originalMethod)
         {
             MethodInfo position = AccessTools.PropertyGetter(typeof(Transform), "position");
             MethodInfo forward = AccessTools.PropertyGetter(typeof(Transform), "forward");
@@ -263,7 +272,8 @@ namespace ScamWithYourFriendsInVR.Patches
                 }
                 yield return instruction;
             }
-            if (positions != 1 || directions != 1) throw new InvalidOperationException("Javelin target camera reads changed; expected one position and direction");
+            if (positions != (__originalMethod.Name == "OnThrowPressed" ? 0 : 1) || directions != 1)
+                throw new InvalidOperationException("Held item camera reads changed: " + __originalMethod.Name);
         }
 
         private static IEnumerable<CodeInstruction> WeaponRays(IEnumerable<CodeInstruction> instructions)

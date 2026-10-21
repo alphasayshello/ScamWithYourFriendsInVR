@@ -220,6 +220,9 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     && HasBlue(Texture()) && !(Member(paint, "m_galleryItems") as IDictionary).Contains(duplicate),
                     "Controller delete did not remove only the copy and return to surviving artwork");
                 Logger.LogInfo("PAINT FILE ACTIONS PASS: native controller duplicate preserves saved bytes; delete removes only the isolated copy and reopens surviving art");
+                var printChecks = TestNativePaintPrint(paint, surface);
+                try { while (printChecks.MoveNext()) yield return printChecks.Current; }
+                finally { (printChecks as IDisposable)?.Dispose(); }
             }
             finally
             {
