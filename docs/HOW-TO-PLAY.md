@@ -54,7 +54,7 @@ Trigger and grip keep their normal interaction/grab functions. A pad click keeps
 
 Point inside a browser webpage and use the stick to scroll that page. Browser toolbar controls and other apps retain ordinary UI scrolling. Native browser privacy approval and availability still apply.
 
-In Paint, hold trigger over the canvas to draw. Use its Undo and Redo buttons to change a stroke, or hold right B and move sideways over the canvas to change brush size. Painting keeps the game's normal save behaviour. A physical PC keyboard is still needed for text and shortcuts.
+In Paint, hold trigger over the canvas to draw. Use its Undo and Redo buttons to change a stroke, or hold right B and move sideways over the canvas to change brush size. Open the colour swatch to drag the hue strip and saturation/value square, then close the picker to draw. The gallery reopens saved art; Canvas starts a blank drawing. Duplicate Image makes another file, and Delete Image removes the selected artwork and selects a surviving one. Painting keeps the game's normal save behaviour. A physical PC keyboard is still needed for text and shortcuts.
 
 In Camera, click **Show** to open its controls. The shutter takes a picture from the desk webcam. Select a gallery thumbnail to view a saved picture, choose **Live** to return to the webcam, or use the trash button to delete the selected picture. Closing Camera stops its preview rendering.
 

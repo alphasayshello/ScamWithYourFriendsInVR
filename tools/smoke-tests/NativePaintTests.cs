@@ -33,6 +33,8 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             string folder = Path.Combine(tempRoot, "swyf-paint-fixture-" + Guid.NewGuid().ToString("N"));
             var probe = new Harmony("com.swyf.vr.paintfixture");
             object app = null, paint = null;
+            object notifications = Member(os, "m_notifications");
+            var originalToasts = (Member(notifications, "m_entries") as IList)?.Cast<object>().ToArray() ?? Array.Empty<object>();
             var manager = VRManager.Instance;
             var tick = AccessTools.Method(typeof(VRPointer), "LateUpdate");
             void Set(string key, bool value) => manager.Input.GetType().GetProperty(key).SetValue(manager.Input, value);
@@ -140,6 +142,84 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 Require(Member(paint, "m_pointerDrawing") is bool stopped && !stopped && !image.HasPointerCapture(VRPointer.ToolkitPointerId),
                     "Controller focus loss left native paint drawing/capture active");
                 Logger.LogInfo("PAINT PASS: controller focus cancellation finishes the native stroke and clears capture");
+
+                appFixtureAim = false;
+                var paletteClick = ClickAppControl(surface, Member(paint, "m_colorSwatch") as VisualElement);
+                try { while (paletteClick.MoveNext()) yield return paletteClick.Current; }
+                finally { (paletteClick as IDisposable)?.Dispose(); }
+                var picker = Member(paint, "m_hsvPicker") as VisualElement;
+                Require(Member(paint, "m_hsvPickerVisible") is bool paletteVisible && paletteVisible && picker?.panel != null,
+                    "Controller did not open the native paint colour picker");
+                var hue = picker.Q(className: "jw-paint-hsv-picker__hue");
+                var sv = picker.Q(className: "jw-paint-hsv-picker__sv");
+                float paletteDeadline = Time.realtimeSinceStartup + 3;
+                while (hue != null && sv != null && (!(hue.contentRect.width > 10) || !(sv.contentRect.height > 10))
+                    && Time.realtimeSinceStartup < paletteDeadline) yield return null;
+                Require(hue != null && sv != null && hue.contentRect.width > 10 && sv.contentRect.height > 10,
+                    "Native paint colour picker did not lay out; hue=" + hue?.worldBound + "; sv=" + sv?.worldBound);
+                void PalettePoint(VisualElement area, float x, float y)
+                {
+                    appFixtureAim = true;
+                    appFixturePoint = area.LocalToWorld(area.contentRect.position + Vector2.Scale(area.contentRect.size, new Vector2(x, y)));
+                    AimAppFixture();
+                }
+                PalettePoint(hue, .4f, .5f); Trigger(true);
+                Require(hue.HasPointerCapture(VRPointer.ToolkitPointerId), "Controller did not capture the native hue drag");
+                PalettePoint(hue, .66f, .5f); tick.Invoke(manager.Pointer, null); yield return new WaitForSecondsRealtime(.2f); Trigger(false);
+                PalettePoint(sv, .3f, .7f); Trigger(true);
+                PalettePoint(sv, .9f, .2f); tick.Invoke(manager.Pointer, null); yield return new WaitForSecondsRealtime(.2f); Trigger(false);
+                Color selected = (Color)Member(paint, "m_selectedColor");
+                Require(selected.b > .7f && selected.r < .2f && selected.g < .2f
+                    && !hue.HasPointerCapture(VRPointer.ToolkitPointerId) && !sv.HasPointerCapture(VRPointer.ToolkitPointerId),
+                    "Controller HSV drags did not select a blue brush or release capture; selected=" + selected);
+                PalettePoint(sv, .9f, .2f); Trigger(true);
+                Require(sv.HasPointerCapture(VRPointer.ToolkitPointerId), "Native HSV drag did not capture before focus loss");
+                Set("HasInputFocus", false); tick.Invoke(manager.Pointer, null); Set("HasInputFocus", true);
+                holdInjectedTrigger = false; Set("Trigger", false); Set("TriggerDown", false); Set("TriggerUp", false);
+                Require(!sv.HasPointerCapture(VRPointer.ToolkitPointerId) && Convert.ToInt32(Member(picker, "m_dragPointer")) == -1,
+                    "Focus loss left native HSV drag/capture active");
+                appFixtureAim = false;
+                paletteClick = ClickAppControl(surface, picker.Q<Button>(className: "jw-paint-hsv-picker__close"));
+                try { while (paletteClick.MoveNext()) yield return paletteClick.Current; }
+                finally { (paletteClick as IDisposable)?.Dispose(); }
+                Require(!(bool)Member(paint, "m_hsvPickerVisible"), "Controller could not close paint colour picker");
+                Logger.LogInfo("PAINT PALETTE PASS: controller opens native HSV picker, drags hue and saturation/value, selects blue and releases capture");
+
+                bool HasBlue(Texture2D texture) => texture.GetPixels32().Any(c => c.b > 170 && c.r < 65 && c.g < 65);
+                Point(.75f, .75f); appFixtureAim = true; AimAppFixture(); Trigger(true); Trigger(false);
+                Require(HasBlue(Texture()), "Controller-selected colour did not reach native canvas pixels");
+                saved = Member(paint, "m_currentPath") as string;
+                Require(saved != null && File.Exists(saved), "Coloured paint stroke did not save");
+                appFixtureAim = false;
+                paletteClick = ClickAppControl(surface, Member(paint, "m_newCanvasButton") as VisualElement);
+                try { while (paletteClick.MoveNext()) yield return paletteClick.Current; }
+                finally { (paletteClick as IDisposable)?.Dispose(); }
+                Require(Member(paint, "m_currentPath") == null && !HasBlue(Texture()), "Controller new canvas retained prior artwork");
+                var gallery = Member(paint, "m_galleryItems") as IDictionary;
+                var savedButton = Member(gallery?[saved], "Button") as VisualElement;
+                Require(savedButton?.panel != null, "Saved artwork has no native gallery entry");
+                paletteClick = ClickAppControl(surface, savedButton);
+                try { while (paletteClick.MoveNext()) yield return paletteClick.Current; }
+                finally { (paletteClick as IDisposable)?.Dispose(); }
+                Require(Member(paint, "m_currentPath") as string == saved && HasBlue(Texture()),
+                    "Controller gallery selection did not reopen actual coloured artwork");
+                Logger.LogInfo("PAINT GALLERY PASS: controller-selected brush colour reaches saved pixels; new canvas clears them and gallery reopens the saved artwork");
+
+                paletteClick = ClickAppControl(surface, Member(paint, "m_duplicateButton") as VisualElement);
+                try { while (paletteClick.MoveNext()) yield return paletteClick.Current; }
+                finally { (paletteClick as IDisposable)?.Dispose(); }
+                string duplicate = Member(paint, "m_currentPath") as string;
+                Require(duplicate != null && duplicate != saved
+                    && Path.GetDirectoryName(Path.GetFullPath(duplicate)) == folder && File.Exists(duplicate)
+                    && File.ReadAllBytes(saved).SequenceEqual(File.ReadAllBytes(duplicate)) && HasBlue(Texture()),
+                    "Controller duplicate did not create and select a matching isolated artwork copy");
+                paletteClick = ClickAppControl(surface, Member(paint, "m_deleteButton") as VisualElement);
+                try { while (paletteClick.MoveNext()) yield return paletteClick.Current; }
+                finally { (paletteClick as IDisposable)?.Dispose(); }
+                Require(!File.Exists(duplicate) && File.Exists(saved) && Member(paint, "m_currentPath") as string == saved
+                    && HasBlue(Texture()) && !(Member(paint, "m_galleryItems") as IDictionary).Contains(duplicate),
+                    "Controller delete did not remove only the copy and return to surviving artwork");
+                Logger.LogInfo("PAINT FILE ACTIONS PASS: native controller duplicate preserves saved bytes; delete removes only the isolated copy and reopens surviving art");
             }
             finally
             {
@@ -150,6 +230,9 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 unlock.Invoke(game, new object[] { true, originalUnlock }); refresh.Invoke(os, null);
                 if (paintField.GetValue(os) is IDisposable owned && !ReferenceEquals(owned, originalPaint)) owned.Dispose();
                 paintField.SetValue(os, originalPaint);
+                if (Member(notifications, "m_entries") is IList toasts)
+                    foreach (object toast in toasts.Cast<object>().Where(t => !originalToasts.Contains(t)).ToArray())
+                        AccessTools.Method(notifications.GetType(), "Remove").Invoke(notifications, new[] { toast });
                 probe.UnpatchSelf(); paintFixtureFolder = null;
                 string resolved = Path.GetFullPath(folder);
                 if (resolved.StartsWith(tempRoot, StringComparison.OrdinalIgnoreCase) && Path.GetFileName(resolved).StartsWith("swyf-paint-fixture-"))

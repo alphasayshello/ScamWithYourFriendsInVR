@@ -422,6 +422,13 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 yield return new WaitForSecondsRealtime(0.5f);
                 if (singleComputer)
                 {
+                    if (Environment.GetCommandLineArgs().Contains("--swyf-only-paint-tests"))
+                    {
+                        var focusedPaint = TestNativePaint(os, surface);
+                        try { while (focusedPaint.MoveNext()) yield return focusedPaint.Current; }
+                        finally { (focusedPaint as IDisposable)?.Dispose(); }
+                        yield break;
+                    }
                     if (singleScam)
                     {
                         var focusedScam = TestNativeCall(os, surface);
