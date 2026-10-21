@@ -28,6 +28,8 @@ The laser stays visible while feedback or results are open, including when point
 
 If an overlay opens during a button press or slider drag, that interaction is cancelled. Release the trigger before using the new overlay, then press again. Closing it does not resume the old drag or turn your next click into a double click.
 
+Jump holds are cancelled when settings, players or feedback interrupt gameplay. Release A (right pad up on Vive/original WMR) and press again after returning. A jump pressed inside one of those menus also waits for a fresh press after it closes; keeping the button held does not turn into an unexpected jump.
+
 After input focus or tracking is lost, release action buttons and centre the sticks before using them again. To grab again, release and squeeze grip. This prevents held controls from restarting actions when tracking returns.
 
 ### Vive wands and original Windows MR controllers

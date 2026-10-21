@@ -201,6 +201,14 @@ The paint suite also tests the native printer. It requires an idle printer, empt
 
 The fixture presses controller secondary to place the drawing through one native command onto an owned wall. Held ownership must release, and native attachment must follow the wall when translated/rotated. After native re-pickup, controller trigger must throw once, release ownership and produce rigidbody velocity along controller aim. Separate direct-callback probes check native camera fallback with lost focus/tracking, intercepting only those owned probe commands; normal placement and throwing are not intercepted. The fixture removes its own paper/wall and restores input. Headset handling, real wall variants and remote-client appearance remain outstanding.
 
+## jump interruption and movement ownership
+
+`--swyf-only-jump-tests` (`-Jump` in private launchers) selects the jump fixture on an owned distant floor; the broad gameplay suite includes it too. Fresh press/hold/release must reach the native controller state/event and physically lift the player. The baseline then reproduced a held jump restarting when settings closed. Production retains a deliberate hold during uninterrupted play but cancels it while gameplay is blocked; reactivation needs the controller's real JumpDown edge. Existing jump physics remain native, and ladder dismount remains edge-triggered.
+
+The fixture counts native positive/release events, tests settings cancellation and presses begun inside settings, feedback and players, then checks focus/session cleanup and fresh-input recovery. Held input must not emit a new native jump event when the interruption ends. Cleanup must release the owned jump once. Negative native-overlay tests now provide a fresh JumpDown too, and the curry fixture supplies the same valid fresh-press frame before retaining its hold.
+
+The flight fixture also arranges the retained foot-jump state that can be present at movement ownership handoff, then drives real native climb input. The old order sent the foot release after flight's climb event and cancelled ascent. Production clears the foot-jump hold before flight dispatch; native climb/ascent/release and the remaining flight checks must still pass. No custom jump, vehicle force or authority bypass is introduced. Real-headset comfort and remote-client acceptance remain outstanding.
+
 ## native sprint
 
 `--swyf-only-sprint-tests` (`-Sprint` in private launchers) selects a focused private host. The broad gameplay suite includes the same fixture. It uses an owned distant floor and native teleport/collision motor, preserving the player's original position and settings. The baseline full-stick check failed because no VR sprint input reached the native controller.

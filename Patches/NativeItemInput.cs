@@ -44,6 +44,7 @@ namespace ScamWithYourFriendsInVR.Patches
             Input.VRFlightControls.Clear();
             Input.VRLadderControls.Clear();
             Input.VRSprintControls.Clear();
+            Input.VRJumpControls.Clear();
             callbacks.Clear();
             Input.VRMouseFallback.Release();
         }

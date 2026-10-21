@@ -207,7 +207,14 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     && hints.Q<Label>("swyf-vr-flight-climb-key")?.text == manager.Input.FlightClimbHint, "Native HUD lacks controller flight controls");
                 float yaw = Convert.ToSingle(Member(flightFixture, "lookYawDegrees"));
                 float pitch = Convert.ToSingle(Member(flightFixture, "lookPitchDegrees"));
-                Drive(new Vector2(.25f, .75f), new Vector2(.5f, .25f), false); TriggerClimb(true);
+                Drive(new Vector2(.25f, .75f), new Vector2(.5f, .25f), false);
+                // Arrange the old foot-jump hold that can still be present on
+                // the first controller frame after flight ownership changes.
+                Input("Jump", true); Input("JumpDown", true);
+                AccessTools.Method(typeof(VRManager).Assembly.GetType("ScamWithYourFriendsInVR.Input.VRJumpControls"), "Read")
+                    .Invoke(null, new object[] { controller, manager.Input, true });
+                AccessTools.Field(controller.GetType(), "isJumping").SetValue(controller, true);
+                Input("Jump", false); Input("JumpDown", false); TriggerClimb(true);
                 deadline = Time.realtimeSinceStartup + 3;
                 while (!(Member(flightFixture, "NetworkverticalAccelerationActive") is bool triggerLift && triggerLift))
                 { Require(Time.realtimeSinceStartup < deadline, "Left trigger did not reach native FPV climb while both sticks are in use"); yield return new WaitForFixedUpdate(); }

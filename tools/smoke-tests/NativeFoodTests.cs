@@ -116,12 +116,16 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 try
                 {
                     manager.Pointer.Cancel(); injectFoodJump = true;
+                    Input("Jump", true); Input("JumpDown", true);
+                    AccessTools.Method(typeof(VRManager).Assembly.GetType("ScamWithYourFriendsInVR.Patches.PlayerPatches"), "BeforeController")
+                        .Invoke(null, new[] { controller });
+                    Input("JumpDown", false);
                     deadline = Time.realtimeSinceStartup + 3;
                     while (!jumpSeen) { Require(Time.realtimeSinceStartup < deadline, "VR jump did not fire the actual native jump event"); yield return null; }
                     Require(boostSeen, "Native curry jump did not activate its boost envelope/cooldown");
                     Logger.LogInfo("FOOD PASS: VR jump fires native onJumped and activates the curry boost; trajectory not covered");
                 }
-                finally { injectFoodJump = false; Input("Jump", false); jumped.RemoveListener(onJump); }
+                finally { injectFoodJump = false; Input("Jump", false); Input("JumpDown", false); jumped.RemoveListener(onJump); }
                 deadline = Time.realtimeSinceStartup + 20;
                 while (Member(fart, "curryFartRoutine") != null || Member(fart, "forcedFartActive") is bool stillActive && stillActive)
                 { Require(Time.realtimeSinceStartup < deadline, "Native food effect did not expire normally"); yield return null; }

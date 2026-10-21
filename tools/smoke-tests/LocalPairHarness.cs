@@ -117,16 +117,25 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 { Require(Time.realtimeSinceStartup < readyDeadline, "Focused test host did not become ready"); yield return null; }
                 yield return new WaitForSecondsRealtime(1.5f);
                 bool settingsOnly = Environment.GetCommandLineArgs().Contains("--swyf-only-settings-tests");
+                bool jump = Environment.GetCommandLineArgs().Contains("--swyf-only-jump-tests");
                 bool sprint = Environment.GetCommandLineArgs().Contains("--swyf-only-sprint-tests");
                 bool heldWeapons = Environment.GetCommandLineArgs().Contains("--swyf-only-held-weapon-tests");
-                IEnumerator test = singleMenus ? settingsOnly ? TestSettingsRender() : TestMenuRouting() : singleProfile ? ProfileModFrames() : singleCombat ? sprint ? TestNativeSprint() : heldWeapons ? TestNativeHeldWeapons() : TestCombatTransitions() : TestNativeRagdoll();
+                IEnumerator test;
+                string testName;
+                if (singleMenus) { test = settingsOnly ? TestSettingsRender() : TestMenuRouting(); testName = settingsOnly ? "SETTINGS" : "MENU ROUTING"; }
+                else if (singleProfile) { test = ProfileModFrames(); testName = "PROFILE"; }
+                else if (singleCombat && jump) { test = TestNativeJump(); testName = "JUMP"; }
+                else if (singleCombat && sprint) { test = TestNativeSprint(); testName = "SPRINT"; }
+                else if (singleCombat && heldWeapons) { test = TestNativeHeldWeapons(); testName = "HELD WEAPON"; }
+                else if (singleCombat) { test = TestCombatTransitions(); testName = "COMBAT TRANSITION"; }
+                else { test = TestNativeRagdoll(); testName = "RAGDOLL"; }
                 try
                 {
                     while (true)
                     {
                         bool more;
                         try { more = test.MoveNext(); }
-                        catch (Exception ex) { Logger.LogError((singleMenus ? "MENU ROUTING FAIL: " : singleProfile ? "PROFILE FAIL: " : singleCombat ? sprint ? "SPRINT FAIL: " : heldWeapons ? "HELD WEAPON FAIL: " : "COMBAT TRANSITION FAIL: " : "RAGDOLL FAIL: ") + ex.GetBaseException()); break; }
+                        catch (Exception ex) { Logger.LogError(testName + " FAIL: " + ex.GetBaseException()); break; }
                         if (!more) break;
                         yield return test.Current;
                     }

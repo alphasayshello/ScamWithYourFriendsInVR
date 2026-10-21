@@ -151,13 +151,16 @@ namespace ScamWithYourFriendsInVR.Patches
                 && !GameAdapter.SettingsOpen && !GameAdapter.ModalOverlayOpen && !manager.Keyboard.Visible && !manager.Pointer.HasPanelHit
                 && !(GameAdapter.Read(GameAdapter.Static("TabMenu", "Instance"), "IsOpen") is bool playersOpen && playersOpen);
             Input.VRBagControls.Update(__instance as Component, bag, bag != null && specialInput);
-            Input.VRFlightControls.Update(__instance as Component, Input.VRFlightControls.Current, specialInput);
+            Component flight = Input.VRFlightControls.Current;
+            // Release the old foot jump before flight sends its own climb event.
+            if (flight != null) Input.VRJumpControls.Clear();
+            Input.VRFlightControls.Update(__instance as Component, flight, specialInput);
             Component ladder = Input.VRLadderControls.Current;
             Input.VRLadderControls.Update(__instance as Component, ladder, specialInput);
             bool releaseBody = Input.VRFlightControls.SuppressBodyInput(manager.Input);
             releaseBody |= Input.VRLadderControls.SuppressBodyInput(manager.Input);
             Input.VRSprintControls.Update(__instance as Component, specialInput && GameplayInput && !releaseBody
-                && bag == null && Input.VRFlightControls.Current == null);
+                && bag == null && flight == null);
             Vector2 move = Vector2.zero;
             Transform polar = GameAdapter.Polar;
             if (manager.Interactive && manager.Rig.Head != null && polar != null
@@ -177,7 +180,9 @@ namespace ScamWithYourFriendsInVR.Patches
             }
             GameAdapter.Write(__instance, "movementVector", move);
             if (GameplayInput && !manager.Keyboard.Visible && manager.Input.FartDown) GameAdapter.FartBoost();
-            bool jump = GameplayInput && !releaseBody && !manager.Keyboard.Visible && !manager.Pointer.HasPanelHit && manager.Input.Jump && (ladder == null || manager.Input.JumpDown);
+            bool jump = Input.VRJumpControls.Read(__instance as Component, manager.Input,
+                GameplayInput && !releaseBody && !manager.Keyboard.Visible && !manager.Pointer.HasPanelHit);
+            if (ladder != null) jump &= manager.Input.JumpDown;
             if (GameAdapter.Read(__instance, "isJumping") is bool previous && previous != jump)
             {
                 GameAdapter.Write(__instance, "isJumping", jump);

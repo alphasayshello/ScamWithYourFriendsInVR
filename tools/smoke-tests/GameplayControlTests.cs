@@ -14,6 +14,9 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             var sprint = TestNativeSprint();
             try { while (sprint.MoveNext()) yield return sprint.Current; }
             finally { (sprint as IDisposable)?.Dispose(); }
+            var jumps = TestNativeJump();
+            try { while (jumps.MoveNext()) yield return jumps.Current; }
+            finally { (jumps as IDisposable)?.Dispose(); }
             var manager = VRManager.Instance;
             var player = Mirror.NetworkClient.localPlayer;
             Type adapter = typeof(VRManager).Assembly.GetType("ScamWithYourFriendsInVR.Patches.GameAdapter");
@@ -46,7 +49,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 Require(Member(nativePlayer, "wasPPressed") is bool released && !released, "Native pee input remained held");
                 Logger.LogInfo("GAMEPLAY PASS: controller pee/fart bindings, native pee transition and host synchronization/release");
 
-                Set("Jump", true); beforeController.Invoke(null, new[] { controller });
+                Set("Jump", true); Set("JumpDown", true); beforeController.Invoke(null, new[] { controller }); Set("JumpDown", false);
                 Require(Member(controller, "isJumping") is bool jumping && jumping, "Controller jump did not reach native controller");
                 toggle.Invoke(null, null); paused = true;
                 beforeController.Invoke(null, new[] { controller });
@@ -54,7 +57,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 Set("Pee", true); Set("FartDown", true);
                 Require(!Bound(held, "HoldP") && !Bound(pressed, "ManualFart"), "Settings allowed controller pee/fart gameplay input");
                 toggle.Invoke(null, null); paused = false;
-                Set("Jump", false); Set("Pee", false); Set("FartDown", false);
+                Set("Jump", false); Set("JumpDown", false); Set("Pee", false); Set("FartDown", false);
                 Logger.LogInfo("GAMEPLAY PASS: native jump input and settings gameplay suppression");
 
                 var hudType = Find("ScammerGameHudController");
@@ -99,7 +102,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             }
             finally
             {
-                Set("Jump", false); Set("Pee", false); Set("FartDown", false);
+                Set("Jump", false); Set("JumpDown", false); Set("Pee", false); Set("FartDown", false);
                 if (paused) toggle.Invoke(null, null);
                 handleP.Invoke(nativePlayer, null);
                 beforeController.Invoke(null, new[] { controller });
