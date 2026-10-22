@@ -122,6 +122,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 bool cctv = Environment.GetCommandLineArgs().Contains("--swyf-only-cctv-tests");
                 bool polaroid = Environment.GetCommandLineArgs().Contains("--swyf-only-polaroid-tests");
                 bool pee = Environment.GetCommandLineArgs().Contains("--swyf-only-pee-tests");
+                bool chair = Environment.GetCommandLineArgs().Contains("--swyf-only-chair-tests");
                 bool jump = Environment.GetCommandLineArgs().Contains("--swyf-only-jump-tests");
                 bool sprint = Environment.GetCommandLineArgs().Contains("--swyf-only-sprint-tests");
                 bool heldWeapons = Environment.GetCommandLineArgs().Contains("--swyf-only-held-weapon-tests");
@@ -136,6 +137,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 else if (singleCombat && cctv) { test = TestNativeCctv(); testName = "CCTV"; }
                 else if (singleCombat && polaroid) { test = TestNativePolaroid(); testName = "POLAROID"; }
                 else if (singleCombat && pee) { test = TestNativePee(); testName = "PEE"; }
+                else if (singleCombat && chair) { test = TestNativeChair(); testName = "CHAIR"; }
                 else if (singleCombat && jump) { test = TestNativeJump(); testName = "JUMP"; }
                 else if (singleCombat && sprint) { test = TestNativeSprint(); testName = "SPRINT"; }
                 else if (singleCombat && heldWeapons) { test = TestNativeHeldWeapons(); testName = "HELD WEAPON"; }
@@ -273,6 +275,19 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     }
                 }
                 finally { (ragdollTest as IDisposable)?.Dispose(); }
+                IEnumerator chairTest = TestNativeChair();
+                try
+                {
+                    while (true)
+                    {
+                        bool more;
+                        try { more = chairTest.MoveNext(); }
+                        catch (Exception ex) { Logger.LogError("CHAIR FAIL: " + ex.GetBaseException()); break; }
+                        if (!more) break;
+                        yield return chairTest.Current;
+                    }
+                }
+                finally { (chairTest as IDisposable)?.Dispose(); }
                 IEnumerator rigTest = TestNativeRigMotion();
                 try
                 {

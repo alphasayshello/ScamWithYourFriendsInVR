@@ -32,6 +32,8 @@ namespace ScamWithYourFriendsInVR.Camera
         private bool calibrated;
         private bool floorOrigin;
         private bool wasSitting;
+        private bool hasChairStandingOffset;
+        private Vector3 chairStandingOffset;
         private float menuYaw;
         private float centerYaw;
         private float trackingYaw, lastBodyYaw;
@@ -161,10 +163,10 @@ namespace ScamWithYourFriendsInVR.Camera
             Transform flightEye = flightCamera != null ? flightCamera.transform : null;
             // A destroyed Unity object compares equal to null. Its former
             // flight offset must still be discarded when ownership disappears.
-            if (!ReferenceEquals(lastFlight, flight)) { lastFlight = flight; Recenter(); }
+            if (!ReferenceEquals(lastFlight, flight)) { lastFlight = flight; hasChairStandingOffset = false; Recenter(); }
             Component viewController = GameAdapter.Read(subject, "controller") as Component ?? GameAdapter.Controller;
             Transform nextPlayer = inMenu ? null : subject?.transform;
-            if (nextPlayer != player) { player = nextPlayer; Recenter(); }
+            if (nextPlayer != player) { player = nextPlayer; hasChairStandingOffset = false; Recenter(); }
             object ragdoll = GameAdapter.Read(subject, "RagdollManager");
             Component hidingBag = GameAdapter.Read(ragdoll, "NetworkisHiding") as Component;
             GameObject bagCamera = GameAdapter.Read(hidingBag, "bagCamera") as GameObject;
@@ -176,10 +178,27 @@ namespace ScamWithYourFriendsInVR.Camera
             bool agent = GameAdapter.Read(mode, "isAgent") is bool police && police;
             if (!hadPoseContext || lastAgent != agent || lastRagdolled != ragdolled)
             {
-                hadPoseContext = true; lastAgent = agent; lastRagdolled = ragdolled; Recenter();
+                hadPoseContext = true; lastAgent = agent; lastRagdolled = ragdolled; hasChairStandingOffset = false; Recenter();
             }
             bool sitting = GameAdapter.Read(GameAdapter.Interactor, "isSitting") is bool seated && seated;
-            if (sitting != wasSitting) { wasSitting = sitting; Recenter(); }
+            if (sitting != wasSitting)
+            {
+                if (sitting)
+                {
+                    hasChairStandingOffset = player != null && subject == localPlayer && hasEyeOffset && !ragdolled && flightEye == null
+                        && VRAvatarEyeAnchor.ValidStandingOffset(player, eyeOffset);
+                    if (hasChairStandingOffset) chairStandingOffset = eyeOffset;
+                }
+                wasSitting = sitting; Recenter();
+                if (!sitting && hasChairStandingOffset)
+                {
+                    // The standing animation can still have a forward-leaning
+                    // eye mesh during the calibration window. Restore this
+                    // body's established standing anchor instead of latching it.
+                    eyeOffset = chairStandingOffset; hasEyeOffset = true;
+                    anchorSettlesUntil = 0; hasChairStandingOffset = false;
+                }
+            }
             if (manager.Input.RecenterDown) Recenter();
             InputDevice device = InputDevices.GetDeviceAtXRNode(XRNode.Head);
             if (!VRInputManager.Tracked(device) || !device.TryGetFeatureValue(CommonUsages.devicePosition, out Vector3 position)
