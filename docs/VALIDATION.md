@@ -14,6 +14,8 @@
 
 ## Changed, needs another headset check
 
+- Controller push-to-talk now uses held right stick click, or a centre press on the right Vive pad. Simulated checks cover native logical/network/filter state, independent keyboard input, mute precedence, fresh focus/settings/session recovery and use during actual desk-computer capture. Voice mode and microphone selection remain native. Actual headset audio, other players hearing you and hardware usability still need checking.
+
 - Empty-handed agents can request a native tackle with right grip + B, or right grip + lower right pad on Vive/original WMR. Simulated checks cover actual movement along headset heading, native animation/command/cooldown, stable view recovery, settings/focus suppression, input blockers and actual head obstruction. Held-item secondary, hip swap and ordinary scammer input remain native. Collision hit outcomes, remote presentation and headset comfort still need checking.
 
 - Contraband storage now uses a held controller chord: left grip + left Y, or left grip + left menu on Vive/original WMR. Native charge/cancel, storing and retrieving a registered pepper-spray item, and preserving its partial-use state pass simulated checks. Input ownership prevents a cancelled hold from turning into settings or restarting after focus/tracking loss. Capacity limits, other item variants, multiplayer and headset usability still need checking.

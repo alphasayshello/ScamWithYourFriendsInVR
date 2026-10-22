@@ -126,6 +126,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 bool spray = Environment.GetCommandLineArgs().Contains("--swyf-only-spray-tests");
                 bool storage = Environment.GetCommandLineArgs().Contains("--swyf-only-storage-tests");
                 bool tackle = Environment.GetCommandLineArgs().Contains("--swyf-only-tackle-tests");
+                bool voice = Environment.GetCommandLineArgs().Contains("--swyf-only-voice-tests");
                 bool jump = Environment.GetCommandLineArgs().Contains("--swyf-only-jump-tests");
                 bool sprint = Environment.GetCommandLineArgs().Contains("--swyf-only-sprint-tests");
                 bool heldWeapons = Environment.GetCommandLineArgs().Contains("--swyf-only-held-weapon-tests");
@@ -143,6 +144,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 else if (singleCombat && chair) { test = TestNativeChairAndRig(); testName = "CHAIR"; }
                 else if (singleCombat && storage) { test = TestNativeStorage(); testName = "STORAGE"; }
                 else if (singleCombat && tackle) { test = TestNativeTackle(); testName = "TACKLE"; }
+                else if (singleCombat && voice) { test = TestNativeVoice(); testName = "VOICE"; }
                 else if (singleCombat && spray) { test = Environment.GetCommandLineArgs().Contains("--swyf-spray-recovery-tests") ? TestNativeSprayRecovery() : TestNativeSpray(); testName = "SPRAY"; }
                 else if (singleCombat && jump) { test = TestNativeJump(); testName = "JUMP"; }
                 else if (singleCombat && sprint) { test = TestNativeSprint(); testName = "SPRINT"; }
@@ -203,6 +205,19 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     }
                 }
                 finally { (settingsTest as IDisposable)?.Dispose(); }
+                IEnumerator voiceTest = TestNativeVoice();
+                try
+                {
+                    while (true)
+                    {
+                        bool more;
+                        try { more = voiceTest.MoveNext(); }
+                        catch (Exception ex) { Logger.LogError("VOICE FAIL: " + ex.GetBaseException()); break; }
+                        if (!more) break;
+                        yield return voiceTest.Current;
+                    }
+                }
+                finally { (voiceTest as IDisposable)?.Dispose(); }
                 IEnumerator gameplayTest = TestGameplayControls();
                 try
                 {

@@ -41,7 +41,7 @@ namespace ScamWithYourFriendsInVR.Input
         {
             if (layout != hand.Layout) { layout = hand.Layout; released = false; action = 0; }
             if (layout != Plugin.ControllerLayoutKind.ViveWand && layout != Plugin.ControllerLayoutKind.Wmr)
-            { released = false; action = 0; return; }
+            { released = false; action = 0; hand.HasVoice = hand.Voice = false; return; }
 
             bool vive = layout == Plugin.ControllerLayoutKind.ViveWand;
             bool hasClick = vive ? hand.HasStickClick : hand.HasPadClick;
@@ -52,11 +52,13 @@ namespace ScamWithYourFriendsInVR.Input
             bool valid = active && hand.Connected && hand.Tracked && hasClick;
             if (!valid || click && !validAxis) { released = false; action = 0; }
             else if (!click) { released = true; action = 0; }
-            else if (released && action == 0) action = left || axis.y >= 0 ? 1 : 2;
+            else if (released && action == 0)
+                action = !left && vive && axis.sqrMagnitude <= .1225f ? 3 : left || axis.y >= 0 ? 1 : 2;
 
             hand.HasPrimary = hand.HasSecondary = valid;
             hand.Primary = action == 1;
             hand.Secondary = !left && action == 2;
+            hand.HasVoice = vive && !left && valid; hand.Voice = action == 3;
             if (vive)
             {
                 // Touch moves/scrolls/turns; pressing the pad owns its action

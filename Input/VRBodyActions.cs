@@ -12,6 +12,7 @@ namespace ScamWithYourFriendsInVR.Input
         private void Update()
         {
             var manager = VRManager.Instance;
+            if (manager != null) VRVoiceControls.Update(manager.Input); else VRVoiceControls.Cancel();
             bool allowed = manager != null && manager.Interactive && !GameAdapter.InMainMenu && !GameAdapter.SettingsOpen
                 && !GameAdapter.MonitorCaptured && !GameAdapter.ModalOverlayOpen && !manager.Keyboard.Visible
                 && !(GameAdapter.Read(GameAdapter.Static("TabMenu", "Instance"), "IsOpen") is bool players && players);
@@ -42,6 +43,7 @@ namespace ScamWithYourFriendsInVR.Input
         {
             CancelGiveUp();
             CancelStorage();
+            VRVoiceControls.Cancel();
         }
         private void CancelGiveUp()
         {

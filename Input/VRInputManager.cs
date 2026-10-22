@@ -26,6 +26,8 @@ namespace ScamWithYourFriendsInVR.Input
         public bool GiveUpDown { get; private set; }
         public bool Storage { get; private set; }
         public bool StorageDown { get; private set; }
+        public bool Voice { get; private set; }
+        public bool VoiceDown { get; private set; }
         public bool Pee { get; private set; }
         public bool PeeDown { get; private set; }
         public bool FartDown { get; private set; }
@@ -43,7 +45,7 @@ namespace ScamWithYourFriendsInVR.Input
         private bool rightPrimaryHeld, giveUpChord, giveUpCanceled;
         private bool leftMenuHeld, storageChord, storageCanceled;
         private VRButtonReleaseGate triggerGate, gripGate, leftTriggerGate, rightPrimaryGate, secondaryGate;
-        private VRButtonReleaseGate leftPrimaryGate, leftSecondaryGate, leftMenuGate, rightMenuGate, recenterGate;
+        private VRButtonReleaseGate leftPrimaryGate, leftSecondaryGate, leftMenuGate, rightMenuGate, recenterGate, voiceGate;
         private VRStickReleaseGate moveGate, turnGate;
         private VRControllerIdentity leftIdentity, rightIdentity;
         private VRPadBindings leftPad, rightPad;
@@ -53,6 +55,7 @@ namespace ScamWithYourFriendsInVR.Input
         public string SettingsHint => LeftLayout == Plugin.ControllerLayoutKind.ViveWand || LeftLayout == Plugin.ControllerLayoutKind.Wmr ? "MENU" : "LEFT Y";
         public string StorageHint => LeftLayout == Plugin.ControllerLayoutKind.ViveWand || LeftLayout == Plugin.ControllerLayoutKind.Wmr ? "LEFT GRIP + LEFT MENU" : "LEFT GRIP + LEFT Y";
         public string TackleHint => RightLayout == Plugin.ControllerLayoutKind.ViveWand || RightLayout == Plugin.ControllerLayoutKind.Wmr ? "RIGHT GRIP + RIGHT PAD DOWN" : "RIGHT GRIP + RIGHT B";
+        public string VoiceHint => RightLayout == Plugin.ControllerLayoutKind.ViveWand ? "RIGHT PAD CENTRE" : "RIGHT STICK CLICK";
         public string JumpHint => RightLayout == Plugin.ControllerLayoutKind.ViveWand || RightLayout == Plugin.ControllerLayoutKind.Wmr ? "RIGHT PAD UP" : "RIGHT A";
         public string MoveHint => LeftLayout == Plugin.ControllerLayoutKind.ViveWand ? "LEFT PAD" : "LEFT STICK";
         public string TurnHint => RightLayout == Plugin.ControllerLayoutKind.ViveWand ? "RIGHT PAD" : "RIGHT STICK";
@@ -152,6 +155,10 @@ namespace ScamWithYourFriendsInVR.Input
             SecondaryDown = nextSecondary && !secondary;
             Secondary = nextSecondary;
             secondary = nextSecondary;
+            bool viveVoice = state.Right.Layout == Plugin.ControllerLayoutKind.ViveWand;
+            bool nextVoice = voiceGate.Read(viveVoice ? state.Right.Voice : state.Right.StickClick,
+                rightActive && (viveVoice ? state.Right.HasVoice : state.Right.HasStickClick));
+            VoiceDown = nextVoice && !Voice; Voice = nextVoice;
         }
 
         private void UpdateMenuButtons(bool leftPressed, bool rightPressed)

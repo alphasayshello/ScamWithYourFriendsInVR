@@ -43,6 +43,7 @@ The table below uses Quest buttons. [Vive wand and original WMR alternatives](do
 | Right grip + trigger, away from UI | Native punch / weapon input |
 | Right B | Computer context click or held right-mouse drag / native secondary action |
 | Right grip + right B, empty-handed agent | Native tackle / dive |
+| Hold right stick click | Native push-to-talk |
 | Right A | Jump / struggle / native hiding escape |
 | Hold left grip + right A | Native give-up / unstuck hold |
 | Left X | Players |

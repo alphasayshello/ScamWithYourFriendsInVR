@@ -44,6 +44,7 @@ The bundled OpenXR controller names select these layouts automatically. Quest, I
 | Jump / give up with left grip held | Click upper half of right pad | Click upper half of right pad |
 | Context click / secondary action | Click lower half of right pad | Click lower half of right pad |
 | Agent tackle, empty hands | Right grip + lower right pad | Right grip + lower right pad |
+| Push-to-talk | Hold centre of right pad | Hold right stick click |
 | Settings / back / exit computer | Controller menu | Controller menu |
 | Store / retrieve (hold) | Left grip + left menu | Left grip + left menu |
 | Recenter | Settings → General → VR options | Hold left stick click |
@@ -143,6 +144,14 @@ To climb into a hideable bag, hold it and keep **left grip + right trigger** hel
 Right A also sends the native struggle/escape action when ragdolled or hiding. To use the native give-up/unstuck action, hold left grip **before** pressing and holding right A. Its normal game timer and recovery, respawn or jail rules still apply. Release either control to cancel. Menus, focus loss and VR shutdown also release the hold; closing a menu while the buttons remain held does not restart it.
 
 If a ragdoll camera marker is missing from the player prefab, the view follows its physical head, with native chest/hips as a backup. Basic simulated ragdoll/recovery checks pass; violent impacts, completed give-up outcomes, hiding variants and real-headset comfort still need acceptance.
+
+## Voice chat
+
+For push-to-talk, select that voice mode and your input device in the game's audio settings, then **hold right stick click** while speaking. Vive wand users **hold a press at the centre of the right pad**. Release to stop. Open-mic/voice-activity mode and mute remain under the game's settings; the mod does not switch your selected voice mode or microphone.
+
+Voice works while using the desk computer. Settings, lost focus/tracking and session cleanup cancel a held VR voice input; release and press again afterward. Mute always wins, and unmuting while still holding the button requires a fresh press. The native keyboard/gamepad voice controls keep their state independently. The VR gesture is held input, even if native gamepad toggle-talk is enabled.
+
+On Vive, a centre press keeps voice ownership until released, even if your thumb drifts. Use a fresh upper/lower pad press for jump/secondary actions. Software checks cover native voice state with audio samples suppressed; actual headset microphone quality and other players hearing you still need testing.
 
 ## Play with friends
 

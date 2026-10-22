@@ -13,6 +13,7 @@ namespace ScamWithYourFriendsInVR.Patches
         internal static void Install(Harmony harmony)
         {
             NativeItemInput.Install(harmony);
+            VoiceInputPatches.Install(harmony);
             Input.VRFlightControls.Initialize();
             Input.VRLadderControls.Initialize();
             Patch(harmony, "LadderInteractable", "DeltaClimber", null, null, nameof(AfterClimberChanged));
