@@ -130,6 +130,9 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 while (Member(fart, "curryFartRoutine") != null || Member(fart, "forcedFartActive") is bool stillActive && stillActive)
                 { Require(Time.realtimeSinceStartup < deadline, "Native food effect did not expire normally"); yield return null; }
                 Logger.LogInfo("FOOD PASS: native curry/gassy duration expires normally");
+                var consumables = TestNativeConsumables();
+                try { while (consumables.MoveNext()) yield return consumables.Current; }
+                finally { (consumables as IDisposable)?.Dispose(); }
             }
             finally
             {

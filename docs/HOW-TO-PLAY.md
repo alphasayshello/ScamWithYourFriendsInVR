@@ -96,6 +96,10 @@ Left trigger interacts with the world under your right-hand aim, so you can open
 
 Left grip + left trigger holds the native pee action; release either control to stop. Settings, players, feedback and lost focus cancel it. Release the chord and press again after returning; a chord started inside a menu does not activate when the menu closes. Left grip + left X requests a fart, or the native cone boost when an eligible agent has a traffic cone in the hip slot. Left grip + right B swaps the agent hand/hip slots. Left grip + right trigger sends the native extra held-item action; releasing its modifier ends that action. Food-related poop effects retain the game's existing rules and jump triggers; no debug/cheat poop shortcut is enabled. Curry consumption and its timed poop/gassy effect pass simulated checks. VR jump now reaches the native jump event and activates the curry boost. Hip swap, nonfinal cone boost activation, cooldowns and effect spawning pass simulated checks. Full boost trajectories, final cone use/ragdoll, other foods and full combat acceptance are still outstanding.
 
+### Food and drinks
+
+Pick up a food or drink and press right trigger to use it. Settings block consumption. The game controls item removal and each drink's speed, drunk, water-stream or gassy effect; the mod keeps those native rules. Beer, burrito, coffee, coffee mug, coke, margarita, patron, water bottle and wine pass simulated use and expiry checks with shorter test durations. Stacking, pass-out outcomes and headset handling still need checking.
+
 ## Handheld polaroid
 
 Pick up the camera, move and rotate it with your right controller, then press right trigger to take a picture. Right B switches between normal and selfie mode using the game's authored camera grip. Its normal photo cooldown still applies. Settings block both actions. The local head appears in the photo render, then returns to its hidden first-person state; it does not stay visible around the headset.
