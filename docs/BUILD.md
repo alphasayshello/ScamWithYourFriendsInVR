@@ -9,6 +9,10 @@
 - An editor matching the target game exactly, with Windows Mono player support. An extracted editor works. Supported pairs are **6000.3.26f1 (de8167e7440c)** with Input System **1.20.0**, and legacy **6000.3.10f1 (e35f0c77bd8e)** with Input System **1.19.0**.
 - Visual Studio 2026 with .NET desktop development, if using the IDE.
 
+## Build and install together
+
+For a new playable copy, [Setup-Mod.ps1](../tools/Setup-Mod.ps1) runs preparation, Release build, staging and installation in one command. [Setup instructions](GETTING-STARTED.md). It requires the tools above and a matching editor, and leaves the original game untouched. The separate commands below remain useful for development or staging without installation.
+
 ## Prepare and build
 
 From the repository root:
@@ -33,6 +37,14 @@ Choose a destination that does not exist:
 Staging assembles the required engine/BCL restoration, providers, BepInEx and mod plugins, and writes a file-hash manifest and exact engine identity. It rejects a provider built against the wrong Input System version. Use `tools/Install-GameCopy.ps1` to create an isolated game copy with PC/VR launchers. See [installation](GETTING-STARTED.md) and [runtime architecture](XR-RUNTIME.md).
 
 The source archive contains no game DLLs or game assets. The locally staged runtime contains third-party libraries; review their licences before redistributing it. MIT applies to this project's own code, not those dependencies.
+
+## Setup workflow regression checks
+
+```powershell
+./tools/tests/Workflow.Tests.ps1
+```
+
+These use temporary non-executable fixtures to check workflow ordering, paths with spaces, existing/nested destinations, input/cache isolation, linked-cache rejection, active-game/SDK checks and stopping after build failure. They do not launch a game or download dependencies.
 
 ## Setup checker regression checks
 

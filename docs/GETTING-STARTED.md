@@ -6,17 +6,29 @@
 
 This implementation targets the Windows x64 **Mono** game, Unity **6000.3.26f1** or **6000.3.10f1**. It rejects IL2CPP installations containing `GameAssembly.dll`. It is a development preview, not a universal installer or standalone Quest APK.
 
-## Install the staged runtime
+## Install from source in one command
 
-1. [Prepare dependencies, build and stage](BUILD.md).
-2. Close the game, then run the command below from this source folder. Choose an unmodified source game, your completed stage and a **new destination** with enough room for another full game copy.
-3. Open **Play VR.cmd** in the new folder after connecting your headset, or **Play PC.cmd** for flat-screen play with tracked-avatar support. The launchers check the installation, preserve your config and select the mode automatically.
+Install PowerShell 7, the .NET 10 SDK and a matching Unity editor with Windows Mono player support. See the [build tools](BUILD.md#tools) for the supported editor versions. Close the game, then run this from the source folder with a **new destination** that has room for another full game copy:
+
+```powershell
+./tools/Setup-Mod.ps1 -UnityEditorDir 'C:\Program Files\Unity\Hub\Editor\6000.3.26f1' -Destination 'D:\Games\SWYF-VR'
+```
+
+The command prepares verified dependencies, builds Release, stages the matching runtime and installs a separate copy. It keeps your original game untouched and creates **Play VR.cmd** and **Play PC.cmd** in the new folder. Setup does not launch the game or change your OpenXR runtime. Linked folders are unsupported; use ordinary local folders for the inputs, cache and destination.
+
+For another Steam library, add `-GameDir 'D:\SteamLibrary\steamapps\common\Scam With Your Friends'`. An optional `-CacheDir` reuses dependencies; keep a separate cache per supported game version. The generated stage stays under this source folder's ignored `work/setup` directory and its location is printed when setup finishes.
+
+Connect your headset and open **Play VR.cmd**, or use **Play PC.cmd** for flat-screen play with tracked-avatar support. Each launcher checks the files, preserves your config and selects its mode. The copied launch tools work independently of the source repository. PowerShell 7 is required to use them.
+
+## Install a runtime you already staged
+
+If you already completed the [manual build and stage](BUILD.md), use the installer directly:
 
 ```powershell
 ./tools/Install-GameCopy.ps1 -SourceGameDir 'C:\Program Files (x86)\Steam\steamapps\common\Scam With Your Friends' -StageDir 'D:\staging\ScamWithYourFriendsInVR' -Destination 'D:\Games\SWYF-VR'
 ```
 
-The installer checks the stage hashes and exact engine identity before copying, leaves your original game untouched, and refuses existing destinations or a running game. Its browser cache starts fresh; generated browser data from the source installation is skipped. The copy has its own launch tools, so moving the source repository does not break its PC/VR launchers. PowerShell 7 is required. It does not launch the game during setup.
+The installer verifies stage hashes and exact engine identity before copying, refuses existing destinations and leaves the source untouched. Browser cache data is not copied.
 
 Keep Steam running when playing the copied game. To uninstall an isolated copy, close it and remove that copy; your original installation is unchanged. Your game may share saves/settings between copies.
 

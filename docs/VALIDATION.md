@@ -10,7 +10,7 @@
 - Readable settings controls, with controller clicking and scrolling.
 - PC mode and tracked-avatar support for modded players.
 - The Visual Studio project, build tools, setup/play guides, Git repository and MIT license.
-- A setup command that creates a separate modded game copy with verified files and PC/VR launchers.
+- One setup command prepares dependencies, builds and creates a separate game copy with verified files and PC/VR launchers. A fresh current-version install passes end-to-end setup checks without changing the stock game.
 
 ## Changed, needs another headset check
 
