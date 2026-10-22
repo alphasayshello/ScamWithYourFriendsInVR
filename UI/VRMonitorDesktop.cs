@@ -10,14 +10,20 @@ namespace ScamWithYourFriendsInVR.UI
         private MeshRenderer screen;
         private float nextResolve;
         internal Component Monitor => monitor;
+        internal bool AwaitingScreen { get; private set; }
 
         internal bool TryPose(UnityEngine.UIElements.UIDocument document, float aspect,
             out Vector3 position, out Quaternion rotation, out Vector2 size)
         {
             position = default; rotation = Quaternion.identity; size = default;
+            AwaitingScreen = false;
             if (!Plugin.PhysicalDesktop.Value || !GameAdapter.MonitorCaptured || document == null) return false;
             object os = GameAdapter.Static("KolkataOsSingleton", "Instance");
             if (!ReferenceEquals(GameAdapter.Read(os, "kolkataOsDocument"), document)) return false;
+            // A desk desktop must not jump into the player's face while native
+            // capture/stream bindings are being replaced. Only the explicit
+            // floating option permits a head-relative computer surface.
+            AwaitingScreen = true;
             Component active = GameAdapter.Read(os, "activeLocalMonitor") as Component;
             if (active == null || !active.gameObject.activeInHierarchy) return false;
             Component bound = GameAdapter.Read(os, "boundWorkspace") as Component;
@@ -55,6 +61,7 @@ namespace ScamWithYourFriendsInVR.UI
             position = screen.transform.TransformPoint(bounds.center) - normal * .006f;
             float width = Mathf.Min(right.magnitude, up.magnitude * aspect);
             size = new Vector2(width, width / aspect);
+            AwaitingScreen = false;
             return true;
         }
     }

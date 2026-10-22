@@ -452,7 +452,7 @@ namespace ScamWithYourFriendsInVR.UI
         internal bool PhysicalPresenter => NativePresenter || MonitorAnchored;
         internal bool BindingValid => nativeMapping != null && Settings != null && Settings.targetTexture == Texture && nativeMapping.SourceMatches(Texture);
         public IPanel Panel => Document != null && Document.isActiveAndEnabled ? Document.rootVisualElement?.panel : null;
-        internal bool CanInteract => isActiveAndEnabled && Panel != null && (!NativePresenter
+        internal bool CanInteract => isActiveAndEnabled && !desktop.AwaitingScreen && Panel != null && (!NativePresenter
             || nativeMapping != null && Settings != null && Settings.targetTexture == Texture && nativeMapping.Active(Texture));
 
         internal bool MatchesPresenter(MeshRenderer renderer, int slot, string property)
@@ -534,6 +534,7 @@ namespace ScamWithYourFriendsInVR.UI
                 transform.localPosition = floatingPosition; transform.localRotation = floatingRotation; transform.localScale = floatingScale;
             }
             MonitorAnchored = anchored;
+            if (mesh != null) mesh.enabled = !desktop.AwaitingScreen;
             if (material != null) material.SetInt("unity_GUIZTestMode", anchored || Plugin.OccludeFloatingUI.Value ? 4 : 8);
         }
 

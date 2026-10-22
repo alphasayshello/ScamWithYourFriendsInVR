@@ -200,6 +200,14 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                         "Desktop placement changed native stream renderer visibility/material ownership");
                     manager.UI.Place(); placement.Invoke(surface, null);
                     Require(Vector3.Distance(surface.transform.position, nativeCenter) < .015f, "Recenter moved the desktop away from the physical monitor");
+                    try
+                    {
+                        SetMockHeadPose(new Vector3(.3f, 1.5f, .1f), Quaternion.Euler(0, 40, 0));
+                        for (int frame = 0; frame < 3; frame++) yield return new WaitForEndOfFrame();
+                        Require(surface.MonitorAnchored && Vector3.Distance(surface.transform.position, nativeCenter) < .015f,
+                            "Physical head movement or rotation detached the desktop from its desk");
+                    }
+                    finally { SetMockHeadPose(new Vector3(0, 1.65f, 0), Quaternion.identity); }
                 }
                 finally { Plugin.PhysicalDesktop.Value = true; }
                 Vector3 savedPosition = nativeScreen.transform.position;
@@ -232,8 +240,16 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                         "Hiding the streamed presenter detached the local desktop from its screen geometry");
                     screenField.SetValue(stream, null); placement.Invoke(surface, null);
                     Require(!surface.MonitorAnchored, "Missing screen retained a stale monitor attachment");
+                    Require(!surface.GetComponent<MeshRenderer>().enabled && !surface.Intersect(new Ray(manager.Rig.Head.transform.position,
+                        surface.transform.position - manager.Rig.Head.transform.position), out _, out _, out _),
+                        "Unavailable native desk geometry left a floating/clickable computer overlay");
+                    Plugin.PhysicalDesktop.Value = false; placement.Invoke(surface, null);
+                    Require(surface.GetComponent<MeshRenderer>().enabled && !surface.MonitorAnchored,
+                        "Explicit floating desktop could not recover while native screen geometry was unavailable");
+                    Plugin.PhysicalDesktop.Value = true; placement.Invoke(surface, null);
+                    Require(!surface.GetComponent<MeshRenderer>().enabled, "Returning to desk mode retained the floating fallback");
                     screenField.SetValue(stream, nativeScreen); placement.Invoke(surface, null);
-                    Require(surface.MonitorAnchored && Vector3.Distance(surface.transform.position, movedCenter) < .015f,
+                    Require(surface.MonitorAnchored && surface.GetComponent<MeshRenderer>().enabled && Vector3.Distance(surface.transform.position, movedCenter) < .015f,
                         "Desktop did not reacquire the native monitor after rebinding");
                 }
                 finally
@@ -244,7 +260,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     if (replacement != null) Destroy(replacement);
                 }
                 Logger.LogInfo("COMPUTER PASS: desktop fits authored monitor, preserves aspect, survives recenter and supports floating fallback without changing native stream renderer");
-                Logger.LogInfo("COMPUTER PASS: desktop follows movement/rotation and renderer rebinding, supports hidden stream geometry and releases missing screens");
+                Logger.LogInfo("COMPUTER PASS: desktop stays at the desk during physical head movement, follows screen movement/rebinding, and waits invisibly without clicks when native geometry is missing");
                 Type.GetType("UnityEngine.ScreenCapture, UnityEngine.ScreenCaptureModule", false)?.GetMethod("CaptureScreenshot", new[] { typeof(string), typeof(int) })?
                     .Invoke(null, new object[] { System.IO.Path.Combine(System.IO.Path.GetDirectoryName(readyFile), "pair-computer-view.png"), 1 });
                 yield return new WaitForEndOfFrame();

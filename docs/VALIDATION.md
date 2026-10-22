@@ -14,6 +14,10 @@
 
 ## Changed, needs another headset check
 
+- Desk mode now hides and disables pointer input while its native monitor geometry is unavailable, instead of unexpectedly floating the computer in front of your face. It restores the screen when the binding returns. The explicit floating option remains available.
+
+- X-ray goggles pass simulated native pickup, settings suppression, controller activation, filled-bag outline state, authored duration and destruction checks. Both actual mock eye targets render changed, nonblank pixels during the native effect. This does not establish headset appearance or through-wall pixel accuracy.
+
 - Controller push-to-talk now uses held right stick click, or a centre press on the right Vive pad. Simulated checks cover native logical/network/filter state, independent keyboard input, mute precedence, fresh focus/settings/session recovery and use during actual desk-computer capture. Voice mode and microphone selection remain native. Actual headset audio, other players hearing you and hardware usability still need checking.
 
 - Empty-handed agents can request a native tackle with right grip + B, or right grip + lower right pad on Vive/original WMR. Simulated checks cover actual movement along headset heading, native animation/command/cooldown, stable view recovery, settings/focus suppression, input blockers and actual head obstruction. Held-item secondary, hip swap and ordinary scammer input remain native. Collision hit outcomes, remote presentation and headset comfort still need checking.

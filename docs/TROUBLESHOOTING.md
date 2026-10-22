@@ -7,6 +7,7 @@
 | Flat screen / no VR session | Connect the headset first; confirm the active OpenXR runtime, `Mode = VR`, complete staged runtime and `-force-d3d11`. Read the startup log. |
 | SteamVR says another app is launching | Close duplicate game/Home windows. If the transition remains stuck, close the game, restart SteamVR, reconnect Steam Link, then launch once. |
 | Computer is awkward to reach | Set `UI.PhysicalDesktop = false`; enter the computer normally, then point at the floating desktop. |
+| Computer screen briefly disappears | Desk mode waits for the native monitor binding to return instead of putting a clickable screen in front of your face. Exit/re-enter the computer if it stays missing; select **FLOATING** in VR General settings if needed. |
 | A VR keyboard obscures the screen | Set `UI.VirtualKeyboard = false`, restart, and use the PC keyboard. |
 | UI is too far / too small | Adjust `UI.PanelDistance` and `PanelWidth`. The shipped distance is 0.9m. |
 | Body drifts after moving in your room | Hold left stick click to recenter. The revised body-follow path needs headset checks; report whether standing, seated or in a native chair. |
