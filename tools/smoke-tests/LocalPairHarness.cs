@@ -137,7 +137,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 else if (singleCombat && cctv) { test = TestNativeCctv(); testName = "CCTV"; }
                 else if (singleCombat && polaroid) { test = TestNativePolaroid(); testName = "POLAROID"; }
                 else if (singleCombat && pee) { test = TestNativePee(); testName = "PEE"; }
-                else if (singleCombat && chair) { test = TestNativeChair(); testName = "CHAIR"; }
+                else if (singleCombat && chair) { test = TestNativeChairAndRig(); testName = "CHAIR"; }
                 else if (singleCombat && jump) { test = TestNativeJump(); testName = "JUMP"; }
                 else if (singleCombat && sprint) { test = TestNativeSprint(); testName = "SPRINT"; }
                 else if (singleCombat && heldWeapons) { test = TestNativeHeldWeapons(); testName = "HELD WEAPON"; }

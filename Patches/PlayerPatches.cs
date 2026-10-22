@@ -17,6 +17,7 @@ namespace ScamWithYourFriendsInVR.Patches
             Input.VRLadderControls.Initialize();
             Patch(harmony, "LadderInteractable", "DeltaClimber", null, null, nameof(AfterClimberChanged));
             Patch(harmony, "LadderInteractable", "OnDisable", nameof(BeforeLadderDisabled));
+            Patch(harmony, "ChairInteractable", "OnDisable", nameof(BeforeChairDisabled));
             Patch(harmony, "FpvInteractable", "OnFlyerChanged", null, null, nameof(AfterFlyerChanged));
             Patch(harmony, "Metater.MetaPlayerController", "Update", nameof(BeforeController));
             Patch(harmony, "Metater.MetaPlayerController", "OnMove", nameof(BeforeMove));
@@ -93,6 +94,9 @@ namespace ScamWithYourFriendsInVR.Patches
         private static void AfterFrameLimit() => VRPerformance.RememberFlatFramePacing();
         private static void BeforeLadderDisabled(Component __instance)
         { if (Active) Input.VRLadderControls.Disabled(__instance); }
+
+        private static void BeforeChairDisabled(Component __instance)
+        { if (Active) Input.VRChairControls.Disabled(__instance); }
 
         private static void AfterClimberChanged(Component __instance, object __1)
             => Input.VRLadderControls.ClimberChanged(__instance, __1);

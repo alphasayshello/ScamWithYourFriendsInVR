@@ -8,6 +8,15 @@ namespace ScamWithYourFriendsInVR.SmokeTests
 {
     public sealed partial class LocalPairHarness
     {
+        private IEnumerator TestNativeChairAndRig()
+        {
+            foreach (IEnumerator test in new[] { TestNativeChair(), TestNativeRigMotion() })
+            {
+                try { while (test.MoveNext()) yield return test.Current; }
+                finally { (test as IDisposable)?.Dispose(); }
+            }
+        }
+
         private IEnumerator TestNativeChair()
         {
             var manager = VRManager.Instance;
@@ -110,12 +119,39 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                         "Chair exit failed to restore standing eye offset; before=" + standingOffset.ToString("F3") + "; after=" + returnedOffset.ToString("F3"));
                     Logger.LogInfo("CHAIR EXIT PASS: settings cancel jump ownership, held jump stays blocked and fresh VR jump restores native standing body/eye alignment; cycle=" + cycle);
                 }
-                Logger.LogInfo("CHAIR COMPLETE PASS: three native sit/lean/recenter/move/menu/exit cycles completed");
+                for (int removal = 0; removal < 2; removal++)
+                {
+                    AccessTools.Method(chairType, "CmdInteract").Invoke(chair, new object[] { interactor });
+                    float deadline = Time.realtimeSinceStartup + 5;
+                    while (!Sitting()) { Require(Time.realtimeSinceStartup < deadline, "Chair recovery fixture did not seat player"); yield return null; }
+                    yield return new WaitForSecondsRealtime(1.2f);
+                    if (removal == 0) ((Behaviour)chair).enabled = false;
+                    else { NetworkServer.Destroy(fixture); fixture = null; }
+                    yield return new WaitForSecondsRealtime(1.2f);
+                    yield return new WaitForEndOfFrame();
+                    Require(!Sitting(), "Disabled/destroyed native chair retained the local seated flag; removal=" + removal);
+                    var listeners = AccessTools.Field(controller.GetType(), "OnJumpInputChanged").GetValue(controller) as Action<bool>;
+                    Require(listeners == null || !Array.Exists(listeners.GetInvocationList(), listener => ReferenceEquals(listener.Target, chair)),
+                        "Disabled/destroyed chair retained its native jump subscription");
+                    Require(Vector3.Distance(manager.Rig.Head.transform.position - interactor.transform.position, standingOffset) < .05f,
+                        "Disabled/destroyed chair retained the seated eye offset");
+                    if (removal == 0)
+                    {
+                        Require(Member(chair, "Networksitter") == null, "Disabled chair retained its native sitter ownership");
+                        ((Behaviour)chair).enabled = true;
+                    }
+                    Logger.LogInfo("CHAIR REMOVAL PASS: occupied " + (removal == 0 ? "disable/re-enable" : "destruction")
+                        + " releases native seated state, jump subscription and standing eye offset");
+                }
+                Logger.LogInfo("CHAIR COMPLETE PASS: three native sit/lean/recenter/move/menu/exit cycles and occupied disable/destruction completed");
             }
             finally
             {
                 if (paused) toggle.Invoke(null, null);
                 DriveJump(false); jumpFixture = false;
+                // A failed disable test must re-register before the native
+                // instance registry can perform its normal fixture cleanup.
+                if (chair != null && fixture != null) ((Behaviour)chair).enabled = true;
                 AccessTools.Method(chairType, "ServerClearSitter").Invoke(null, new object[] { interactor });
                 if (fixture != null) NetworkServer.Destroy(fixture);
                 SetMockHeadPose(new Vector3(0, 1.65f, 0), Quaternion.identity);
