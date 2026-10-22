@@ -51,6 +51,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 Set(left, "Tracked", true); Step(); Check(!input.Storage, "Tracking restoration resumed a cancelled chord");
                 Button(false); Step(); Button(true); Step(); Check(input.StorageDown, "Storage did not recover after controller tracking loss");
                 Check(input.StorageHint == (layout == Plugin.ControllerLayoutKind.FaceButtons ? "LEFT GRIP + LEFT Y" : "LEFT GRIP + LEFT MENU"), "Storage hint does not match controller layout");
+                Check(input.TackleHint == (layout == Plugin.ControllerLayoutKind.FaceButtons ? "RIGHT GRIP + RIGHT B" : "RIGHT GRIP + RIGHT PAD DOWN"), "Tackle hint does not match controller layout");
             }
         }
     }

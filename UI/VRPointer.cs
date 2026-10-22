@@ -31,7 +31,7 @@ namespace ScamWithYourFriendsInVR.UI
         private bool toolkitDown, worldDown, leftWorldDown, attacking;
         private int toolkitButton;
         private bool attackRequiresGrip = true, secondaryHeld;
-        private bool primaryTertiary, secondaryHipSwap;
+        private bool primaryTertiary, secondaryHipSwap, secondaryTackle;
         private GameAdapter.ModalLayer modalLayer;
         private bool modalPrimaryBlocked, modalSecondaryBlocked;
         private VisualElement clickRoot, clickTarget;
@@ -328,7 +328,9 @@ namespace ScamWithYourFriendsInVR.UI
             if (secondaryDown && !HasPanelHit && !context && !toolkitDown)
             {
                 secondaryHipSwap = manager.Input.LeftGrip; secondaryHeld = true;
-                if (secondaryHipSwap) GameAdapter.SwapHip(true); else GameAdapter.SecondaryUse(true);
+                secondaryTackle = !secondaryHipSwap && manager.Input.Grip && GameAdapter.TryTackle();
+                if (secondaryHipSwap) GameAdapter.SwapHip(true);
+                else if (!secondaryTackle) GameAdapter.SecondaryUse(true);
             }
             if (manager.Input.TriggerUp && !toolkitDown && graphic.gameObject != null) manager.Keyboard.TryOpen(graphic.gameObject);
             visualHit = HasPanelHit || toolkitDown;
@@ -540,8 +542,9 @@ namespace ScamWithYourFriendsInVR.UI
         private void StopSecondary()
         {
             if (!secondaryHeld) return;
-            if (secondaryHipSwap) GameAdapter.SwapHip(false); else GameAdapter.SecondaryUse(false);
-            secondaryHeld = secondaryHipSwap = false;
+            if (secondaryHipSwap) GameAdapter.SwapHip(false);
+            else if (!secondaryTackle) GameAdapter.SecondaryUse(false);
+            secondaryHeld = secondaryHipSwap = secondaryTackle = false;
         }
 
         public void Cancel()

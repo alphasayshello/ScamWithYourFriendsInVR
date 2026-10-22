@@ -26,7 +26,7 @@ namespace ScamWithYourFriendsInVR.Patches
             foreach (var binding in new[] { ("PlayerInteractor", "OnAttack"), ("PlayerInteractor", "OnBlock"),
                 ("PlayerInteractor", "OnTertiaryInteract"), ("PlayerInteractor", "OnSecondaryInteract"), ("PlayerFartManager", "OnFart"),
                 ("Metater.MetaPlayerController", "OnSprint"), ("PlayerRagdollManager", "OnJump"), ("PlayerRagdollManager", "OnGiveUp"),
-                ("ButtStorage", "OnStoreInButt") })
+                ("ButtStorage", "OnStoreInButt"), ("PlayerTackle", "OnCrouch") })
             {
                 Type owner = ReflectionTypes.Find(binding.Item1);
                 string name = binding.Item2;
@@ -41,6 +41,8 @@ namespace ScamWithYourFriendsInVR.Patches
             }
             NativeConsumableInput.Install(harmony);
         }
+
+        internal static bool Supports(string name) => callbacks.ContainsKey(name);
 
         internal static void Clear()
         {

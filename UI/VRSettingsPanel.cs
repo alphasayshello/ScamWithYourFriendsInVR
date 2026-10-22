@@ -62,7 +62,8 @@ namespace ScamWithYourFriendsInVR.UI
                 () => Plugin.SceneRenderScale.Value = Next(Plugin.SceneRenderScale.Value, .7f, .85f, 1), () => Plugin.BalancedVR.Value);
             var help = new Label("Changes save automatically. Use the controller laser and trigger. Text entry uses your PC keyboard.");
             section.Refresh.Add(() => help.text = "Changes save automatically. Use the controller laser and trigger. Text entry uses your PC keyboard. Storage: hold "
-                + VRManager.Instance.Input.StorageHint + "; hold an item to store it, or use empty hands to retrieve.");
+                + VRManager.Instance.Input.StorageHint + "; hold an item to store it, or use empty hands to retrieve. Agent tackle: "
+                + VRManager.Instance.Input.TackleHint + " with empty hands.");
             help.style.fontSize = 18; help.style.color = Cream; help.style.whiteSpace = WhiteSpace.Normal; help.style.marginTop = 8;
             section.Root.Add(help);
             VisualElement container = general.Q<ScrollView>()?.contentContainer ?? general;

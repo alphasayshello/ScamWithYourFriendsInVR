@@ -125,6 +125,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 bool chair = Environment.GetCommandLineArgs().Contains("--swyf-only-chair-tests");
                 bool spray = Environment.GetCommandLineArgs().Contains("--swyf-only-spray-tests");
                 bool storage = Environment.GetCommandLineArgs().Contains("--swyf-only-storage-tests");
+                bool tackle = Environment.GetCommandLineArgs().Contains("--swyf-only-tackle-tests");
                 bool jump = Environment.GetCommandLineArgs().Contains("--swyf-only-jump-tests");
                 bool sprint = Environment.GetCommandLineArgs().Contains("--swyf-only-sprint-tests");
                 bool heldWeapons = Environment.GetCommandLineArgs().Contains("--swyf-only-held-weapon-tests");
@@ -141,6 +142,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 else if (singleCombat && pee) { test = TestNativePee(); testName = "PEE"; }
                 else if (singleCombat && chair) { test = TestNativeChairAndRig(); testName = "CHAIR"; }
                 else if (singleCombat && storage) { test = TestNativeStorage(); testName = "STORAGE"; }
+                else if (singleCombat && tackle) { test = TestNativeTackle(); testName = "TACKLE"; }
                 else if (singleCombat && spray) { test = Environment.GetCommandLineArgs().Contains("--swyf-spray-recovery-tests") ? TestNativeSprayRecovery() : TestNativeSpray(); testName = "SPRAY"; }
                 else if (singleCombat && jump) { test = TestNativeJump(); testName = "JUMP"; }
                 else if (singleCombat && sprint) { test = TestNativeSprint(); testName = "SPRINT"; }
@@ -292,6 +294,19 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     }
                 }
                 finally { (combatTest as IDisposable)?.Dispose(); }
+                IEnumerator tackleTest = TestNativeTackle();
+                try
+                {
+                    while (true)
+                    {
+                        bool more;
+                        try { more = tackleTest.MoveNext(); }
+                        catch (Exception ex) { Logger.LogError("TACKLE FAIL: " + ex.GetBaseException()); break; }
+                        if (!more) break;
+                        yield return tackleTest.Current;
+                    }
+                }
+                finally { (tackleTest as IDisposable)?.Dispose(); }
                 IEnumerator ragdollTest = TestNativeRagdoll();
                 try
                 {

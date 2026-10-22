@@ -43,6 +43,7 @@ The bundled OpenXR controller names select these layouts automatically. Quest, I
 | Players / fart with left grip held | Click left pad | Click left pad |
 | Jump / give up with left grip held | Click upper half of right pad | Click upper half of right pad |
 | Context click / secondary action | Click lower half of right pad | Click lower half of right pad |
+| Agent tackle, empty hands | Right grip + lower right pad | Right grip + lower right pad |
 | Settings / back / exit computer | Controller menu | Controller menu |
 | Store / retrieve (hold) | Left grip + left menu | Left grip + left menu |
 | Recenter | Settings → General → VR options | Hold left stick click |
@@ -86,6 +87,10 @@ Remote photos have fit/fill controls. Audio and video use play/pause buttons, a 
 Use right grip for native pickup/hold interactions, then release to drop. While holding an item, right trigger sends its native primary action, including food/tool use. Right B sends the native secondary action away from UI; hold and release it for actions that need a held button. With empty hands, right grip + trigger punches. Aim the right controller: both the hit ray and native punch animation target follow it, including the direction sent through the game’s normal animation command.
 
 For charged weapons such as the shotgun and sniper, keep the right trigger held until the game fires. Release early to cancel charging. Opening settings or losing VR input focus cancels the charge too; release and press again to start a new shot. Shotgun spread follows the controller's orientation as well as its aim direction.
+
+As an agent with empty hands, hold **right grip**, then press **right B** to request the native tackle/dive. Vive wand/original WMR hold **right grip**, then click **the lower right pad**. The game controls movement, animation and cooldown; one fresh press starts one attempt, and holding the button does not repeat it. Tackle moves along your headset's horizontal heading. Held items keep their normal secondary action, bare B/pad-down keeps native zoom/grab, and left grip + B/pad-down keeps hip swap.
+
+Menus, focus loss and an obstructed headset prevent new tackles. Release and press again after returning. A dive already underway completes through the native motor; headset comfort and hit outcomes against other players/NPCs still need checking.
 
 For a javelin, aim the right controller at a surface and press the right trigger. The missile target follows your controller instead of where your head is looking. The game's normal valid-target requirement and single-use behaviour still apply.
 

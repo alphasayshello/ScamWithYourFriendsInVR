@@ -207,6 +207,23 @@ namespace ScamWithYourFriendsInVR.Patches
             NativeItemInput.Send(Interactor, true, pressed);
         }
 
+        internal static bool TryTackle()
+        {
+            Component tackle = Static("PlayerTackle", "LocalPlayerInstance") as Component;
+            if (tackle == null || !NativeItemInput.Supports("OnCrouch")
+                || !(Read(tackle, "IsAgent") is bool agent && agent)
+                || Read(Interactor, "CurrentHeldItem") is Component held && held != null
+                || AvatarUnavailable(LocalPlayer) || Input.VRLadderControls.Current != null
+                || Read(Interactor, "isSitting") is bool sitting && sitting) return false;
+            var manager = VRManager.Instance;
+            if (manager?.Interactive == true && !InMainMenu && !SettingsOpen && !MonitorCaptured
+                && !ModalOverlayOpen && Allowed(Interactor) && !manager.Rig.HeadObstructed)
+                NativeItemInput.SendNamed(tackle, "OnCrouch", true);
+            // Consume the gesture even when native cooldown/blockers reject
+            // the press; it must not turn into zoom/grab during recovery.
+            return true;
+        }
+
         internal static void TertiaryUse(bool pressed)
         {
             if (pressed && (VRManager.Instance?.Interactive != true || InMainMenu)) return;

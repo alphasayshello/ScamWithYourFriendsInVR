@@ -52,6 +52,7 @@ namespace ScamWithYourFriendsInVR.Input
         public string PlayersHint => LeftLayout == Plugin.ControllerLayoutKind.ViveWand || LeftLayout == Plugin.ControllerLayoutKind.Wmr ? "LEFT PAD" : "LEFT X";
         public string SettingsHint => LeftLayout == Plugin.ControllerLayoutKind.ViveWand || LeftLayout == Plugin.ControllerLayoutKind.Wmr ? "MENU" : "LEFT Y";
         public string StorageHint => LeftLayout == Plugin.ControllerLayoutKind.ViveWand || LeftLayout == Plugin.ControllerLayoutKind.Wmr ? "LEFT GRIP + LEFT MENU" : "LEFT GRIP + LEFT Y";
+        public string TackleHint => RightLayout == Plugin.ControllerLayoutKind.ViveWand || RightLayout == Plugin.ControllerLayoutKind.Wmr ? "RIGHT GRIP + RIGHT PAD DOWN" : "RIGHT GRIP + RIGHT B";
         public string JumpHint => RightLayout == Plugin.ControllerLayoutKind.ViveWand || RightLayout == Plugin.ControllerLayoutKind.Wmr ? "RIGHT PAD UP" : "RIGHT A";
         public string MoveHint => LeftLayout == Plugin.ControllerLayoutKind.ViveWand ? "LEFT PAD" : "LEFT STICK";
         public string TurnHint => RightLayout == Plugin.ControllerLayoutKind.ViveWand ? "RIGHT PAD" : "RIGHT STICK";
