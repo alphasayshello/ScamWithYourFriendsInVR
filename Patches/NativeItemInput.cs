@@ -25,7 +25,8 @@ namespace ScamWithYourFriendsInVR.Patches
             if (pressedGetter == null) { Plugin.Log.LogWarning("Native input callbacks unavailable."); return; }
             foreach (var binding in new[] { ("PlayerInteractor", "OnAttack"), ("PlayerInteractor", "OnBlock"),
                 ("PlayerInteractor", "OnTertiaryInteract"), ("PlayerInteractor", "OnSecondaryInteract"), ("PlayerFartManager", "OnFart"),
-                ("Metater.MetaPlayerController", "OnSprint"), ("PlayerRagdollManager", "OnJump"), ("PlayerRagdollManager", "OnGiveUp") })
+                ("Metater.MetaPlayerController", "OnSprint"), ("PlayerRagdollManager", "OnJump"), ("PlayerRagdollManager", "OnGiveUp"),
+                ("ButtStorage", "OnStoreInButt") })
             {
                 Type owner = ReflectionTypes.Find(binding.Item1);
                 string name = binding.Item2;

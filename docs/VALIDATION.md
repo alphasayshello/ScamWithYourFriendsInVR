@@ -14,6 +14,8 @@
 
 ## Changed, needs another headset check
 
+- Contraband storage now uses a held controller chord: left grip + left Y, or left grip + left menu on Vive/original WMR. Native charge/cancel, storing and retrieving a registered pepper-spray item, and preserving its partial-use state pass simulated checks. Input ownership prevents a cancelled hold from turning into settings or restarting after focus/tracking loss. Capacity limits, other item variants, multiplayer and headset usability still need checking.
+
 - VR UI discovery now caches documents through their enable lifecycle and spreads presenter/material maintenance across frames. In one simulated office/settings profile, UI-update peaks fell from roughly 8 ms to about 3.6 ms and repeated global document searches stopped. Late document activation, button input and disable/re-enable pass core checks. This does not establish headset/GPU or busy multiplayer performance.
 - The updated Steam game now passes simulated startup, pointer, computer/settings, grip, native NPC damage and rig checks with matching dependencies. Older game copies keep their separate dependency profile.
 

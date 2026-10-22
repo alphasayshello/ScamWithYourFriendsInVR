@@ -124,6 +124,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 bool pee = Environment.GetCommandLineArgs().Contains("--swyf-only-pee-tests");
                 bool chair = Environment.GetCommandLineArgs().Contains("--swyf-only-chair-tests");
                 bool spray = Environment.GetCommandLineArgs().Contains("--swyf-only-spray-tests");
+                bool storage = Environment.GetCommandLineArgs().Contains("--swyf-only-storage-tests");
                 bool jump = Environment.GetCommandLineArgs().Contains("--swyf-only-jump-tests");
                 bool sprint = Environment.GetCommandLineArgs().Contains("--swyf-only-sprint-tests");
                 bool heldWeapons = Environment.GetCommandLineArgs().Contains("--swyf-only-held-weapon-tests");
@@ -139,6 +140,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 else if (singleCombat && polaroid) { test = TestNativePolaroid(); testName = "POLAROID"; }
                 else if (singleCombat && pee) { test = TestNativePee(); testName = "PEE"; }
                 else if (singleCombat && chair) { test = TestNativeChairAndRig(); testName = "CHAIR"; }
+                else if (singleCombat && storage) { test = TestNativeStorage(); testName = "STORAGE"; }
                 else if (singleCombat && spray) { test = Environment.GetCommandLineArgs().Contains("--swyf-spray-recovery-tests") ? TestNativeSprayRecovery() : TestNativeSpray(); testName = "SPRAY"; }
                 else if (singleCombat && jump) { test = TestNativeJump(); testName = "JUMP"; }
                 else if (singleCombat && sprint) { test = TestNativeSprint(); testName = "SPRINT"; }
@@ -212,6 +214,19 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     }
                 }
                 finally { (gameplayTest as IDisposable)?.Dispose(); }
+                IEnumerator storageTest = TestNativeStorage();
+                try
+                {
+                    while (true)
+                    {
+                        bool more;
+                        try { more = storageTest.MoveNext(); }
+                        catch (Exception ex) { Logger.LogError("STORAGE FAIL: " + ex.GetBaseException()); break; }
+                        if (!more) break;
+                        yield return storageTest.Current;
+                    }
+                }
+                finally { (storageTest as IDisposable)?.Dispose(); }
                 IEnumerator foodTest = TestNativeFood();
                 try
                 {

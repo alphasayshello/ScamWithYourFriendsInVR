@@ -44,6 +44,7 @@ The bundled OpenXR controller names select these layouts automatically. Quest, I
 | Jump / give up with left grip held | Click upper half of right pad | Click upper half of right pad |
 | Context click / secondary action | Click lower half of right pad | Click lower half of right pad |
 | Settings / back / exit computer | Controller menu | Controller menu |
+| Store / retrieve (hold) | Left grip + left menu | Left grip + left menu |
 | Recenter | Settings → General → VR options | Hold left stick click |
 
 Trigger and grip keep their normal interaction/grab functions. A pad click keeps the action chosen when pressed until you release it. Vive pad presses pause movement/scrolling/turning so they do not also move you while using an action; lift your thumb or return the pad to centre before moving again. WMR keeps its separate thumbsticks available.
@@ -95,6 +96,12 @@ Physical controller movement supplies inherited release speed. Snap turns, rig r
 Left trigger interacts with the world under your right-hand aim, so you can open a computer while holding an item. Like the native interact key, it can drop your held item when aimed at empty space. Left grip + left trigger is reserved for pee and does not also interact. Release either grip or trigger to end attack input. Opening a menu or pointing onto UI also cancels it. Right A jumps. Cooldowns, stamina, ownership and server rules still apply.
 
 Left grip + left trigger holds the native pee action; release either control to stop. Settings, players, feedback and lost focus cancel it. Release the chord and press again after returning; a chord started inside a menu does not activate when the menu closes. Left grip + left X requests a fart, or the native cone boost when an eligible agent has a traffic cone in the hip slot. Left grip + right B swaps the agent hand/hip slots. Left grip + right trigger sends the native extra held-item action; releasing its modifier ends that action. Food-related poop effects retain the game's existing rules and jump triggers; no debug/cheat poop shortcut is enabled. Curry consumption and its timed poop/gassy effect pass simulated checks. VR jump now reaches the native jump event and activates the curry boost. Hip swap, nonfinal cone boost activation, cooldowns and effect spawning pass simulated checks. Full boost trajectories, final cone use/ragdoll, remaining item variants and full combat acceptance are still outstanding.
+
+### Contraband storage
+
+Hold **left grip, then left Y** to charge the native storage action. On Vive wands/original WMR, hold **left grip, then the left controller menu button** instead. With an eligible held item, the game stores it; with empty hands, the same hold retrieves stored items. Keep holding until the native charge completes. Capacity, eligible items and whether retrieval goes into your hand stay under the game's rules.
+
+Release early to cancel. Menus, tracking/focus loss and session cleanup also cancel a hold; release and press again to resume. Releasing grip while keeping Y/menu held does not open settings or resume storage when you squeeze again. For normal settings/back, release left grip first; the right controller's menu remains a menu/back input.
 
 ### Food and drinks
 

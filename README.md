@@ -49,6 +49,7 @@ The table below uses Quest buttons. [Vive wand and original WMR alternatives](do
 | Hold left stick click | Recenter |
 | Left grip + left trigger | Pee |
 | Left grip + left X | Fart / eligible native cone boost |
+| Hold left grip + left Y | Store held contraband / retrieve with empty hands |
 | Left grip + right B | Agent hand/hip slot swap |
 | Left grip + right trigger | Extra held-item action |
 

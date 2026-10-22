@@ -24,6 +24,8 @@ namespace ScamWithYourFriendsInVR.Input
         public bool JumpDown { get; private set; }
         public bool GiveUp { get; private set; }
         public bool GiveUpDown { get; private set; }
+        public bool Storage { get; private set; }
+        public bool StorageDown { get; private set; }
         public bool Pee { get; private set; }
         public bool PeeDown { get; private set; }
         public bool FartDown { get; private set; }
@@ -39,6 +41,7 @@ namespace ScamWithYourFriendsInVR.Input
         private float recenterStarted;
         private bool turnLatched;
         private bool rightPrimaryHeld, giveUpChord, giveUpCanceled;
+        private bool leftMenuHeld, storageChord, storageCanceled;
         private VRButtonReleaseGate triggerGate, gripGate, leftTriggerGate, rightPrimaryGate, secondaryGate;
         private VRButtonReleaseGate leftPrimaryGate, leftSecondaryGate, leftMenuGate, rightMenuGate, recenterGate;
         private VRStickReleaseGate moveGate, turnGate;
@@ -48,6 +51,7 @@ namespace ScamWithYourFriendsInVR.Input
         public Plugin.ControllerLayoutKind RightLayout { get; private set; }
         public string PlayersHint => LeftLayout == Plugin.ControllerLayoutKind.ViveWand || LeftLayout == Plugin.ControllerLayoutKind.Wmr ? "LEFT PAD" : "LEFT X";
         public string SettingsHint => LeftLayout == Plugin.ControllerLayoutKind.ViveWand || LeftLayout == Plugin.ControllerLayoutKind.Wmr ? "MENU" : "LEFT Y";
+        public string StorageHint => LeftLayout == Plugin.ControllerLayoutKind.ViveWand || LeftLayout == Plugin.ControllerLayoutKind.Wmr ? "LEFT GRIP + LEFT MENU" : "LEFT GRIP + LEFT Y";
         public string JumpHint => RightLayout == Plugin.ControllerLayoutKind.ViveWand || RightLayout == Plugin.ControllerLayoutKind.Wmr ? "RIGHT PAD UP" : "RIGHT A";
         public string MoveHint => LeftLayout == Plugin.ControllerLayoutKind.ViveWand ? "LEFT PAD" : "LEFT STICK";
         public string TurnHint => RightLayout == Plugin.ControllerLayoutKind.ViveWand ? "RIGHT PAD" : "RIGHT STICK";
@@ -119,13 +123,11 @@ namespace ScamWithYourFriendsInVR.Input
             GripDown = gripPress && !Grip;
             GripUp = !nextGrip && Grip;
             Grip = nextGrip;
+            LeftGrip = leftActive && (state.Left.HasGripButton && state.Left.GripButton || state.Left.HasGrip && state.Left.GripValue > .6f);
             bool leftMenu = leftMenuGate.Read(state.Left.Menu, active && state.Left.Connected && state.Left.HasMenu);
             bool rightMenu = rightMenuGate.Read(state.Right.Menu, active && state.Right.Connected && state.Right.HasMenu);
             bool leftSecondary = leftSecondaryGate.Read(state.Left.Secondary, active && state.Left.Connected && state.Left.HasSecondary);
-            bool nextMenu = leftMenu || rightMenu || leftSecondary;
-            MenuDown = nextMenu && !menu;
-            menu = nextMenu;
-            LeftGrip = leftActive && (state.Left.HasGripButton && state.Left.GripButton || state.Left.HasGrip && state.Left.GripValue > .6f);
+            UpdateMenuButtons(leftMenu || leftSecondary, rightMenu);
             bool rightPrimary = rightPrimaryGate.Read(state.Right.Primary, rightActive && state.Right.HasPrimary);
             UpdateBodyPrimary(rightPrimary);
             bool rawLeftTrigger = state.Left.HasTriggerButton && state.Left.TriggerButton || state.Left.HasTrigger && state.Left.TriggerValue > (LeftTrigger || !leftTriggerGate.Released ? .45f : .6f);
@@ -149,6 +151,19 @@ namespace ScamWithYourFriendsInVR.Input
             SecondaryDown = nextSecondary && !secondary;
             Secondary = nextSecondary;
             secondary = nextSecondary;
+        }
+
+        private void UpdateMenuButtons(bool leftPressed, bool rightPressed)
+        {
+            if (leftPressed && !leftMenuHeld) { storageChord = LeftGrip; storageCanceled = false; }
+            if (!leftPressed) { storageChord = false; storageCanceled = false; }
+            if (storageChord && !LeftGrip) storageCanceled = true;
+            bool nextStorage = leftPressed && storageChord && !storageCanceled;
+            StorageDown = nextStorage && !Storage; Storage = nextStorage;
+            // A press owns its original action until release. Dropping the
+            // modifier must not turn a cancelled storage hold into settings.
+            bool nextMenu = rightPressed || leftPressed && !storageChord;
+            MenuDown = nextMenu && !menu; menu = nextMenu; leftMenuHeld = leftPressed;
         }
 
         private void UpdateBodyPrimary(bool rightPrimary)
