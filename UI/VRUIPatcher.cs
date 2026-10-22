@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.UIElements;
 using UnityEngine.SceneManagement;
+using Stopwatch = System.Diagnostics.Stopwatch;
 
 namespace ScamWithYourFriendsInVR.UI
 {
@@ -16,6 +17,13 @@ namespace ScamWithYourFriendsInVR.UI
         private readonly List<CanvasState> canvases = new List<CanvasState>();
         private readonly HashSet<PanelSettings> panelSettings = new HashSet<PanelSettings>();
         private UnityEngine.Camera eventCamera;
+        private readonly HashSet<UIDocument> knownDocuments = new HashSet<UIDocument>();
+        private readonly List<UIDocument> documentScan = new List<UIDocument>();
+        private bool documentEvents, documentsSeeded;
+        private readonly List<Canvas> maintenanceCanvases = new List<Canvas>();
+        private readonly List<VRPanelSurface> maintenancePanels = new List<VRPanelSurface>();
+        private int maintenanceCanvasCursor, maintenancePanelCursor;
+        private bool maintenancePending;
         private float nextScan;
         private float nextTextureScan;
         private MeshRenderer[] presenterScan;
@@ -68,6 +76,29 @@ namespace ScamWithYourFriendsInVR.UI
             SceneManager.activeSceneChanged += SceneChanged;
         }
 
+        internal void UseDocumentEvents()
+        {
+            documentEvents = true; documentsSeeded = false; nextScan = 0;
+        }
+        internal void RememberDocument(UIDocument document)
+        {
+            if (document == null) return;
+            knownDocuments.Add(document); nextScan = 0;
+        }
+        private List<UIDocument> GetDocuments()
+        {
+            if (!documentsSeeded || !documentEvents)
+            {
+                foreach (UIDocument document in FindDocuments()) knownDocuments.Add(document);
+                documentsSeeded = true;
+            }
+            knownDocuments.RemoveWhere(document => document == null);
+            // Enable callbacks may add documents while a surface is prepared.
+            // Enumerate a reusable snapshot instead of the live registry.
+            documentScan.Clear(); documentScan.AddRange(knownDocuments);
+            return documentScan;
+        }
+
         public void Place()
         {
             UnityEngine.Camera head = VRManager.Instance.Rig.Head;
@@ -90,7 +121,11 @@ namespace ScamWithYourFriendsInVR.UI
             if (captured != monitorCaptured) { monitorCaptured = captured; placed = false; }
             if (!placed || manager.Input.RecenterDown) Place();
             if (presenterScan != null) DiscoverTexturePresenters();
-            if (!placed || Time.unscaledTime < nextScan) return;
+            if (!placed || Time.unscaledTime < nextScan)
+            {
+                AdvanceMaintenance();
+                return;
+            }
             nextScan = Time.unscaledTime + 0.5f;
             PruneDestroyedGraphics();
             canvases.RemoveAll(state => state.Canvas == null);
@@ -103,15 +138,13 @@ namespace ScamWithYourFriendsInVR.UI
             });
             textureDocuments.Clear();
             WorldDocuments.RemoveAll(d => d == null || !d.isActiveAndEnabled);
-            foreach (Canvas canvas in FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (Canvas canvas in FindCanvases())
             {
                 if (!canvas.isActiveAndEnabled || !canvas.isRootCanvas || Canvases.Contains(canvas)) continue;
                 if (canvas.renderMode != RenderMode.WorldSpace) Convert(canvas);
                 else Canvases.Add(canvas);
             }
-            foreach (CanvasState state in canvases)
-                if (state.Canvas != null && state.Canvas.isActiveAndEnabled) PrepareFloatingGraphics(state.Canvas);
-            foreach (UIDocument document in FindObjectsByType<UIDocument>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (UIDocument document in GetDocuments())
             {
                 if (!document.isActiveAndEnabled || document.rootVisualElement?.panel == null) continue;
                 manager.Settings?.Track(document);
@@ -139,19 +172,54 @@ namespace ScamWithYourFriendsInVR.UI
                 surface.Document = document;
                 surface.AddDocument(document);
                 Panels.Add(surface);
+                surface.RefreshDocument();
             }
             if (textureDocuments.Count > 0 && presenterScan == null && Time.unscaledTime >= nextTextureScan)
             {
                 nextTextureScan = Time.unscaledTime + 2;
-                presenterScan = FindObjectsByType<MeshRenderer>(FindObjectsSortMode.None);
+                presenterScan = FindPresenters();
                 presenterScanCursor = 0;
             }
-            foreach (VRPanelSurface panel in Panels)
+            if (!maintenancePending)
             {
-                if (panel == null) continue;
-                panel.RefreshDocument();
+                maintenanceCanvases.Clear(); maintenancePanels.Clear();
+                foreach (CanvasState state in canvases) if (state.Canvas != null) maintenanceCanvases.Add(state.Canvas);
+                maintenancePanels.AddRange(Panels);
+                maintenanceCanvasCursor = maintenancePanelCursor = 0;
+                maintenancePending = true;
             }
         }
+
+        private void AdvanceMaintenance()
+        {
+            if (!maintenancePending) return;
+            long started = Stopwatch.GetTimestamp();
+            long budget = Stopwatch.Frequency * 35 / 100000;
+            while (maintenanceCanvasCursor < maintenanceCanvases.Count)
+            {
+                Canvas canvas = maintenanceCanvases[maintenanceCanvasCursor++];
+                if (canvas != null && canvas.isActiveAndEnabled) PrepareFloatingGraphics(canvas);
+                if (Stopwatch.GetTimestamp() - started >= budget) return;
+            }
+            while (maintenancePanelCursor < maintenancePanels.Count)
+            {
+                VRPanelSurface panel = maintenancePanels[maintenancePanelCursor++];
+                if (panel != null) panel.RefreshDocument();
+                if (Stopwatch.GetTimestamp() - started >= budget) return;
+            }
+            ResetMaintenance();
+        }
+
+        private void ResetMaintenance()
+        {
+            maintenancePending = false;
+            maintenanceCanvasCursor = maintenancePanelCursor = 0;
+            maintenanceCanvases.Clear(); maintenancePanels.Clear();
+        }
+
+        private static Canvas[] FindCanvases() => FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        private static UIDocument[] FindDocuments() => FindObjectsByType<UIDocument>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        private static MeshRenderer[] FindPresenters() => FindObjectsByType<MeshRenderer>(FindObjectsSortMode.None);
 
         private void DiscoverTexturePresenters()
         {
@@ -164,9 +232,14 @@ namespace ScamWithYourFriendsInVR.UI
                 if (settings != null && settings.targetTexture != null)
                     presenterDocuments.Add(new PresenterDocument { Document = document, Settings = settings, Texture = settings.targetTexture });
             }
-            int end = Mathf.Min(presenterScan.Length, presenterScanCursor + 512);
+            int end = Mathf.Min(presenterScan.Length, presenterScanCursor + 128);
+            long started = Stopwatch.GetTimestamp();
+            long budget = Stopwatch.Frequency * 35 / 100000; // 0.35 ms, checked in small batches.
+            int processed = 0;
             while (presenterScanCursor < end)
             {
+                if (processed > 0 && (processed & 7) == 0 && Stopwatch.GetTimestamp() - started >= budget) break;
+                processed++;
                 MeshRenderer renderer = presenterScan[presenterScanCursor++];
                 if (renderer == null || !renderer.enabled || !renderer.gameObject.activeInHierarchy) continue;
                 Mesh mesh = renderer.GetComponent<MeshFilter>()?.sharedMesh;
@@ -220,6 +293,7 @@ namespace ScamWithYourFriendsInVR.UI
             rect.sizeDelta = new Vector2(width, height);
             Canvases.Add(canvas);
             PlaceCanvas(canvases[canvases.Count - 1]);
+            PrepareFloatingGraphics(canvas);
         }
 
         private void LateUpdate()
@@ -314,8 +388,8 @@ namespace ScamWithYourFriendsInVR.UI
             WorldDocuments.Clear();
             foreach (VRPanelSurface panel in Panels) if (panel != null) panel.Remove();
             Panels.Clear(); panelSettings.Clear();
-            textureDocuments.Clear();
-            ResetPresenterScan();
+            textureDocuments.Clear(); knownDocuments.Clear(); documentScan.Clear(); documentsSeeded = false;
+            ResetPresenterScan(); ResetMaintenance();
         }
 
         private void ResetPresenterScan()
@@ -323,10 +397,11 @@ namespace ScamWithYourFriendsInVR.UI
             presenterScan = null; presenterScanCursor = 0; nextTextureScan = 0;
             presenterDocuments.Clear(); presenterMaterials.Clear();
         }
-        private void SceneChanged(Scene oldScene, Scene newScene) { placed = false; ResetPresenterScan(); }
+        private void SceneChanged(Scene oldScene, Scene newScene) { placed = false; documentsSeeded = false; nextScan = 0; ResetPresenterScan(); ResetMaintenance(); }
         private void SceneUnloaded(Scene scene)
         {
-            ResetPresenterScan();
+            documentsSeeded = false; nextScan = 0;
+            ResetPresenterScan(); ResetMaintenance();
             for (int i = canvases.Count - 1; i >= 0; i--)
             {
                 CanvasState state = canvases[i];

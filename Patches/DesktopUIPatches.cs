@@ -11,8 +11,25 @@ namespace ScamWithYourFriendsInVR.Patches
 {
     internal static class DesktopUIPatches
     {
+        private static void AfterDocumentEnabled(UIDocument __instance)
+        {
+            var manager = VRManager.Instance;
+            if (manager?.UI != null) manager.UI.RememberDocument(__instance);
+        }
+
         internal static void Install(Harmony harmony)
         {
+            try
+            {
+                var enable = AccessTools.Method(typeof(UIDocument), "OnEnable", Type.EmptyTypes);
+                if (enable != null)
+                {
+                    harmony.Patch(enable, postfix: new HarmonyMethod(typeof(DesktopUIPatches), nameof(AfterDocumentEnabled)));
+                    VRManager.Instance?.UI?.UseDocumentEvents();
+                }
+                else Plugin.Log.LogWarning("UI document enable hook unavailable; discovery will use polling.");
+            }
+            catch (Exception ex) { GameAdapter.Report("UI document discovery hook", ex); }
             try
             {
                 Type browser = ReflectionTypes.Find("Kolkata.UI.KolkataOsBrowserHost");

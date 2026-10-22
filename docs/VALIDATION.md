@@ -14,6 +14,7 @@
 
 ## Changed, needs another headset check
 
+- VR UI discovery now caches documents through their enable lifecycle and spreads presenter/material maintenance across frames. In one simulated office/settings profile, UI-update peaks fell from roughly 8 ms to about 3.6 ms and repeated global document searches stopped. Late document activation, button input and disable/re-enable pass core checks. This does not establish headset/GPU or busy multiplayer performance.
 - The updated Steam game now passes simulated startup, pointer, computer/settings, grip, native NPC damage and rig checks with matching dependencies. Older game copies keep their separate dependency profile.
 
 - Temporary controller capsules (the bean shapes) are removed. The laser now hides during idle gameplay and uses steadier UI aiming, a smaller distance-scaled reticle and more forgiving double clicks. Its feel still needs a headset check.

@@ -111,6 +111,21 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             }
             finally { (textureTest as IDisposable)?.Dispose(); }
             if (texturePassed) Logger.LogInfo("SMOKE PASS: authored mesh UV/flip mapping, native button, off-mesh drag and renderer/texture ownership");
+            IEnumerator documentTest = TestDocumentDiscovery(document);
+            bool documentsPassed = true;
+            try
+            {
+                while (true)
+                {
+                    bool more;
+                    try { more = documentTest.MoveNext(); }
+                    catch (Exception ex) { documentsPassed = false; Logger.LogError("SMOKE FAIL: document discovery: " + ex.GetBaseException()); break; }
+                    if (!more) break;
+                    yield return documentTest.Current;
+                }
+            }
+            finally { (documentTest as IDisposable)?.Dispose(); }
+            if (documentsPassed) Logger.LogInfo("SMOKE PASS: late inactive-document activation, real button events, disable/re-enable input and unique surface ownership");
             IEnumerator cornerTest = TestCornerLifecycle(document);
             bool cornersPassed = true;
             try

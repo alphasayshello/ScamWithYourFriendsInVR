@@ -65,6 +65,22 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                         probe.Patch(method, prefix: new HarmonyMethod(typeof(LocalPairHarness), nameof(BeginMethodCost)),
                             postfix: new HarmonyMethod(typeof(LocalPairHarness), nameof(EndMethodCost)));
                     }
+                foreach (var method in new[] {
+                    AccessTools.Method(typeof(UI.VRUIPatcher), "AdvanceMaintenance"),
+                    AccessTools.Method(typeof(UI.VRUIPatcher), "FindCanvases"),
+                    AccessTools.Method(typeof(UI.VRUIPatcher), "FindDocuments"),
+                    AccessTools.Method(typeof(UI.VRUIPatcher), "FindPresenters"),
+                    AccessTools.Method(typeof(UI.VRUIPatcher), "PrepareFloatingGraphics"),
+                    AccessTools.Method(typeof(UI.VRUIPatcher), "PruneDestroyedGraphics"),
+                    AccessTools.Method(typeof(UI.VRPanelSurface), "RefreshDocument"),
+                    AccessTools.Method(typeof(UI.VRPanelSurface), "UpdatePlacement"),
+                    AccessTools.Method(typeof(UI.VRSettingsPanel), "Track") })
+                {
+                    if (method == null || methodCosts.ContainsKey(method)) continue;
+                    methodCosts.Add(method, new MethodCost());
+                    probe.Patch(method, prefix: new HarmonyMethod(typeof(LocalPairHarness), nameof(BeginMethodCost)),
+                        postfix: new HarmonyMethod(typeof(LocalPairHarness), nameof(EndMethodCost)));
+                }
                 yield return new WaitForSecondsRealtime(10);
                 foreach (string scenario in new[] { "office-idle", "settings-open" })
                 {

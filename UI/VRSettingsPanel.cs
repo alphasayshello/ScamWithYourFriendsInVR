@@ -9,7 +9,7 @@ namespace ScamWithYourFriendsInVR.UI
     {
         private sealed class Section
         {
-            internal VisualElement Root;
+            internal VisualElement Root, General;
             internal readonly List<Action> Refresh = new List<Action>();
         }
         private readonly Dictionary<UIDocument, Section> sections = new Dictionary<UIDocument, Section>();
@@ -19,6 +19,10 @@ namespace ScamWithYourFriendsInVR.UI
 
         internal void Track(UIDocument document)
         {
+            VisualElement documentRoot = document?.rootVisualElement;
+            if (document != null && sections.TryGetValue(document, out Section known)
+                && known.General?.panel != null && known.Root.panel == known.General.panel
+                && documentRoot != null && documentRoot.Contains(known.General) && known.General.Contains(known.Root)) return;
             VisualElement general = document?.rootVisualElement?.Q("general-screen");
             if (general == null || document.rootVisualElement.Q("general-tab-button") == null) return;
             if (sections.TryGetValue(document, out Section existing))
@@ -26,7 +30,7 @@ namespace ScamWithYourFriendsInVR.UI
                 if (existing.Root.panel == general.panel && general.Contains(existing.Root)) return;
                 existing.Root.RemoveFromHierarchy(); sections.Remove(document);
             }
-            var section = new Section { Root = new VisualElement { name = "swyf-vr-options" } };
+            var section = new Section { Root = new VisualElement { name = "swyf-vr-options" }, General = general };
             section.Root.style.flexShrink = 0; section.Root.style.paddingLeft = 16; section.Root.style.paddingRight = 16;
             section.Root.style.paddingTop = 14; section.Root.style.paddingBottom = 14; section.Root.style.marginBottom = 20;
             section.Root.style.backgroundColor = new Color(.12f, .085f, .055f, .96f);
