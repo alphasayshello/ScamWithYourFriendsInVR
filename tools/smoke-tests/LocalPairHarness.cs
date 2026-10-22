@@ -129,6 +129,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 string testName;
                 if (singleMenus) { test = settingsOnly ? TestSettingsRender() : TestMenuRouting(); testName = settingsOnly ? "SETTINGS" : "MENU ROUTING"; }
                 else if (singleProfile) { test = ProfileModFrames(); testName = "PROFILE"; }
+                else if (singleCombat && drinkStacks && heldWeapons) { test = TestStackedHeldWeapons(); testName = "STACKED HELD WEAPON"; }
                 else if (singleCombat && drinkStacks) { test = TestNativeDrinkStacks(); testName = "DRINK STACK"; }
                 else if (singleCombat && consumables) { test = TestNativeConsumables(); testName = "CONSUMABLE"; }
                 else if (singleCombat && cctv && polaroid) { test = TestNativeCameraTools(); testName = "CAMERA TOOLS"; }

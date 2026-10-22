@@ -78,7 +78,14 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             float originalSteering = Plugin.FlightSteeringSpeed.Value;
             Type feedback = Find("FeedbackUi");
             var toggle = AccessTools.Method(adapter, "TogglePause");
+            // Previous native bag/ragdoll callbacks and body physics can run
+            // before the rig's LateUpdate. Snapshot both in the same finished frame.
+            yield return new WaitForEndOfFrame();
+            Vector3 pilotBody = NetworkClient.localPlayer.transform.position;
             Vector3 pilotEye = manager.Rig.AuthoredEye;
+            Vector3 pilotEyeOffset = pilotEye - pilotBody;
+            Logger.LogInfo("FLIGHT PILOT START: eye=" + pilotEye + "; body=" + NetworkClient.localPlayer.transform.position
+                + "; grounded=" + Member(controller, "isGrounded"));
             var probe = new Harmony("com.swyf.vr.flightfixture");
             try
             {
@@ -354,10 +361,12 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 Logger.LogInfo("FLIGHT RETURN: before=" + pilotEye + "; after=" + manager.Rig.AuthoredEye + "; body=" + NetworkClient.localPlayer.transform.position
                     + "; ragdoll=" + Member(NetworkClient.localPlayer.GetComponent(Find("PlayerRagdollManager")), "IsRagdollActive"));
                 Require(AccessTools.Property(controls, "Current").GetValue(null) == null
-                    && Vector3.Distance(manager.Rig.AuthoredEye, pilotEye) < 1f,
+                    && Vector3.Distance(manager.Rig.AuthoredEye - NetworkClient.localPlayer.transform.position, pilotEyeOffset) < .2f,
                     "Native flight end did not restore the pilot view and clear VR flight ownership; owned="
                     + (AccessTools.Property(controls, "Current").GetValue(null) != null) + "; before=" + pilotEye
-                    + "; after=" + manager.Rig.AuthoredEye + "; body=" + NetworkClient.localPlayer.transform.position);
+                    + "; after=" + manager.Rig.AuthoredEye + "; body=" + NetworkClient.localPlayer.transform.position
+                    + "; beforeBody=" + pilotBody + "; beforeOffset=" + pilotEyeOffset
+                    + "; afterOffset=" + (manager.Rig.AuthoredEye - NetworkClient.localPlayer.transform.position));
                 pose = (Multiplayer.PoseFrame)AccessTools.Field(typeof(Multiplayer.PoseNetwork), "local").GetValue(Multiplayer.PoseNetwork.Instance);
                 Require(pose.Tracked != 0, "Native flight end did not restore tracked-avatar ownership");
                 Require(headRenderers.All(r => r == null || r.shadowCastingMode == UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly),

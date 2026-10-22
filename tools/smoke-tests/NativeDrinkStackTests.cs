@@ -29,6 +29,15 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             object held = Member(__instance, "heldItem");
             stackedServerDetached |= user == null || !ReferenceEquals(Member(user, "CurrentHeldItem"), held) && !ReferenceEquals(Member(user, "CurrentHipItem"), held);
         }
+        private IEnumerator TestStackedHeldWeapons()
+        {
+            var stacks = TestNativeDrinkStacks();
+            try { while (stacks.MoveNext()) yield return stacks.Current; }
+            finally { (stacks as IDisposable)?.Dispose(); }
+            var weapons = TestNativeHeldWeapons();
+            try { while (weapons.MoveNext()) yield return weapons.Current; }
+            finally { (weapons as IDisposable)?.Dispose(); }
+        }
         private IEnumerator TestNativeDrinkStacks()
         {
             var manager = VRManager.Instance;
