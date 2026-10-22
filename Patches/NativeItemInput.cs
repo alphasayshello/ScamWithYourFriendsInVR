@@ -15,6 +15,8 @@ namespace ScamWithYourFriendsInVR.Patches
         [ThreadStatic] private static string action;
         [ThreadStatic] private static bool pressed;
 
+        internal static bool IsPrimaryDispatch => receiver != null && action == "OnAttack" && pressed;
+
         internal static void Install(Harmony harmony)
         {
             callbacks.Clear();
@@ -36,6 +38,7 @@ namespace ScamWithYourFriendsInVR.Patches
                 }
                 catch (Exception ex) { GameAdapter.Report("Native item callback " + name, ex); }
             }
+            NativeConsumableInput.Install(harmony);
         }
 
         internal static void Clear()
@@ -46,6 +49,7 @@ namespace ScamWithYourFriendsInVR.Patches
             Input.VRSprintControls.Clear();
             Input.VRJumpControls.Clear();
             Input.VRPeeControls.Clear();
+            NativeConsumableInput.Clear();
             callbacks.Clear();
             Input.VRMouseFallback.Release();
         }

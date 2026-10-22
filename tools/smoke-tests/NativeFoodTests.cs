@@ -133,6 +133,9 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 var consumables = TestNativeConsumables();
                 try { while (consumables.MoveNext()) yield return consumables.Current; }
                 finally { (consumables as IDisposable)?.Dispose(); }
+                var stacks = TestNativeDrinkStacks();
+                try { while (stacks.MoveNext()) yield return stacks.Current; }
+                finally { (stacks as IDisposable)?.Dispose(); }
             }
             finally
             {
