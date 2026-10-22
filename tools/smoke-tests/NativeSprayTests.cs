@@ -9,6 +9,15 @@ namespace ScamWithYourFriendsInVR.SmokeTests
 {
     public sealed partial class LocalPairHarness
     {
+        private IEnumerator TestNativeSprayRecovery()
+        {
+            foreach (IEnumerator test in new[] { TestNativeSpray(), TestNativeCombat(), TestNativeRagdoll(), TestNativeRigMotion() })
+            {
+                try { while (test.MoveNext()) yield return test.Current; }
+                finally { (test as IDisposable)?.Dispose(); }
+            }
+        }
+
         private static bool sprayGripFixture;
         private static Vector3 sprayGripPosition;
         private static Quaternion sprayGripRotation;

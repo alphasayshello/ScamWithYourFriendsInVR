@@ -139,7 +139,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 else if (singleCombat && polaroid) { test = TestNativePolaroid(); testName = "POLAROID"; }
                 else if (singleCombat && pee) { test = TestNativePee(); testName = "PEE"; }
                 else if (singleCombat && chair) { test = TestNativeChairAndRig(); testName = "CHAIR"; }
-                else if (singleCombat && spray) { test = TestNativeSpray(); testName = "SPRAY"; }
+                else if (singleCombat && spray) { test = Environment.GetCommandLineArgs().Contains("--swyf-spray-recovery-tests") ? TestNativeSprayRecovery() : TestNativeSpray(); testName = "SPRAY"; }
                 else if (singleCombat && jump) { test = TestNativeJump(); testName = "JUMP"; }
                 else if (singleCombat && sprint) { test = TestNativeSprint(); testName = "SPRINT"; }
                 else if (singleCombat && heldWeapons) { test = TestNativeHeldWeapons(); testName = "HELD WEAPON"; }

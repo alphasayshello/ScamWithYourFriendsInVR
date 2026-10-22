@@ -62,9 +62,27 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     + "; nativeParent=" + manager.Rig.Head.transform.parent?.name + "; local=" + local
                     + "; selected=" + selectedRagdoll + "; actual=" + ragdoll + "; active=" + Member(ragdoll, "IsRagdollActive"));
                 Transform chest = AccessTools.Method(ragdoll.GetType(), "GetCurrentChestTransform").Invoke(ragdoll, null) as Transform;
-                Require(eye != null ? Vector3.Distance(manager.Rig.Head.transform.position, eye.position) < .35f
-                        : chest != null && Vector3.Distance(manager.Rig.Head.transform.position, chest.position) < .75f,
-                    "VR view did not follow the native ragdoll camera anchor");
+                Transform hips = AccessTools.Method(ragdoll.GetType(), "GetCurrentHipsTransform").Invoke(ragdoll, null) as Transform;
+                Logger.LogInfo("RAGDOLL body diagnostic: chest=" + chest?.position.ToString("F3") + "; hips=" + hips?.position.ToString("F3")
+                    + "; player=" + player.transform.position.ToString("F3") + "; scale=" + player.transform.lossyScale.ToString("F3"));
+                Transform head = null;
+                if (chest != null)
+                    foreach (Transform bone in chest.GetComponentsInChildren<Transform>(true))
+                        if (bone.name == "mixamorig:Head" && bone.gameObject.activeInHierarchy) { head = bone; break; }
+                // The actual animated/physical head is the anatomical target.
+                // Chest-to-head distance varies with the native ragdoll pose.
+                Transform anchor = eye != null ? eye : head != null ? head : chest;
+                float allowance = eye != null ? .35f : head != null ? .25f * Mathf.Clamp(player.transform.lossyScale.y, .5f, 2) : .75f;
+                Require(anchor != null, "Native ragdoll has no camera/head/chest reference");
+                for (int frame = 0; frame < 10; frame++)
+                {
+                    yield return new WaitForEndOfFrame();
+                    Require(Vector3.Distance(manager.Rig.Head.transform.position, anchor.position) < allowance,
+                        "VR view did not follow native ragdoll " + anchor.name + "; view=" + manager.Rig.Head.transform.position.ToString("F3")
+                        + "; anchor=" + anchor.position.ToString("F3") + "; allowed=" + allowance);
+                }
+                Logger.LogInfo("RAGDOLL anchor target: name=" + anchor.name + "; head=" + head?.position.ToString("F3")
+                    + "; error=" + Vector3.Distance(manager.Rig.Head.transform.position, anchor.position));
                 Require(Pose().Tracked == 0, "Ragdoll retained tracked-avatar ownership");
                 object hints = Instance("StrugglingAndGiveUpUi");
                 foreach (string key in new[] { "struggleText", "giveUpText", "escapeText" })
