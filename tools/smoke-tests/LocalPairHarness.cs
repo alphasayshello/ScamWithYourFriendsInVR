@@ -123,6 +123,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 bool polaroid = Environment.GetCommandLineArgs().Contains("--swyf-only-polaroid-tests");
                 bool pee = Environment.GetCommandLineArgs().Contains("--swyf-only-pee-tests");
                 bool chair = Environment.GetCommandLineArgs().Contains("--swyf-only-chair-tests");
+                bool spray = Environment.GetCommandLineArgs().Contains("--swyf-only-spray-tests");
                 bool jump = Environment.GetCommandLineArgs().Contains("--swyf-only-jump-tests");
                 bool sprint = Environment.GetCommandLineArgs().Contains("--swyf-only-sprint-tests");
                 bool heldWeapons = Environment.GetCommandLineArgs().Contains("--swyf-only-held-weapon-tests");
@@ -138,6 +139,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 else if (singleCombat && polaroid) { test = TestNativePolaroid(); testName = "POLAROID"; }
                 else if (singleCombat && pee) { test = TestNativePee(); testName = "PEE"; }
                 else if (singleCombat && chair) { test = TestNativeChairAndRig(); testName = "CHAIR"; }
+                else if (singleCombat && spray) { test = TestNativeSpray(); testName = "SPRAY"; }
                 else if (singleCombat && jump) { test = TestNativeJump(); testName = "JUMP"; }
                 else if (singleCombat && sprint) { test = TestNativeSprint(); testName = "SPRINT"; }
                 else if (singleCombat && heldWeapons) { test = TestNativeHeldWeapons(); testName = "HELD WEAPON"; }
@@ -249,6 +251,19 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     }
                 }
                 finally { (heldWeaponTest as IDisposable)?.Dispose(); }
+                IEnumerator sprayTest = TestNativeSpray();
+                try
+                {
+                    while (true)
+                    {
+                        bool more;
+                        try { more = sprayTest.MoveNext(); }
+                        catch (Exception ex) { Logger.LogError("SPRAY FAIL: " + ex.GetBaseException()); break; }
+                        if (!more) break;
+                        yield return sprayTest.Current;
+                    }
+                }
+                finally { (sprayTest as IDisposable)?.Dispose(); }
                 IEnumerator combatTest = TestNativeCombat();
                 try
                 {
