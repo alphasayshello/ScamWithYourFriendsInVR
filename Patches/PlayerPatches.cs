@@ -109,7 +109,8 @@ namespace ScamWithYourFriendsInVR.Patches
 
         private static void AfterHeldInput(string __0, string __1, ref bool __result)
         {
-            if (__0 == "Shortcuts" && __1 == "HoldP" && GameplayInput) __result |= VRManager.Instance.Input.Pee;
+            if (__0 == "Shortcuts" && __1 == "HoldP" && Active)
+                __result |= Input.VRPeeControls.Read(VRManager.Instance.Input, GameplayInput);
         }
         private static void AfterPressedInput(string __0, string __1, ref bool __result)
         {
@@ -188,6 +189,9 @@ namespace ScamWithYourFriendsInVR.Patches
                 GameAdapter.Write(__instance, "isJumping", jump);
                 (GameAdapter.Read(__instance, "OnJumpInputChanged") as Action<bool>)?.Invoke(jump);
             }
+            // Native HandlePInput skips binding reads while settings are open.
+            // Cancel the VR hold here so closing settings cannot resume it.
+            Input.VRPeeControls.Read(manager.Input, GameplayInput);
             if (!GameplayInput && GameAdapter.Read(GameAdapter.LocalPlayer, "wasPPressed") is bool peeing && peeing)
             {
                 GameAdapter.Write(GameAdapter.LocalPlayer, "wasPPressed", false);

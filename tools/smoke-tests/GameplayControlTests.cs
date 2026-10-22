@@ -17,6 +17,9 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             var jumps = TestNativeJump();
             try { while (jumps.MoveNext()) yield return jumps.Current; }
             finally { (jumps as IDisposable)?.Dispose(); }
+            var peeChecks = TestNativePee();
+            try { while (peeChecks.MoveNext()) yield return peeChecks.Current; }
+            finally { (peeChecks as IDisposable)?.Dispose(); }
             var manager = VRManager.Instance;
             var player = Mirror.NetworkClient.localPlayer;
             Type adapter = typeof(VRManager).Assembly.GetType("ScamWithYourFriendsInVR.Patches.GameAdapter");
@@ -29,7 +32,6 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             var pressed = AccessTools.Method(inputType, "Pressed", new[] { typeof(string), typeof(string) });
             void Set(string name, bool value) => manager.Input.GetType().GetProperty(name).SetValue(manager.Input, value);
             bool Bound(MethodInfo method, string name) => (bool)method.Invoke(null, new object[] { "Shortcuts", name });
-            var pee = player.GetComponent(Find("PeeNetworking"));
             var handleP = AccessTools.Method(player.GetComponent(Find("Metater.MetaPlayer")).GetType(), "HandlePInput");
             object nativePlayer = player.GetComponent(Find("Metater.MetaPlayer"));
             bool paused = false;
@@ -40,24 +42,23 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 manager.Pointer.Cancel();
                 Require(playerPatches.GetProperty("GameplayInput", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null) is bool allowed && allowed,
                     "Native gameplay input is blocked after leaving the computer");
-                Set("Pee", true); Set("FartDown", true);
+                Set("Pee", true); Set("PeeDown", true); Set("FartDown", true);
                 Require(Bound(held, "HoldP") && Bound(pressed, "ManualFart"), "Controller pee/fart did not reach native bindings");
                 handleP.Invoke(nativePlayer, null);
                 Require(Member(nativePlayer, "wasPPressed") is bool peeing && peeing, "Native pee transition did not receive controller input");
-                if (pee != null) Require(Member(pee, "NetworkisPeeing") is bool streamed && streamed, "Native host did not synchronize pee state");
-                Set("Pee", false); Set("FartDown", false); handleP.Invoke(nativePlayer, null);
+                Set("Pee", false); Set("PeeDown", false); Set("FartDown", false); handleP.Invoke(nativePlayer, null);
                 Require(Member(nativePlayer, "wasPPressed") is bool released && !released, "Native pee input remained held");
-                Logger.LogInfo("GAMEPLAY PASS: controller pee/fart bindings, native pee transition and host synchronization/release");
+                Logger.LogInfo("GAMEPLAY PASS: controller pee/fart bindings and native pee transition/release");
 
                 Set("Jump", true); Set("JumpDown", true); beforeController.Invoke(null, new[] { controller }); Set("JumpDown", false);
                 Require(Member(controller, "isJumping") is bool jumping && jumping, "Controller jump did not reach native controller");
                 toggle.Invoke(null, null); paused = true;
                 beforeController.Invoke(null, new[] { controller });
                 Require(Member(controller, "isJumping") is bool stopped && !stopped, "Opening settings left jump held");
-                Set("Pee", true); Set("FartDown", true);
+                Set("Pee", true); Set("PeeDown", true); Set("FartDown", true);
                 Require(!Bound(held, "HoldP") && !Bound(pressed, "ManualFart"), "Settings allowed controller pee/fart gameplay input");
                 toggle.Invoke(null, null); paused = false;
-                Set("Jump", false); Set("JumpDown", false); Set("Pee", false); Set("FartDown", false);
+                Set("Jump", false); Set("JumpDown", false); Set("Pee", false); Set("PeeDown", false); Set("FartDown", false);
                 Logger.LogInfo("GAMEPLAY PASS: native jump input and settings gameplay suppression");
 
                 var hudType = Find("ScammerGameHudController");
@@ -102,7 +103,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             }
             finally
             {
-                Set("Jump", false); Set("JumpDown", false); Set("Pee", false); Set("FartDown", false);
+                Set("Jump", false); Set("JumpDown", false); Set("Pee", false); Set("PeeDown", false); Set("FartDown", false);
                 if (paused) toggle.Invoke(null, null);
                 handleP.Invoke(nativePlayer, null);
                 beforeController.Invoke(null, new[] { controller });

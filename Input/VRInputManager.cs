@@ -25,6 +25,7 @@ namespace ScamWithYourFriendsInVR.Input
         public bool GiveUp { get; private set; }
         public bool GiveUpDown { get; private set; }
         public bool Pee { get; private set; }
+        public bool PeeDown { get; private set; }
         public bool FartDown { get; private set; }
         public bool RecenterDown { get; private set; }
         public bool SecondaryDown { get; private set; }
@@ -131,7 +132,9 @@ namespace ScamWithYourFriendsInVR.Input
             bool nextLeftTrigger = leftTriggerGate.Read(rawLeftTrigger, leftActive && (state.Left.HasTrigger || state.Left.HasTriggerButton));
             LeftTriggerDown = nextLeftTrigger && !LeftTrigger;
             LeftTrigger = nextLeftTrigger;
-            Pee = LeftGrip && LeftTrigger;
+            bool nextPee = LeftGrip && LeftTrigger;
+            PeeDown = nextPee && !Pee;
+            Pee = nextPee;
             bool leftPrimary = leftPrimaryGate.Read(state.Left.Primary, leftActive && state.Left.HasPrimary);
             bool leftPrimaryDown = leftPrimary && !leftPrimaryHeld;
             FartDown = leftPrimaryDown && LeftGrip;

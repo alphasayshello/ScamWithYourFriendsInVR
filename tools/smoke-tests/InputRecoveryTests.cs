@@ -109,11 +109,13 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             LeftStep(0);
             Set(leftHand, "GripButton", true); Set(leftHand, "Primary", true); Set(leftHand, "TriggerButton", true);
             Set(leftHand, "StickClick", true); Set(leftHand, "Stick", new Vector2(.8f, 0)); LeftStep(1);
-            Check(leftInput.FartDown && leftInput.Pee && !leftInput.PlayersDown && leftInput.Move.sqrMagnitude > 0, "Fresh left-hand chord did not activate");
+            Check(leftInput.FartDown && leftInput.Pee && leftInput.PeeDown && !leftInput.PlayersDown && leftInput.Move.sqrMagnitude > 0, "Fresh left-hand chord did not activate");
+            LeftStep(1.05f);
+            Check(leftInput.Pee && !leftInput.PeeDown, "Held pee chord repeated its press edge");
             Set(leftHand, "Tracked", false); LeftStep(1.1f);
-            Check(!leftInput.FartDown && !leftInput.Pee && !leftInput.PlayersDown && leftInput.Move == Vector2.zero, "Left tracking loss changed a fart into a players press");
+            Check(!leftInput.FartDown && !leftInput.Pee && !leftInput.PeeDown && !leftInput.PlayersDown && leftInput.Move == Vector2.zero, "Left tracking loss changed a fart into a players press");
             Set(leftHand, "Tracked", true); LeftStep(2); LeftStep(2.9f);
-            Check(!leftInput.FartDown && !leftInput.Pee && !leftInput.PlayersDown && !leftInput.RecenterDown && leftInput.Move == Vector2.zero,
+            Check(!leftInput.FartDown && !leftInput.Pee && !leftInput.PeeDown && !leftInput.PlayersDown && !leftInput.RecenterDown && leftInput.Move == Vector2.zero,
                 "Held left-hand input restarted after tracking recovery");
             Set(leftHand, "Primary", false); Set(leftHand, "TriggerButton", false); Set(leftHand, "StickClick", false); Set(leftHand, "Stick", Vector2.zero); LeftStep(3);
             Set(leftHand, "Primary", true); LeftStep(3.1f); Check(leftInput.FartDown, "Fresh left chord did not recover");
@@ -123,6 +125,16 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             Check(leftInput.PlayersDown && !leftInput.FartDown, "Fresh unmodified X did not open players");
             Set(leftHand, "GripButton", true); LeftStep(4.2f);
             Check(!leftInput.FartDown && !leftInput.PlayersDown, "Adding a modifier changed a held players press into a fart");
+            Set(leftHand, "TriggerButton", true); LeftStep(5);
+            Check(leftInput.Pee && leftInput.PeeDown, "Fresh trigger with held grip did not begin pee chord");
+            Set(leftHand, "GripButton", false); LeftStep(5.1f);
+            Check(!leftInput.Pee && !leftInput.PeeDown, "Grip release retained pee chord");
+            Set(leftHand, "GripButton", true); LeftStep(5.2f);
+            Check(leftInput.Pee && leftInput.PeeDown, "Fresh grip with held trigger did not begin pee chord");
+            LeftStep(5.3f);
+            Check(leftInput.Pee && !leftInput.PeeDown, "Sustained modifier chord repeated its edge");
+            Set(leftHand, "TriggerButton", false); LeftStep(5.4f);
+            Check(!leftInput.Pee && !leftInput.PeeDown, "Trigger release retained pee chord");
         }
     }
 }

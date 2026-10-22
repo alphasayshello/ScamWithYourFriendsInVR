@@ -31,14 +31,14 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 object controller = AccessTools.Property(adapter, "Controller").GetValue(null);
                 var beforeController = AccessTools.Method(patches, "BeforeController");
                 Type bindings = Find("GameInputBindings");
-                string[] names = { "Move", "Jump", "JumpDown", "Pee", "FartDown" };
+                string[] names = { "Move", "Jump", "JumpDown", "Pee", "PeeDown", "FartDown" };
                 object[] values = new object[names.Length];
                 for (int i = 0; i < names.Length; i++) values[i] = manager.Input.GetType().GetProperty(names[i]).GetValue(manager.Input);
                 try
                 {
                     manager.Pointer.Cancel();
                     manager.Input.GetType().GetProperty("Move").SetValue(manager.Input, Vector2.one);
-                    foreach (string name in new[] { "Jump", "JumpDown", "Pee", "FartDown" }) manager.Input.GetType().GetProperty(name).SetValue(manager.Input, true);
+                    foreach (string name in new[] { "Jump", "JumpDown", "Pee", "PeeDown", "FartDown" }) manager.Input.GetType().GetProperty(name).SetValue(manager.Input, true);
                     beforeController.Invoke(null, new[] { controller });
                     bool pee = (bool)AccessTools.Method(bindings, "Held", new[] { typeof(string), typeof(string) }).Invoke(null, new object[] { "Shortcuts", "HoldP" });
                     bool fart = (bool)AccessTools.Method(bindings, "Pressed", new[] { typeof(string), typeof(string) }).Invoke(null, new object[] { "Shortcuts", "ManualFart" });
