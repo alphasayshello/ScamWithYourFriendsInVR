@@ -260,7 +260,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 }
                 if (!onlyBag && !onlyFlight && !onlyArtwork && !onlyLadder)
                 {
-                    var photos = TestNativePolaroid();
+                    var photos = TestNativeCameraTools();
                     try { while (photos.MoveNext()) yield return photos.Current; }
                     finally { (photos as IDisposable)?.Dispose(); }
                 }

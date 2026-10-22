@@ -117,6 +117,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 { Require(Time.realtimeSinceStartup < readyDeadline, "Focused test host did not become ready"); yield return null; }
                 yield return new WaitForSecondsRealtime(1.5f);
                 bool settingsOnly = Environment.GetCommandLineArgs().Contains("--swyf-only-settings-tests");
+                bool cctv = Environment.GetCommandLineArgs().Contains("--swyf-only-cctv-tests");
                 bool polaroid = Environment.GetCommandLineArgs().Contains("--swyf-only-polaroid-tests");
                 bool pee = Environment.GetCommandLineArgs().Contains("--swyf-only-pee-tests");
                 bool jump = Environment.GetCommandLineArgs().Contains("--swyf-only-jump-tests");
@@ -126,6 +127,8 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 string testName;
                 if (singleMenus) { test = settingsOnly ? TestSettingsRender() : TestMenuRouting(); testName = settingsOnly ? "SETTINGS" : "MENU ROUTING"; }
                 else if (singleProfile) { test = ProfileModFrames(); testName = "PROFILE"; }
+                else if (singleCombat && cctv && polaroid) { test = TestNativeCameraTools(); testName = "CAMERA TOOLS"; }
+                else if (singleCombat && cctv) { test = TestNativeCctv(); testName = "CCTV"; }
                 else if (singleCombat && polaroid) { test = TestNativePolaroid(); testName = "POLAROID"; }
                 else if (singleCombat && pee) { test = TestNativePee(); testName = "PEE"; }
                 else if (singleCombat && jump) { test = TestNativeJump(); testName = "JUMP"; }
