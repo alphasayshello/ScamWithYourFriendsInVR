@@ -96,6 +96,12 @@ Left trigger interacts with the world under your right-hand aim, so you can open
 
 Left grip + left trigger holds the native pee action; release either control to stop. Settings, players, feedback and lost focus cancel it. Release the chord and press again after returning; a chord started inside a menu does not activate when the menu closes. Left grip + left X requests a fart, or the native cone boost when an eligible agent has a traffic cone in the hip slot. Left grip + right B swaps the agent hand/hip slots. Left grip + right trigger sends the native extra held-item action; releasing its modifier ends that action. Food-related poop effects retain the game's existing rules and jump triggers; no debug/cheat poop shortcut is enabled. Curry consumption and its timed poop/gassy effect pass simulated checks. VR jump now reaches the native jump event and activates the curry boost. Hip swap, nonfinal cone boost activation, cooldowns and effect spawning pass simulated checks. Full boost trajectories, final cone use/ragdoll, other foods and full combat acceptance are still outstanding.
 
+## Handheld polaroid
+
+Pick up the camera, move and rotate it with your right controller, then press right trigger to take a picture. Right B switches between normal and selfie mode using the game's authored camera grip. Its normal photo cooldown still applies. Settings block both actions. The local head appears in the photo render, then returns to its hidden first-person state; it does not stay visible around the headset.
+
+Controller shutter, native printed photo pixels, camera movement, selfie switching and cleanup/recovery pass simulated checks. Headset handling and how other players see the resulting photos still need checking.
+
 ## Ladders
 
 While holding an extension ladder, press right trigger to extend or retract it. Drop it, point at its climb interaction and press right trigger to mount. Use the left stick up/down to climb and **right A** to dismount. Vive/original WMR use right pad up instead of A; the HUD shows your controller controls.

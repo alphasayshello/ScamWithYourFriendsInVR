@@ -24,6 +24,7 @@ namespace ScamWithYourFriendsInVR.Patches
                 new[] { typeof(bool), typeof(bool), typeof(bool), typeof(bool), typeof(bool) });
             Patch(harmony, "PlayerInteractor", "GetHoldPoint", null, null, nameof(AfterHoldPoint));
             Patch(harmony, "MaxFpsSetting", "Apply", null, new[] { typeof(int) }, nameof(AfterFrameLimit));
+            Patch(harmony, "PolaroidInteractable", "CoTakePictureThing", nameof(BeforePhotoCapture));
             Patch(harmony, "Metater.MetaPlayerController", "UpdateMeshRendererVisibility", null, new[] { typeof(bool) }, nameof(AfterMeshVisibility));
             Patch(harmony, "ScammerGameHudController", "RefreshPlayerMenuHint", null, null, nameof(AfterHudHints));
             Patch(harmony, "GameInputBindings", "Held", null, new[] { typeof(string), typeof(string) }, nameof(AfterHeldInput));
@@ -132,6 +133,14 @@ namespace ScamWithYourFriendsInVR.Patches
                 UI.VRHudHints.ApplyFlightRelease(hints, VRManager.Instance.Input, Input.VRFlightControls.WaitingForBodyRelease);
                 UI.VRHudHints.ApplyLadder(hints, VRManager.Instance.Input, Input.VRLadderControls.Current != null, Input.VRLadderControls.WaitingForBodyRelease);
             }
+        }
+
+        private static void BeforePhotoCapture(object __instance)
+        {
+            if (!Active || GameAdapter.Read(__instance, "cameraGo") is not UnityEngine.Camera camera) return;
+            // Keep native photo renders separate from the first-person view:
+            // only their render pass may temporarily show the local head.
+            VRManager.Instance.Rig.GetComponent<Camera.VRDesktopCamera>()?.RegisterPhoto(camera);
         }
 
         private static void AfterMeshVisibility(object __instance)

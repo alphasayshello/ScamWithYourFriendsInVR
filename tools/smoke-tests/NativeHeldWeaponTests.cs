@@ -258,6 +258,12 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     try { while (ladder.MoveNext()) yield return ladder.Current; }
                     finally { (ladder as IDisposable)?.Dispose(); }
                 }
+                if (!onlyBag && !onlyFlight && !onlyArtwork && !onlyLadder)
+                {
+                    var photos = TestNativePolaroid();
+                    try { while (photos.MoveNext()) yield return photos.Current; }
+                    finally { (photos as IDisposable)?.Dispose(); }
+                }
                 if (noMouse)
                 {
                     Type fallback = Find("ScamWithYourFriendsInVR.Input.VRMouseFallback");

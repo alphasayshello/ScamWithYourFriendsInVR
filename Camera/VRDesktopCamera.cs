@@ -13,6 +13,13 @@ namespace ScamWithYourFriendsInVR.Camera
         private int scheduledFrame = -1;
         internal UnityEngine.Camera Source { get; private set; }
         private readonly Dictionary<Renderer, UnityEngine.Rendering.ShadowCastingMode> headVisibility = new Dictionary<Renderer, UnityEngine.Rendering.ShadowCastingMode>();
+        private readonly HashSet<UnityEngine.Camera> photoCameras = new HashSet<UnityEngine.Camera>();
+        private readonly List<Renderer> captureRenderers = new List<Renderer>();
+        internal void RegisterPhoto(UnityEngine.Camera camera)
+        {
+            photoCameras.RemoveWhere(candidate => candidate == null);
+            if (camera != null && camera != VRManager.Instance?.Rig?.Head) photoCameras.Add(camera);
+        }
         private readonly List<System.WeakReference> owners = new List<System.WeakReference>();
 
         internal UnityEngine.Camera Assign(object owner, RenderTexture texture)
@@ -49,10 +56,12 @@ namespace ScamWithYourFriendsInVR.Camera
         private void BeginPreview(UnityEngine.Rendering.ScriptableRenderContext context, UnityEngine.Camera camera)
         {
             RestoreVisibility();
-            if (camera != preview || Source == null || Source == VRManager.Instance?.Rig?.Head) return;
+            bool photo = photoCameras.Contains(camera) && camera.targetTexture != null;
+            if (!photo && (camera != preview || Source == null || Source == VRManager.Instance?.Rig?.Head)) return;
             Component player = GameAdapter.Controller;
             if (player == null) return;
-            foreach (Renderer renderer in player.GetComponentsInChildren<Renderer>(true))
+            player.GetComponentsInChildren(true, captureRenderers);
+            foreach (Renderer renderer in captureRenderers)
                 if (renderer.shadowCastingMode == UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly)
                 {
                     headVisibility[renderer] = renderer.shadowCastingMode;
@@ -62,7 +71,7 @@ namespace ScamWithYourFriendsInVR.Camera
 
         private void EndPreview(UnityEngine.Rendering.ScriptableRenderContext context, UnityEngine.Camera camera)
         {
-            if (camera == preview) RestoreVisibility();
+            if (camera == preview || photoCameras.Contains(camera)) RestoreVisibility();
         }
 
         private void RestoreVisibility()
@@ -76,6 +85,7 @@ namespace ScamWithYourFriendsInVR.Camera
             UnityEngine.Rendering.RenderPipelineManager.beginCameraRendering -= BeginPreview;
             UnityEngine.Rendering.RenderPipelineManager.endCameraRendering -= EndPreview;
             RestoreVisibility();
+            photoCameras.Clear(); captureRenderers.Clear();
             if (preview != null) preview.enabled = false;
         }
 

@@ -54,6 +54,7 @@ namespace ScamWithYourFriendsInVR
                 Input = session.AddComponent<VRInputManager>();
                 BodyActions = session.AddComponent<VRBodyActions>();
                 Rig = session.AddComponent<VRCameraController>();
+                session.AddComponent<VRDesktopCamera>();
                 session.AddComponent<VRAudioController>();
                 session.AddComponent<VRAvatarArms>();
                 session.AddComponent<VRPerformance>();
