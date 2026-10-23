@@ -107,6 +107,10 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 Require(!blank.SequenceEqual(painted) && Member(Member(fixture, "m_canvas"), "CanUndo") is true,
                     "Controller pointer did not change native creator canvas pixels/history");
                 Logger.LogInfo("CREATOR DRAW PASS: controller pointer changes native canvas pixels and creates undo history");
+                var layerChecks = TestCreatorLayers(fixture, app, surface);
+                try { while (layerChecks.MoveNext()) yield return layerChecks.Current; }
+                finally { (layerChecks as IDisposable)?.Dispose(); }
+                tabs = Member(fixture, "m_tabStrip") as VisualElement;
                 click = ClickAppControl(surface, tabs[1]);
                 try { while (click.MoveNext()) yield return click.Current; }
                 finally { (click as IDisposable)?.Dispose(); }

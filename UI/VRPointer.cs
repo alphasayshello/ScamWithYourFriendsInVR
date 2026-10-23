@@ -451,7 +451,9 @@ namespace ScamWithYourFriendsInVR.UI
             // The native runtime continues to pump the desktop mouse between
             // Unity frames. Keep controller capture independent of that cursor.
             GameAdapter.Write(evt, "pointerId", ToolkitPointerId);
-            GameAdapter.Write(evt, "pointerType", UnityEngine.UIElements.PointerType.pen);
+            // A ray is an indirect cursor. Pen/touch semantics let ScrollView steal
+            // capture to pan its contents while the user is dragging a child control.
+            GameAdapter.Write(evt, "pointerType", UnityEngine.UIElements.PointerType.mouse);
             GameAdapter.Write(evt, "isPrimary", true);
             GameAdapter.Write(evt, "pressedButtons", held ? 1 << button : 0);
             if (evt is PointerDownEvent) pressPointer?.Invoke(null, new object[] { ToolkitPointerId, button });

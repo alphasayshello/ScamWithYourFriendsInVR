@@ -14,7 +14,9 @@
 
 ## Changed, needs another headset check
 
-- Character Creator keeps the current draft, canvas, painted pixels, undo history, personality fields, gender/language selections and selected tab when its content rebuilds. Simulated checks cover controller drawing/text entry, native draft autosave, undo/redo, window controls, explicit native New Caller and recovery after a failed rebuild. Microphone recording, generated voice previews, publication, every drawing tool/layer action and headset usability still need checking.
+- Controller drags inside scrollable computer panels now keep their control instead of turning into touch scrolling. Character Creator passes simulated add/paint, hide/show, select, reorder and delete checks. Layer order, selection, both painted canvases and the onion-skin toggle survive refreshes; deleting the final layer remains disabled. Real headset handling and other drawing tools still need checking.
+
+- Character Creator keeps the current draft, canvas, painted pixels, undo history, personality fields, gender/language selections and selected tab when its content rebuilds. Simulated checks cover controller drawing/text entry, native draft autosave, undo/redo, window controls, explicit native New Caller and recovery after a failed rebuild. Microphone recording, generated voice previews, publication, remaining drawing tools/layer limits and headset usability still need checking.
 
 - The laptop desktop now fits the full native display inside its model instead of the displaced stream presenter. Actual native laptop capture passes simulated position, movement, missing-binding recovery, controller window controls and exit checks. The surface fills the display width and stays within 12mm of its centre rather than more than a metre away. A real headset check is still needed.
 
