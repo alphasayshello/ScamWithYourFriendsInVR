@@ -80,6 +80,16 @@ namespace ScamWithYourFriendsInVR.Patches
             catch (Exception ex) { GameAdapter.Report("Paint content lifecycle patch", ex); }
             try
             {
+                Type app = ReflectionTypes.Find("Kolkata.UI.KolkataOsClickerApp");
+                var build = app == null ? null : AccessTools.Method(app, "BuildContent");
+                if (build != null) harmony.Patch(build,
+                    prefix: new HarmonyMethod(typeof(DesktopUIPatches), nameof(BeforeClickerContent)),
+                    postfix: new HarmonyMethod(typeof(DesktopUIPatches), nameof(AfterClickerContent)));
+                else Plugin.Log.LogWarning("Native clicker builder unavailable; content recreation unverified.");
+            }
+            catch (Exception ex) { GameAdapter.Report("Clicker content lifecycle patch", ex); }
+            try
+            {
                 Type app = ReflectionTypes.Find("Kolkata.UI.KolkataOsBanditCamApp");
                 var build = app == null ? null : AccessTools.Method(app, "BuildPlaybackControls");
                 if (build != null) harmony.Patch(build, postfix: new HarmonyMethod(typeof(DesktopUIPatches), nameof(AfterPlaybackControls)));
@@ -260,6 +270,53 @@ namespace ScamWithYourFriendsInVR.Patches
             // The native builder adds every brush again after replacing the
             // window content. Discard its detached button references only.
             (GameAdapter.Read(__instance, "m_brushButtons") as System.Collections.IDictionary)?.Clear();
+        }
+
+        private sealed class ClickerContentState
+        {
+            internal VisualElement Event;
+            internal float NextEvent;
+        }
+
+        private static void BeforeClickerContent(object __instance, object __0, out ClickerContentState __state)
+        {
+            __state = null;
+            if (Plugin.Mode?.Value != Plugin.PlayerMode.VR || !(GameAdapter.Read(__0, "WindowContent") is VisualElement)) return;
+            if (GameAdapter.Read(__instance, "m_eventElement") is VisualElement previous)
+                __state = new ClickerContentState { Event = previous,
+                    NextEvent = GameAdapter.Read(__instance, "m_nextEventAt") is float next ? next : 0f };
+            (GameAdapter.Read(__instance, "m_tickSchedule") as IVisualElementScheduledItem)?.Pause();
+            object session = GameAdapter.Read(__instance, "m_session");
+            if (session != null)
+            {
+                Type type = session.GetType();
+                var changed = type.GetEvent("Changed", BindingFlags.Public | BindingFlags.Instance);
+                if (AccessTools.Field(type, "Changed")?.GetValue(session) is Delegate handlers && changed != null)
+                    foreach (Delegate handler in handlers.GetInvocationList())
+                        if (ReferenceEquals(handler.Target, __instance) && handler.Method.Name == "OnSessionChanged")
+                            changed.RemoveEventHandler(session, handler);
+            }
+            // These lists hold view elements, not the session's cookie economy.
+            foreach (string name in new[] { "m_crumbs", "m_iconParticles", "m_floatingLabels", "m_categoryTabs", "m_shopCardBindings", "m_shopRefreshers" })
+                (GameAdapter.Read(__instance, name) as IList)?.Clear();
+            foreach (string name in new[] { "m_crumbCursor", "m_iconCursor", "m_labelCursor" }) GameAdapter.Write(__instance, name, 0);
+            GameAdapter.Write(__instance, "m_leaderboardSignature", null);
+            GameAdapter.Write(__instance, "m_uiDirty", true);
+            GameAdapter.Write(__instance, "m_wasVisible", false);
+            GameAdapter.Write(__instance, "m_nextUiRefreshAt", 0f);
+            GameAdapter.Write(__instance, "m_nextShopRefreshAt", 0f);
+        }
+
+        private static void AfterClickerContent(object __instance, ClickerContentState __state)
+        {
+            if (__state == null || Plugin.Mode?.Value != Plugin.PlayerMode.VR) return;
+            GameAdapter.Write(__instance, "m_nextEventAt", __state.NextEvent);
+            if (GameAdapter.Read(__instance, "m_activeEventId") == null
+                || !(GameAdapter.Read(__instance, "m_eventElement") is VisualElement current)) return;
+            // Keep a live helpful event visible for its remaining native duration.
+            current.style.backgroundImage = __state.Event.style.backgroundImage;
+            current.style.left = __state.Event.style.left; current.style.top = __state.Event.style.top;
+            current.style.display = __state.Event.style.display; current.tooltip = __state.Event.tooltip;
         }
 
         private static void DetachZoomyHandlers(object owner)

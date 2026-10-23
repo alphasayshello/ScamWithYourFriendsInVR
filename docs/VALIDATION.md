@@ -13,6 +13,8 @@
 - One setup command prepares dependencies, builds and creates a separate game copy with verified files and PC/VR launchers. A fresh current-version install passes end-to-end setup checks without changing the stock game.
 
 ## Changed, needs another headset check
+
+- Meteor Cookie now rebuilds its window without accumulating session listeners, detached particle pools or old category tabs. Totals and leaderboard panels refresh, live bonus events retain their expiry, and the next event keeps its native schedule. Simulated controller checks cover clicking, categories, held-input cancellation during rebuilds and a native upgrade purchase in an isolated unsaved session. Real saved progression, every upgrade/boost, leaderboard delivery and headset usability still need checking.
 - Zoomy now keeps the local head visible to its webcam while excluding floating VR UI, then restores the headset view. Simulated checks cover joining/leaving, mute/deafen, chat visibility, screen-share start/stop, controller-focused text sends and resource cleanup. Rebuilding the app no longer duplicates chat messages or its event listeners. Other players receiving video/audio and headset usability still need checking.
 - Paint can rebuild its controls without duplicate-brush errors or losing the current drawing, selected brush, saved path or undo history. Controller drawing, undo/redo and the rebuilt button references pass simulated checks.
 

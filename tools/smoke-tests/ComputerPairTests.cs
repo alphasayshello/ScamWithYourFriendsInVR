@@ -438,6 +438,13 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 yield return new WaitForSecondsRealtime(0.5f);
                 if (singleComputer)
                 {
+                    if (Environment.GetCommandLineArgs().Contains("--swyf-only-clicker-tests"))
+                    {
+                        var clicker = TestNativeClicker(os, surface);
+                        try { while (clicker.MoveNext()) yield return clicker.Current; }
+                        finally { (clicker as IDisposable)?.Dispose(); }
+                        yield break;
+                    }
                     if (Environment.GetCommandLineArgs().Contains("--swyf-only-zoomy-tests"))
                     {
                         var zoomy = TestNativeZoomy(os, surface);
@@ -481,6 +488,9 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     var zoomyChecks = TestNativeZoomy(os, surface);
                     try { while (zoomyChecks.MoveNext()) yield return zoomyChecks.Current; }
                     finally { (zoomyChecks as IDisposable)?.Dispose(); }
+                    var clickerChecks = TestNativeClicker(os, surface);
+                    try { while (clickerChecks.MoveNext()) yield return clickerChecks.Current; }
+                    finally { (clickerChecks as IDisposable)?.Dispose(); }
                     var storeChecks = TestNativeStore(os, surface);
                     try { while (storeChecks.MoveNext()) yield return storeChecks.Current; }
                     finally { (storeChecks as IDisposable)?.Dispose(); }
