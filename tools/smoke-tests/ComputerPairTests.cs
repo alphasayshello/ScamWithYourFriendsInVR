@@ -438,6 +438,13 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 yield return new WaitForSecondsRealtime(0.5f);
                 if (singleComputer)
                 {
+                    if (Environment.GetCommandLineArgs().Contains("--swyf-only-caller-queue-tests"))
+                    {
+                        var callerQueue = TestNativeCallerQueue(os, surface);
+                        try { while (callerQueue.MoveNext()) yield return callerQueue.Current; }
+                        finally { (callerQueue as IDisposable)?.Dispose(); }
+                        yield break;
+                    }
                     if (Environment.GetCommandLineArgs().Contains("--swyf-only-game-manager-tests"))
                     {
                         var gameManager = TestNativeGameManager(os, surface);
@@ -511,6 +518,9 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     var gameManagerChecks = TestNativeGameManager(os, surface);
                     try { while (gameManagerChecks.MoveNext()) yield return gameManagerChecks.Current; }
                     finally { (gameManagerChecks as IDisposable)?.Dispose(); }
+                    var callerQueueChecks = TestNativeCallerQueue(os, surface);
+                    try { while (callerQueueChecks.MoveNext()) yield return callerQueueChecks.Current; }
+                    finally { (callerQueueChecks as IDisposable)?.Dispose(); }
                     var storeChecks = TestNativeStore(os, surface);
                     try { while (storeChecks.MoveNext()) yield return storeChecks.Current; }
                     finally { (storeChecks as IDisposable)?.Dispose(); }

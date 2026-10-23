@@ -14,6 +14,8 @@
 
 ## Changed, needs another headset check
 
+- Caller Manager preserves its search and filtered results when its window content rebuilds. Simulated controller checks cover search, clearing the filter, repeated rebuilds, event ownership and maximise/minimise/close controls on the native laptop desktop. Saved queue edits, community browsing/downloads, voice preview and use on the physical laptop in a headset still need checking.
+
 - Laptop game-manager confirmations now cancel with controller menu/back before exiting the computer. Opening a confirmation releases the old pointer press and requires a fresh trigger press to confirm. Simulated checks on both supported game versions cover Cancel, Back, held-input ownership, one confirmation dispatch and content rebuilds. Actual save clearing, loading, restarts, day changes and use on the physical laptop in a headset still need checking.
 
 - Disscord preserves contact search and an existing draft when its window content rebuilds. Its native newest-message scroll now finds the actual final history row. Simulated checks cover offline contact selection/read state, search, rebuilds, latest-message positioning and controller history scrolling. An unavailable attachment reports its native failure without activating a game virus. Live recipients, outgoing delivery, positive attachment effects and headset usability still need checking.

@@ -59,7 +59,9 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             bool Fits()
             {
                 Rect view = scroll.contentViewport.worldBound, bounds = control.worldBound;
-                return bounds.yMin >= view.yMin + 8 && bounds.yMax <= view.yMax - 8;
+                // Native layouts can pin a fully visible control to the viewport edge.
+                // Requiring extra padding there makes an already-visible field impossible to reveal.
+                return bounds.yMin >= view.yMin - .5f && bounds.yMax <= view.yMax + .5f;
             }
             try
             {

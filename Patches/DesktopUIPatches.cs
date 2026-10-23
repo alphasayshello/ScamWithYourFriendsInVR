@@ -104,6 +104,16 @@ namespace ScamWithYourFriendsInVR.Patches
             catch (Exception ex) { GameAdapter.Report("Messenger content state patch", ex); }
             try
             {
+                Type app = ReflectionTypes.Find("Kolkata.UI.KolkataOsCallerQueueApp");
+                var build = app == null ? null : AccessTools.Method(app, "BuildContent");
+                if (build != null) harmony.Patch(build,
+                    prefix: new HarmonyMethod(typeof(DesktopUIPatches), nameof(BeforeCallerQueueContent)),
+                    postfix: new HarmonyMethod(typeof(DesktopUIPatches), nameof(AfterCallerQueueContent)));
+                else Plugin.Log.LogWarning("Native caller manager builder unavailable; search restoration unverified.");
+            }
+            catch (Exception ex) { GameAdapter.Report("Caller manager search state patch", ex); }
+            try
+            {
                 Type app = ReflectionTypes.Find("Kolkata.UI.KolkataOsBanditCamApp");
                 var build = app == null ? null : AccessTools.Method(app, "BuildPlaybackControls");
                 if (build != null) harmony.Patch(build, postfix: new HarmonyMethod(typeof(DesktopUIPatches), nameof(AfterPlaybackControls)));
@@ -331,6 +341,20 @@ namespace ScamWithYourFriendsInVR.Patches
             current.style.backgroundImage = __state.Event.style.backgroundImage;
             current.style.left = __state.Event.style.left; current.style.top = __state.Event.style.top;
             current.style.display = __state.Event.style.display; current.tooltip = __state.Event.tooltip;
+        }
+
+        private static void BeforeCallerQueueContent(object __instance, object __0, out string __state)
+        {
+            __state = null;
+            if (Plugin.Mode?.Value != Plugin.PlayerMode.VR || !(GameAdapter.Read(__0, "WindowContent") is VisualElement)) return;
+            __state = (GameAdapter.Read(__instance, "search") as TextField)?.value;
+        }
+
+        private static void AfterCallerQueueContent(object __instance, string __state)
+        {
+            if (__state == null || Plugin.Mode?.Value != Plugin.PlayerMode.VR) return;
+            // Restoring through the native callback filters the new list without editing its queue.
+            if (GameAdapter.Read(__instance, "search") is TextField search) search.value = __state;
         }
 
         private sealed class MessengerContentState
