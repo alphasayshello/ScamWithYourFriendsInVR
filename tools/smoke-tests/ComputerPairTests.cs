@@ -75,6 +75,13 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             yield return new WaitForSecondsRealtime(3);
             Require(NetworkManager.singleton.networkAddress == "127.0.0.1", "Computer test requires the local pair transport");
             Require(Find("UnityEngine.XR.OpenXR.OpenXRRuntime")?.GetProperty("name")?.GetValue(null) as string == "Unity Mock Runtime", "Computer simulation requires Unity Mock Runtime");
+            if (Environment.GetCommandLineArgs().Contains("--swyf-only-laptop-tests"))
+            {
+                var laptop = TestNativeLaptop();
+                try { while (laptop.MoveNext()) yield return laptop.Current; }
+                finally { (laptop as IDisposable)?.Dispose(); }
+                yield break;
+            }
             testingComputer = true;
             object desktop = null;
             bool savedPhysicalDesktop = Plugin.PhysicalDesktop.Value;
@@ -436,7 +443,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 // CaptureScreenshot is deferred. Keep the computer open until the
                 // image is saved, instead of closing it before the capture executes.
                 yield return new WaitForSecondsRealtime(0.5f);
-                if (singleComputer)
+                if (singleComputer && !Environment.GetCommandLineArgs().Contains("--swyf-only-laptop-transition-tests"))
                 {
                     if (Environment.GetCommandLineArgs().Contains("--swyf-only-caller-queue-tests"))
                     {
@@ -558,6 +565,12 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 VRManager.Instance?.Pointer?.Cancel();
                 testingComputer = false;
                 placed = false;
+            }
+            if (singleComputer)
+            {
+                var laptop = TestNativeLaptop();
+                try { while (laptop.MoveNext()) yield return laptop.Current; }
+                finally { (laptop as IDisposable)?.Dispose(); }
             }
         }
 

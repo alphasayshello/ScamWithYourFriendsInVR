@@ -28,6 +28,8 @@ In the laptop's game manager, menu/back cancels an open confirmation before exit
 
 Caller Manager's search keeps its text and filtered results when the app rebuilds. Use the pointer to focus text fields and your PC keyboard for typing.
 
+Laptop apps stay on the laptop model's screen in physical desktop mode. If the screen binding disappears, the overlay and its pointer input pause until that binding returns. The floating desktop option remains available in VR settings.
+
 The laser stays visible while feedback or results are open, including when pointing away from the panel. Gameplay actions pause behind these overlays; a cancelled give-up hold needs a fresh press after closing them.
 
 If an overlay opens during a button press or slider drag, that interaction is cancelled. Release the trigger before using the new overlay, then press again. Closing it does not resume the old drag or turn your next click into a double click.

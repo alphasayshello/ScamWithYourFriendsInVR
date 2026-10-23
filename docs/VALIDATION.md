@@ -14,6 +14,8 @@
 
 ## Changed, needs another headset check
 
+- The laptop desktop now fits the full native display inside its model instead of the displaced stream presenter. Actual native laptop capture passes simulated position, movement, missing-binding recovery, controller window controls and exit checks. The surface fills the display width and stays within 12mm of its centre rather than more than a metre away. A real headset check is still needed.
+
 - Caller Manager preserves its search and filtered results when its window content rebuilds. Simulated controller checks cover search, clearing the filter, repeated rebuilds, event ownership and maximise/minimise/close controls on the native laptop desktop. Saved queue edits, community browsing/downloads, voice preview and use on the physical laptop in a headset still need checking.
 
 - Laptop game-manager confirmations now cancel with controller menu/back before exiting the computer. Opening a confirmation releases the old pointer press and requires a fresh trigger press to confirm. Simulated checks on both supported game versions cover Cancel, Back, held-input ownership, one confirmation dispatch and content rebuilds. Actual save clearing, loading, restarts, day changes and use on the physical laptop in a headset still need checking.
