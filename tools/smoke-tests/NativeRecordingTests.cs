@@ -65,6 +65,12 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             bool previousFocus = manager.Input.HasInputFocus;
             bool previousReady = manager.Ready;
             bool wasPlaying = Convert.ToBoolean(Member(playback, "IsPlaying"));
+            var video = Member(playback, "m_player") as UnityEngine.Video.VideoPlayer;
+            Require(video != null, "Native seek decoder unavailable");
+            int completedSeeks = 0;
+            double completedTime = -1;
+            void Completed(UnityEngine.Video.VideoPlayer source) { completedSeeks++; completedTime = source.time; }
+            video.seekCompleted += Completed;
             void Input(string name, bool value) => manager.Input.GetType().GetProperty(name).SetValue(manager.Input, value);
             void Press()
             {
@@ -103,7 +109,8 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                         : frame.b > frame.r + .35f && frame.b > frame.g + .35f;
                     if (correctFrame && (wasPlaying || Math.Abs(Convert.ToDouble(Member(playback, "CurrentTime")) - expectedTime) < .2)) break;
                     Require(Time.realtimeSinceStartup < deadline, "Native video frame did not follow controller seek; playing=" + wasPlaying + "; colour=" + frame
-                        + "; requestedTime=" + expectedTime + "; currentTime=" + Member(playback, "CurrentTime") + "; duration=" + Member(playback, "Duration"));
+                        + "; requestedTime=" + expectedTime + "; currentTime=" + Member(playback, "CurrentTime") + "; duration=" + Member(playback, "Duration")
+                        + "; frame=" + video.frame + "; completedSeeks=" + completedSeeks + "; completedTime=" + completedTime);
                     yield return null;
                 }
                 Require(Member(fixture, "m_seekingPlayback") is bool released && !released
@@ -128,6 +135,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             }
             finally
             {
+                if (video != null) video.seekCompleted -= Completed;
                 holdInjectedTrigger = false; appFixtureAim = false; appFixtureSurface = null;
                 AccessTools.Property(typeof(VRManager), "Ready").SetValue(manager, previousReady);
                 Input("HasInputFocus", previousFocus); Input("Trigger", false); Input("TriggerDown", false); Input("TriggerUp", false);
@@ -159,6 +167,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             var probe = new Harmony("com.swyf.vr.recordingfixture");
             object fixture = null, recorder = null;
             GameObject markerObject = null;
+            bool completed = false;
             try
             {
                 AccessTools.Method(os.GetType(), "CloseApp").Invoke(os, new[] { app });
@@ -264,17 +273,30 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 try { while (click.MoveNext()) yield return click.Current; }
                 finally { (click as IDisposable)?.Dispose(); }
                 Require(Member(playback, "IsPlaying") is bool playing && !playing, "Controller pause did not stop native playback");
-                var seek = TestRecordingSeek(fixture, playback, surface);
-                try { while (seek.MoveNext()) yield return seek.Current; }
-                finally { (seek as IDisposable)?.Dispose(); }
-                click = ClickAppControl(surface, Member(fixture, "m_playPauseButton") as Button);
-                try { while (click.MoveNext()) yield return click.Current; }
-                finally { (click as IDisposable)?.Dispose(); }
-                Require(Member(playback, "IsPlaying") is bool resumed && resumed, "Controller play did not resume native playback");
-                seek = TestRecordingSeek(fixture, playback, surface);
-                try { while (seek.MoveNext()) yield return seek.Current; }
-                finally { (seek as IDisposable)?.Dispose(); }
+                int seekCycles = Environment.GetCommandLineArgs().Contains("--swyf-recording-seek-stress-tests") ? 12 : 1;
+                for (int cycle = 0; cycle < seekCycles; cycle++)
+                {
+                    var seek = TestRecordingSeek(fixture, playback, surface);
+                    try { while (seek.MoveNext()) yield return seek.Current; }
+                    finally { (seek as IDisposable)?.Dispose(); }
+                    click = ClickAppControl(surface, Member(fixture, "m_playPauseButton") as Button);
+                    try { while (click.MoveNext()) yield return click.Current; }
+                    finally { (click as IDisposable)?.Dispose(); }
+                    Require(Member(playback, "IsPlaying") is bool resumed && resumed, "Controller play did not resume native playback");
+                    seek = TestRecordingSeek(fixture, playback, surface);
+                    try { while (seek.MoveNext()) yield return seek.Current; }
+                    finally { (seek as IDisposable)?.Dispose(); }
+                    if (cycle + 1 < seekCycles)
+                    {
+                        click = ClickAppControl(surface, Member(fixture, "m_playPauseButton") as Button);
+                        try { while (click.MoveNext()) yield return click.Current; }
+                        finally { (click as IDisposable)?.Dispose(); }
+                        Require(!(bool)Member(playback, "IsPlaying"), "Stress cycle failed to pause native playback");
+                    }
+                }
                 Logger.LogInfo("RECORDING PASS: controller gallery selection decodes nonblank saved video pixels and pause/play controls operate native playback");
+                if (seekCycles > 1)
+                    File.Copy(saved, Path.Combine(Path.GetDirectoryName(readyFile), "recording-seek-stress.webm"), true);
                 click = ClickAppControl(surface, Member(fixture, "m_deleteButton") as Button);
                 try { while (click.MoveNext()) yield return click.Current; }
                 finally { (click as IDisposable)?.Dispose(); }
@@ -283,6 +305,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 AccessTools.Method(os.GetType(), "CloseApp").Invoke(os, new[] { app });
                 Require(Member(fixture, "m_capturePreview") == null, "Closed recording app retained its capture preview lease");
                 Logger.LogInfo("RECORDING PASS: controller delete removes the fixture clip, restores Live and app close releases preview capture");
+                completed = true;
             }
             finally
             {
@@ -300,6 +323,9 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 if (originalState != "Closed") AccessTools.Method(os.GetType(), "OpenAppById").Invoke(os, new object[] { id });
                 if (originalState == "OpenMinimized") AccessTools.Method(os.GetType(), "MinimizeApp").Invoke(os, new[] { app });
                 string resolved = Path.GetFullPath(folder);
+                string clip = Path.Combine(resolved, "controller-test.webm");
+                if (!completed && File.Exists(clip))
+                    File.Copy(clip, Path.Combine(Path.GetDirectoryName(readyFile), "recording-seek-failure.webm"), true);
                 if (resolved.StartsWith(tempRoot, StringComparison.OrdinalIgnoreCase) && Path.GetFileName(resolved).StartsWith("swyf-recording-fixture-"))
                     try { if (Directory.Exists(resolved)) Directory.Delete(resolved, true); }
                     catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)

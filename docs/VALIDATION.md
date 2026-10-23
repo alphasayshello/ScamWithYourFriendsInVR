@@ -87,7 +87,7 @@
 
 ## Not finished
 
-- Intermittent paused-video seeking: one full computer run kept the old frame after a controller seek. The standalone recorder and a subsequent full run passed that check; the intermittent failure still needs investigation.
+- Intermittent paused-video seeking: one full computer run kept the old frame after a controller seek. The standalone recorder, a subsequent full run and twelve paused/playing seek pairs on each supported game version passed that check. The intermittent failure still needs investigation; repeated passes do not prove it fixed.
 
 - Every computer app and every action inside those apps.
 - Combat damage against players, charged/ranged hit outcomes and remaining weapons, other food variants, boost trajectories/final cone use and all held-item variants in VR.
