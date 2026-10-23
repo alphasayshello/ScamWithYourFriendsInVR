@@ -438,6 +438,13 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 yield return new WaitForSecondsRealtime(0.5f);
                 if (singleComputer)
                 {
+                    if (Environment.GetCommandLineArgs().Contains("--swyf-only-messenger-tests"))
+                    {
+                        var messenger = TestNativeMessenger(os, surface);
+                        try { while (messenger.MoveNext()) yield return messenger.Current; }
+                        finally { (messenger as IDisposable)?.Dispose(); }
+                        yield break;
+                    }
                     if (Environment.GetCommandLineArgs().Contains("--swyf-only-clicker-tests"))
                     {
                         var clicker = TestNativeClicker(os, surface);
@@ -491,6 +498,9 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     var clickerChecks = TestNativeClicker(os, surface);
                     try { while (clickerChecks.MoveNext()) yield return clickerChecks.Current; }
                     finally { (clickerChecks as IDisposable)?.Dispose(); }
+                    var messengerChecks = TestNativeMessenger(os, surface);
+                    try { while (messengerChecks.MoveNext()) yield return messengerChecks.Current; }
+                    finally { (messengerChecks as IDisposable)?.Dispose(); }
                     var storeChecks = TestNativeStore(os, surface);
                     try { while (storeChecks.MoveNext()) yield return storeChecks.Current; }
                     finally { (storeChecks as IDisposable)?.Dispose(); }

@@ -90,6 +90,20 @@ namespace ScamWithYourFriendsInVR.Patches
             catch (Exception ex) { GameAdapter.Report("Clicker content lifecycle patch", ex); }
             try
             {
+                Type app = ReflectionTypes.Find("Kolkata.UI.KolkataOsMessengerApp");
+                var build = app == null ? null : AccessTools.Method(app, "BuildContent");
+                if (build != null) harmony.Patch(build,
+                    prefix: new HarmonyMethod(typeof(DesktopUIPatches), nameof(BeforeMessengerContent)),
+                    postfix: new HarmonyMethod(typeof(DesktopUIPatches), nameof(AfterMessengerContent)));
+                else Plugin.Log.LogWarning("Native messenger builder unavailable; draft/search restoration unverified.");
+                var target = app == null ? null : AccessTools.Method(app, "TryGetCurrentScrollTarget");
+                if (target != null) harmony.Patch(target,
+                    prefix: new HarmonyMethod(typeof(DesktopUIPatches), nameof(BeforeMessengerScrollTarget)));
+                else Plugin.Log.LogWarning("Native messenger scroll target unavailable; history autoscroll unverified.");
+            }
+            catch (Exception ex) { GameAdapter.Report("Messenger content state patch", ex); }
+            try
+            {
                 Type app = ReflectionTypes.Find("Kolkata.UI.KolkataOsBanditCamApp");
                 var build = app == null ? null : AccessTools.Method(app, "BuildPlaybackControls");
                 if (build != null) harmony.Patch(build, postfix: new HarmonyMethod(typeof(DesktopUIPatches), nameof(AfterPlaybackControls)));
@@ -317,6 +331,45 @@ namespace ScamWithYourFriendsInVR.Patches
             current.style.backgroundImage = __state.Event.style.backgroundImage;
             current.style.left = __state.Event.style.left; current.style.top = __state.Event.style.top;
             current.style.display = __state.Event.style.display; current.tooltip = __state.Event.tooltip;
+        }
+
+        private sealed class MessengerContentState
+        {
+            internal string Search, Draft;
+        }
+
+        private static void BeforeMessengerContent(object __instance, object __0, out MessengerContentState __state)
+        {
+            __state = null;
+            if (Plugin.Mode?.Value != Plugin.PlayerMode.VR || GameAdapter.Read(__instance, "m_disposed") is true
+                || !(GameAdapter.Read(__0, "WindowContent") is VisualElement)) return;
+            var search = GameAdapter.Read(__instance, "m_searchField") as TextField;
+            var draft = GameAdapter.Read(__instance, "m_messageInput") as TextField;
+            if (search != null || draft != null) __state = new MessengerContentState { Search = search?.value, Draft = draft?.value };
+        }
+
+        private static void AfterMessengerContent(object __instance, MessengerContentState __state)
+        {
+            if (__state == null || Plugin.Mode?.Value != Plugin.PlayerMode.VR) return;
+            // Use the native search callback to filter the replacement view.
+            if (__state.Search != null && GameAdapter.Read(__instance, "m_searchField") is TextField search)
+                search.value = __state.Search;
+            if (__state.Draft != null && GameAdapter.Read(__instance, "m_messageInput") is TextField draft)
+                draft.SetValueWithoutNotify(__state.Draft);
+            GameAdapter.Call(__instance, "RefreshComposerState");
+        }
+
+        private static bool BeforeMessengerScrollTarget(ScrollView __0, ref VisualElement __1, ref bool __result)
+        {
+            if (Plugin.Mode?.Value != Plugin.PlayerMode.VR) return true;
+            __1 = null; __result = false;
+            var content = __0?.contentContainer;
+            if (content == null || content.childCount == 0) return false;
+            var last = content[content.childCount - 1];
+            // ScrollView.Add gives rows the view as their logical parent.
+            // Native scrolling needs the last actual child of its content.
+            if (last != null && last.hierarchy.parent == content) { __1 = last; __result = true; }
+            return false;
         }
 
         private static void DetachZoomyHandlers(object owner)
