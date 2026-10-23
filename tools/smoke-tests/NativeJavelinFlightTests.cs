@@ -14,9 +14,9 @@ namespace ScamWithYourFriendsInVR.SmokeTests
         private static bool launcherGrip, launcherSpawnScope;
         private static readonly List<Component> launcherMissiles = new List<Component>();
         private static readonly HashSet<GameObject> launcherImpacts = new HashSet<GameObject>();
+        private static readonly Dictionary<GameObject, Vector3> launcherImpactBirths = new Dictionary<GameObject, Vector3>();
         private static readonly List<Vector3> launcherBlastCalls = new List<Vector3>();
         private static readonly List<object> launcherRecoil = new List<object>();
-        private static bool launcherRecoilScope;
         private static Vector3 launcherAimPosition;
         private static Quaternion launcherAimRotation;
 
@@ -32,11 +32,19 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             launcherSpawnScope = ReferenceEquals(__instance, flightLauncher);
         }
         private static void EndLauncherSpawn(bool __state) => launcherSpawnScope = __state;
-        private static void BeginLauncherRecoil(object __instance, ref bool __state)
-        { __state = launcherRecoilScope; launcherRecoilScope = ReferenceEquals(__instance, flightLauncher); }
-        private static void EndLauncherRecoil(bool __state) => launcherRecoilScope = __state;
-        private static void ObserveLauncherRecoil(object __0)
-        { if (launcherRecoilScope) launcherRecoil.Add(__0); }
+        private static void BeginLauncherRecoil(object __instance, ref int __state)
+        {
+            __state = ReferenceEquals(__instance, flightLauncher)
+                ? ((IList)Member(Instance("Metater.MetaPlayerController"), "knockbackEnvelopes")).Count : -1;
+        }
+        private static void EndLauncherRecoil(int __state)
+        {
+            if (__state < 0) return;
+            // Read the native queue after the authored call. Its tiny
+            // AddKnockback helper can be inlined before an observer is patched.
+            var envelopes = (IList)Member(Instance("Metater.MetaPlayerController"), "knockbackEnvelopes");
+            for (int i = __state; i < envelopes.Count; i++) launcherRecoil.Add(envelopes[i]);
+        }
         private static void ObserveLauncherMissile(Component __instance)
         { if (launcherSpawnScope) launcherMissiles.Add(__instance); }
         private static void ObserveLauncherImpact(Component __instance)
@@ -46,7 +54,9 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             foreach (NetworkIdentity identity in NetworkServer.spawned.Values)
                 if (identity != null && identity.GetComponent(dynamite) != null
                     && Vector3.Distance(identity.transform.position, __instance.transform.position) < .1f)
-                    launcherImpacts.Add(identity.gameObject);
+                    // Native collision response may move the impact object
+                    // before explosion. Verify its birth at the endpoint.
+                    if (launcherImpacts.Add(identity.gameObject)) launcherImpactBirths.Add(identity.gameObject, identity.transform.position);
         }
         private static void ObserveLauncherBlast(Vector3 __0)
         {
@@ -92,7 +102,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             {
                 foreach (GameObject impact in launcherImpacts) if (impact != null) NetworkServer.Destroy(impact);
                 foreach (Component missile in launcherMissiles) if (missile != null) Destroy(missile.gameObject);
-                launcherImpacts.Clear(); launcherMissiles.Clear(); launcherBlastCalls.Clear(); launcherRecoil.Clear();
+                launcherImpacts.Clear(); launcherImpactBirths.Clear(); launcherMissiles.Clear(); launcherBlastCalls.Clear(); launcherRecoil.Clear();
             }
             try
             {
@@ -105,7 +115,6 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     postfix: new HarmonyMethod(typeof(LocalPairHarness), nameof(EndLauncherSpawn)));
                 probe.Patch(AccessTools.Method(launcherType, "ApplyLocalRecoil"), prefix: new HarmonyMethod(typeof(LocalPairHarness), nameof(BeginLauncherRecoil)),
                     postfix: new HarmonyMethod(typeof(LocalPairHarness), nameof(EndLauncherRecoil)));
-                probe.Patch(AccessTools.Method(controller.GetType(), "AddKnockback"), postfix: new HarmonyMethod(typeof(LocalPairHarness), nameof(ObserveLauncherRecoil)));
                 probe.Patch(AccessTools.Method(missileType, "LaunchAtPosition"), postfix: new HarmonyMethod(typeof(LocalPairHarness), nameof(ObserveLauncherMissile)));
                 probe.Patch(AccessTools.Method(missileType, "ServerSpawnImpactDynamite"), postfix: new HarmonyMethod(typeof(LocalPairHarness), nameof(ObserveLauncherImpact)));
                 probe.Patch(AccessTools.Method(Find("WorldExplosionManager"), "ServerTriggerExplosion"), prefix: new HarmonyMethod(typeof(LocalPairHarness), nameof(ObserveLauncherBlast)));
@@ -176,7 +185,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                             "Native projectile did not reach selected endpoint and hide its spent model");
                     Require(launcherBlastCalls.All(p => launcherImpacts.Any(go => go != null && Vector3.Distance(
                             (Vector3)Member(go.GetComponent(Find("DynamiteInteractable")), "ExplosionPosition"), p) < .01f))
-                        && launcherImpacts.All(go => go != null && Vector3.Distance(go.transform.position, endpoint.point) < .05f
+                        && launcherImpacts.All(go => go != null && Vector3.Distance(launcherImpactBirths[go], endpoint.point) < .01f
                             && Member(go.GetComponent(Find("DynamiteInteractable")), "dynamiteState").ToString() == "Exploded"),
                         "Native impact dynamite did not explode at the selected endpoint");
                     Logger.LogInfo("LAUNCHER FLIGHT PASS: native controller shot flies to selected endpoint, creates " + expected
@@ -189,7 +198,9 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     Require(launcherRecoil.Count == 1 && Vector3.Distance((Vector3)Member(launcherRecoil[0], "vector"), expectedRecoil) < .01f
                         && Mathf.Abs(Convert.ToSingle(Member(launcherRecoil[0], "force")) - recoilForce) < .01f
                         && Mathf.Abs(Convert.ToSingle(Member(launcherRecoil[0], "duration")) - recoilDuration) < .01f,
-                        "Native launcher recoil changed its authored muzzle-relative vector, force or duration");
+                        "Native launcher recoil changed its authored muzzle-relative vector, force or duration; count=" + launcherRecoil.Count
+                        + "; expectedVector=" + expectedRecoil + "; actual=" + string.Join(";", launcherRecoil.Select(e =>
+                            Member(e, "vector") + "/" + Member(e, "force") + "/" + Member(e, "duration"))));
                     Require(Vector3.Dot(Vector3.ProjectOnPlane(player.transform.position - recoilBefore, Vector3.up).normalized, recoilBack) > .9f,
                         "Native collision-body recoil did not follow the tracked launcher's muzzle heading");
                     Require(Vector3.Distance(manager.Rig.Head.transform.position - player.transform.position, standingEye) < .15f,
@@ -202,7 +213,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
             finally
             {
                 Release(); manager.Pointer.Cancel(); if (paused) toggle.Invoke(null, null);
-                launcherGrip = launcherSpawnScope = launcherRecoilScope = false;
+                launcherGrip = launcherSpawnScope = false;
                 if (item != null)
                 {
                     if (ReferenceEquals(Member(interactor, "CurrentHeldItem"), item.GetComponent(heldType)))
