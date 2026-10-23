@@ -54,11 +54,24 @@ try {
     if (!$result.OpenXRRuntime) { throw 'VR setup omitted runtime resolution.' }
     # Intercept process APIs: only exercise launcher configuration, never start a game.
     $launches = [Collections.Generic.List[object]]::new()
+    $launchProcesses = [Collections.Generic.List[object]]::new()
+    $launchScenario = [pscustomobject]@{ExitEarly=$false;ExitCode=0;NativeExit=$false}
     function Get-CimInstance { param($ClassName, $Filter) }
     function Start-Process {
         param($FilePath, $WorkingDirectory, $ArgumentList, [switch]$PassThru)
         $launches.Add([pscustomobject]@{File=$FilePath; Directory=$WorkingDirectory; Args=$ArgumentList})
-        [pscustomobject]@{Id=1234}
+        if ($launchScenario.NativeExit) {
+            return Microsoft.PowerShell.Management\Start-Process -FilePath $env:ComSpec -ArgumentList '/d /c exit 53' -WindowStyle Hidden -PassThru
+        }
+        $result = [pscustomobject]@{Id=1234;ExitEarly=$launchScenario.ExitEarly;ExitCode=$launchScenario.ExitCode;Disposed=$false}
+        $result | Add-Member -MemberType ScriptMethod -Name WaitForExit -Value {
+            param($milliseconds)
+            if ($milliseconds -ne 2000) { throw 'Unexpected startup observation window.' }
+            return $this.ExitEarly
+        }
+        $result | Add-Member -MemberType ScriptMethod -Name Dispose -Value { $this.Disposed = $true }
+        $launchProcesses.Add($result)
+        return $result
     }
     $env:DOORSTOP_DISABLE = $null; $env:DOORSTOP_ENABLED = $null
     $configPath = Join-Path $fixture 'BepInEx\config\com.swyf.vr.cfg'
@@ -71,11 +84,20 @@ try {
     if ([IO.File]::ReadAllText($configPath + '.before-launch.bak') -cne $originalConfig) { throw 'Launcher config backup differs from the original.' }
     & (Join-Path $tools 'Launch-Game.ps1') -GameDir $fixture -Mode VR | Out-Null
     if ([IO.File]::ReadAllText($configPath) -notmatch 'Mode = VR' -or $launches.Count -ne 2 -or $launches[0].Args -ne '-force-d3d11') { throw 'Launcher mode or DirectX selection failed.' }
+    if ($launchProcesses | Where-Object { !$_.Disposed }) { throw 'Launcher retained a process handle after its startup observation.' }
+    $launchScenario.ExitEarly = $true; $launchScenario.ExitCode = 53
+    Expect-Failure { & (Join-Path $tools 'Launch-Game.ps1') -GameDir $fixture -Mode VR } 'exit code 53'
+    if (!$launchProcesses[-1].Disposed) { throw 'Launcher retained the failed process handle.' }
+    $launchScenario.ExitCode = 0
+    Expect-Failure { & (Join-Path $tools 'Launch-Game.ps1') -GameDir $fixture -Mode PC } 'exit code 0'
+    $launchScenario.NativeExit = $true
+    Expect-Failure { & (Join-Path $tools 'Launch-Game.ps1') -GameDir $fixture -Mode VR } 'exit code 53'
+    $launchScenario.NativeExit = $false; $launchScenario.ExitEarly = $false
     $testPlugin = Join-Path $fixture 'BepInEx\plugins\ScamWithYourFriendsInVR\ScamWithYourFriendsInVR.SmokeTests.dll'
     [IO.File]::WriteAllText($testPlugin, 'fixture')
     Expect-Failure { & (Join-Path $tools 'Launch-Game.ps1') -GameDir $fixture -Mode PC } 'smoke-test plugin'
-    if ($launches.Count -ne 2) { throw 'Launcher ignored the test-plugin guard.' }
-    Write-Output 'Setup checks passed: PC/VR layouts, corrupted files, manifest containment/coverage, runtime selection, launcher modes, config preservation/backups and test-plugin guard. No game was launched.'
+    if ($launches.Count -ne 5) { throw 'Launcher ignored the test-plugin guard.' }
+    Write-Output 'Setup checks passed: PC/VR layouts, corrupted files, manifest containment/coverage, runtime selection, launcher modes, config preservation/backups, early native exit reporting, process-handle cleanup and test-plugin guard. No game was launched.'
 } finally {
     $env:XR_RUNTIME_JSON = $previousRuntime
     $env:DOORSTOP_DISABLE = $previousDisable

@@ -69,14 +69,18 @@ try {
     $launches = [Collections.Generic.List[object]]::new()
     function Start-Process {
         param($FilePath, $WorkingDirectory, $ArgumentList, [switch]$PassThru)
-        $launches.Add([pscustomobject]@{File=$FilePath; Directory=$WorkingDirectory; Args=$ArgumentList})
-        [pscustomobject]@{Id=1234}
+        $result = [pscustomobject]@{Id=1234;Watched=$false;Disposed=$false}
+        $result | Add-Member -MemberType ScriptMethod -Name WaitForExit -Value { param($milliseconds) $this.Watched = $milliseconds -eq 2000; return $false }
+        $result | Add-Member -MemberType ScriptMethod -Name Dispose -Value { $this.Disposed = $true }
+        $launches.Add([pscustomobject]@{File=$FilePath; Directory=$WorkingDirectory; Args=$ArgumentList;Process=$result})
+        return $result
     }
     $installedLaunch = Join-Path $destination '.swyf-vr\Launch-Game.ps1'
     & $installedLaunch -GameDir $destination -Mode PC | Out-Null
     if ($launches.Count -ne 1 -or $launches[0].Directory -ne $destination -or $launches[0].Args -ne '-force-d3d11') {
         throw 'Portable launch tools failed without the source repository.'
     }
+    if (!$launches[0].Process.Watched -or !$launches[0].Process.Disposed) { throw 'Portable launcher omitted startup observation or process-handle cleanup.' }
     if ([IO.File]::ReadAllText((Join-Path $destination 'user-settings.keep')) -cne 'preserved original data') { throw 'Game copy omitted original files.' }
     if (!(Test-Path -LiteralPath (Join-Path $destination 'empty-asset-folder') -PathType Container)) { throw 'Game copy omitted an empty original folder.' }
     foreach ($relative in @('Scam With Your Friends_Data\UWBCache', 'Scam With Your Friends_Data\UnityWebBrowser.Engine.Cef.log')) {

@@ -18,7 +18,7 @@ The command prepares verified dependencies, builds Release, stages the matching 
 
 For another Steam library, add `-GameDir 'D:\SteamLibrary\steamapps\common\Scam With Your Friends'`. An optional `-CacheDir` reuses dependencies; keep a separate cache per supported game version. The generated stage stays under this source folder's ignored `work/setup` directory and its location is printed when setup finishes.
 
-Connect your headset and open **Play VR.cmd**, or use **Play PC.cmd** for flat-screen play with tracked-avatar support. Each launcher checks the files, preserves your config and selects its mode. The copied launch tools work independently of the source repository. PowerShell 7 is required to use them.
+Connect your headset and open **Play VR.cmd**, or use **Play PC.cmd** for flat-screen play with tracked-avatar support. Each launcher checks the files, preserves your config and selects its mode. It watches the process for two seconds and reports an immediate exit with its code. A running process still needs to finish loading; the launcher does not certify tracking or headset readiness. The copied launch tools work independently of the source repository. PowerShell 7 is required to use them.
 
 ## Install a runtime you already staged
 

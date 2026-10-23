@@ -21,5 +21,10 @@ if ($section.Success) {
 if (Test-Path -LiteralPath $configPath) { Copy-Item -LiteralPath $configPath -Destination ($configPath + '.before-launch.bak') -Force }
 [IO.File]::WriteAllText($configPath, $config)
 $process = Start-Process -FilePath (Join-Path $setup.GameDir 'Scam With Your Friends.exe') -WorkingDirectory $setup.GameDir -ArgumentList '-force-d3d11' -PassThru
-Write-Output "Started $Mode mode (process $($process.Id))."
-if ($Mode -eq 'VR') { Write-Output 'OpenXR setup passed. Headset connection and in-game tracking still require checking in your headset.' }
+try {
+    if ($process.WaitForExit(2000)) {
+        throw "Game closed during startup (exit code $($process.ExitCode)). Keep Steam running and signed in, resolve any game or Steam error, then retry."
+    }
+    Write-Output "Game process is running in $Mode mode (process $($process.Id))."
+    if ($Mode -eq 'VR') { Write-Output 'OpenXR setup passed. Headset connection and in-game tracking still require checking in your headset.' }
+} finally { $process.Dispose() }
