@@ -117,7 +117,7 @@ namespace ScamWithYourFriendsInVR.Patches
                 Type app = ReflectionTypes.Find("Kolkata.UI.KolkataOsCharacterCreatorApp");
                 var build = app == null ? null : AccessTools.Method(app, "BuildContent");
                 var start = app == null ? null : AccessTools.Method(app, "BeginNewCaller");
-                if (build != null && start != null && AccessTools.Method(app, "BuildEditor") != null)
+                if (build != null && start != null && AccessTools.Method(app, "BuildEditor") != null && AccessTools.Method(app, "BuildLanding") != null)
                 {
                     harmony.Patch(build,
                         prefix: new HarmonyMethod(typeof(DesktopUIPatches), nameof(BeforeCreatorContent)),
@@ -363,7 +363,7 @@ namespace ScamWithYourFriendsInVR.Patches
         private sealed class CreatorContentState
         {
             internal object Previous;
-            internal bool Resume, Visible;
+            internal bool Resume, Visible, Landing;
             internal string Name, Description, Opening, Gender;
             internal int Language;
         }
@@ -375,10 +375,12 @@ namespace ScamWithYourFriendsInVR.Patches
                 || GameAdapter.Read(GameAdapter.Read(__instance, "m_lifetime"), "IsCancellationRequested") is true) return;
             var body = GameAdapter.Read(__instance, "m_body") as VisualElement;
             var tabs = GameAdapter.Read(__instance, "m_tabStrip") as VisualElement;
-            if (body == null || tabs == null || !body.Contains(tabs) || GameAdapter.Read(__instance, "m_draft") == null) return;
+            bool landing = body?.Q<VisualElement>(className: "character-creator__landing") != null && GameAdapter.Read(__instance, "m_draft") == null;
+            bool editor = body != null && tabs != null && body.Contains(tabs) && GameAdapter.Read(__instance, "m_draft") != null;
+            if (!landing && !editor) return;
             __state = new CreatorContentState
             {
-                Previous = creatorRebuilding, Resume = true, Visible = GameAdapter.Read(__instance, "m_visible") is true,
+                Previous = creatorRebuilding, Resume = true, Landing = landing, Visible = GameAdapter.Read(__instance, "m_visible") is true,
                 Name = (GameAdapter.Read(__instance, "m_nameField") as TextField)?.value,
                 Description = (GameAdapter.Read(__instance, "m_descriptionField") as TextField)?.value,
                 Opening = (GameAdapter.Read(__instance, "m_openingField") as TextField)?.value,
@@ -392,13 +394,19 @@ namespace ScamWithYourFriendsInVR.Patches
         private static bool BeforeCreatorNewCaller(object __instance)
         {
             if (Plugin.Mode?.Value != Plugin.PlayerMode.VR || !ReferenceEquals(creatorRebuilding, __instance)) return true;
-            AccessTools.Method(__instance.GetType(), "BuildEditor").Invoke(__instance, null);
+            string page = GameAdapter.Read(__instance, "m_draft") == null ? "BuildLanding" : "BuildEditor";
+            AccessTools.Method(__instance.GetType(), page).Invoke(__instance, null);
             return false;
         }
 
         private static void AfterCreatorContent(object __instance, CreatorContentState __state)
         {
             if (__state?.Resume != true) return;
+            if (__state.Landing)
+            {
+                if (__state.Visible) GameAdapter.Call(__instance, "SetVisible", true);
+                return;
+            }
             void Restore(string field, string value)
             {
                 if (value != null && GameAdapter.Read(__instance, field) is TextField text) text.value = value;

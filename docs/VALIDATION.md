@@ -14,6 +14,8 @@
 
 ## Changed, needs another headset check
 
+- Character Creator's landing page now survives refreshes without replacing or archiving the saved draft. Simulated controller checks cover Back, Resume, exact painted layer colours, layer visibility/selection, personality values and New Caller after refreshes. A malformed draft shows the native failure status while retaining its file and landing page. Fresh-process restoration and headset use still need checking.
+
 - Controller drags inside scrollable computer panels now keep their control instead of turning into touch scrolling. Character Creator passes simulated add/paint, hide/show, select, reorder and delete checks. Layer order, selection, both painted canvases and the onion-skin toggle survive refreshes; deleting the final layer remains disabled. Real headset handling and other drawing tools still need checking.
 
 - Character Creator keeps the current draft, canvas, painted pixels, undo history, personality fields, gender/language selections and selected tab when its content rebuilds. Simulated checks cover controller drawing/text entry, native draft autosave, undo/redo, window controls, explicit native New Caller and recovery after a failed rebuild. Microphone recording, generated voice previews, publication, remaining drawing tools/layer limits and headset usability still need checking.

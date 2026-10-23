@@ -30,6 +30,8 @@ Caller Manager's search keeps its text and filtered results when the app rebuild
 
 Character Creator keeps your in-progress editor when its window content refreshes, including drawing history and personality text. Starting a new caller still uses the game's normal new-draft action.
 
+Use **Back** inside Character Creator to return to its landing page, then **Resume Draft** to load your saved work. Refreshing that page keeps the saved draft and resume button. **Create New Caller** still starts a fresh draft and uses the game's normal backup behaviour.
+
 To reorder creator layers, point at a layer's name or thumbnail, hold the right trigger, move it to the desired row and release. Use the stick to scroll the panel; dragging a control keeps hold of that control.
 
 Laptop apps stay on the laptop model's screen in physical desktop mode. If the screen binding disappears, the overlay and its pointer input pause until that binding returns. The floating desktop option remains available in VR settings.

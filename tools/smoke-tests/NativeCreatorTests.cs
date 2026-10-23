@@ -177,6 +177,9 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     "Explicit native New Caller no longer creates a fresh draft and archives the isolated previous one");
                 Logger.LogInfo("CREATOR NEW PASS: explicit native New Caller still replaces the draft and archives only the isolated fixture");
                 Logger.LogInfo("CREATOR FAILURE PASS: a failed rebuild releases its preservation scope so the subsequent native New Caller works");
+                var resumeChecks = TestCreatorResume(os, fixture, app, surface);
+                try { while (resumeChecks.MoveNext()) yield return resumeChecks.Current; }
+                finally { (resumeChecks as IDisposable)?.Dispose(); }
                 Require(creatorUnsafeAttempts == 0, "Creator fixture attempted publication, recording, preview or cloud editing");
             }
             finally
