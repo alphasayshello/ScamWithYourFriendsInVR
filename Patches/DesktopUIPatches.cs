@@ -114,6 +114,22 @@ namespace ScamWithYourFriendsInVR.Patches
             catch (Exception ex) { GameAdapter.Report("Caller manager search state patch", ex); }
             try
             {
+                Type app = ReflectionTypes.Find("Kolkata.UI.KolkataOsCharacterCreatorApp");
+                var build = app == null ? null : AccessTools.Method(app, "BuildContent");
+                var start = app == null ? null : AccessTools.Method(app, "BeginNewCaller");
+                if (build != null && start != null && AccessTools.Method(app, "BuildEditor") != null)
+                {
+                    harmony.Patch(build,
+                        prefix: new HarmonyMethod(typeof(DesktopUIPatches), nameof(BeforeCreatorContent)),
+                        postfix: new HarmonyMethod(typeof(DesktopUIPatches), nameof(AfterCreatorContent)),
+                        finalizer: new HarmonyMethod(typeof(DesktopUIPatches), nameof(FinishCreatorContent)));
+                    harmony.Patch(start, prefix: new HarmonyMethod(typeof(DesktopUIPatches), nameof(BeforeCreatorNewCaller)));
+                }
+                else Plugin.Log.LogWarning("Native character creator builders unavailable; draft recreation unverified.");
+            }
+            catch (Exception ex) { GameAdapter.Report("Character creator draft recreation patch", ex); }
+            try
+            {
                 Type app = ReflectionTypes.Find("Kolkata.UI.KolkataOsBanditCamApp");
                 var build = app == null ? null : AccessTools.Method(app, "BuildPlaybackControls");
                 if (build != null) harmony.Patch(build, postfix: new HarmonyMethod(typeof(DesktopUIPatches), nameof(AfterPlaybackControls)));
@@ -341,6 +357,62 @@ namespace ScamWithYourFriendsInVR.Patches
             current.style.backgroundImage = __state.Event.style.backgroundImage;
             current.style.left = __state.Event.style.left; current.style.top = __state.Event.style.top;
             current.style.display = __state.Event.style.display; current.tooltip = __state.Event.tooltip;
+        }
+
+        [ThreadStatic] private static object creatorRebuilding;
+        private sealed class CreatorContentState
+        {
+            internal object Previous;
+            internal bool Resume, Visible;
+            internal string Name, Description, Opening, Gender;
+            internal int Language;
+        }
+
+        private static void BeforeCreatorContent(object __instance, object __0, out CreatorContentState __state)
+        {
+            __state = null;
+            if (Plugin.Mode?.Value != Plugin.PlayerMode.VR || !(GameAdapter.Read(__0, "WindowContent") is VisualElement)
+                || GameAdapter.Read(GameAdapter.Read(__instance, "m_lifetime"), "IsCancellationRequested") is true) return;
+            var body = GameAdapter.Read(__instance, "m_body") as VisualElement;
+            var tabs = GameAdapter.Read(__instance, "m_tabStrip") as VisualElement;
+            if (body == null || tabs == null || !body.Contains(tabs) || GameAdapter.Read(__instance, "m_draft") == null) return;
+            __state = new CreatorContentState
+            {
+                Previous = creatorRebuilding, Resume = true, Visible = GameAdapter.Read(__instance, "m_visible") is true,
+                Name = (GameAdapter.Read(__instance, "m_nameField") as TextField)?.value,
+                Description = (GameAdapter.Read(__instance, "m_descriptionField") as TextField)?.value,
+                Opening = (GameAdapter.Read(__instance, "m_openingField") as TextField)?.value,
+                Gender = (GameAdapter.Read(__instance, "m_genderField") as DropdownField)?.value,
+                Language = (GameAdapter.Read(__instance, "m_languageField") as DropdownField)?.index ?? -1
+            };
+            (GameAdapter.Read(__instance, "m_recordingSchedule") as IVisualElementScheduledItem)?.Pause();
+            creatorRebuilding = __instance;
+        }
+
+        private static bool BeforeCreatorNewCaller(object __instance)
+        {
+            if (Plugin.Mode?.Value != Plugin.PlayerMode.VR || !ReferenceEquals(creatorRebuilding, __instance)) return true;
+            AccessTools.Method(__instance.GetType(), "BuildEditor").Invoke(__instance, null);
+            return false;
+        }
+
+        private static void AfterCreatorContent(object __instance, CreatorContentState __state)
+        {
+            if (__state?.Resume != true) return;
+            void Restore(string field, string value)
+            {
+                if (value != null && GameAdapter.Read(__instance, field) is TextField text) text.value = value;
+            }
+            Restore("m_nameField", __state.Name); Restore("m_descriptionField", __state.Description); Restore("m_openingField", __state.Opening);
+            if (__state.Gender != null && GameAdapter.Read(__instance, "m_genderField") is DropdownField gender) gender.value = __state.Gender;
+            if (GameAdapter.Read(__instance, "m_languageField") is DropdownField language
+                && __state.Language >= 0 && __state.Language < language.choices.Count) language.index = __state.Language;
+            if (__state.Visible) GameAdapter.Call(__instance, "SetVisible", true);
+        }
+
+        private static void FinishCreatorContent(CreatorContentState __state)
+        {
+            if (__state?.Resume == true) creatorRebuilding = __state.Previous;
         }
 
         private static void BeforeCallerQueueContent(object __instance, object __0, out string __state)

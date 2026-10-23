@@ -445,6 +445,13 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 yield return new WaitForSecondsRealtime(0.5f);
                 if (singleComputer && !Environment.GetCommandLineArgs().Contains("--swyf-only-laptop-transition-tests"))
                 {
+                    if (Environment.GetCommandLineArgs().Contains("--swyf-only-creator-tests"))
+                    {
+                        var creator = TestNativeCreator(os, surface);
+                        try { while (creator.MoveNext()) yield return creator.Current; }
+                        finally { (creator as IDisposable)?.Dispose(); }
+                        yield break;
+                    }
                     if (Environment.GetCommandLineArgs().Contains("--swyf-only-caller-queue-tests"))
                     {
                         var callerQueue = TestNativeCallerQueue(os, surface);
@@ -528,6 +535,9 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     var callerQueueChecks = TestNativeCallerQueue(os, surface);
                     try { while (callerQueueChecks.MoveNext()) yield return callerQueueChecks.Current; }
                     finally { (callerQueueChecks as IDisposable)?.Dispose(); }
+                    var creatorChecks = TestNativeCreator(os, surface);
+                    try { while (creatorChecks.MoveNext()) yield return creatorChecks.Current; }
+                    finally { (creatorChecks as IDisposable)?.Dispose(); }
                     var storeChecks = TestNativeStore(os, surface);
                     try { while (storeChecks.MoveNext()) yield return storeChecks.Current; }
                     finally { (storeChecks as IDisposable)?.Dispose(); }
