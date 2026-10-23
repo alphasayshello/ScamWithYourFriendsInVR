@@ -438,6 +438,13 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 yield return new WaitForSecondsRealtime(0.5f);
                 if (singleComputer)
                 {
+                    if (Environment.GetCommandLineArgs().Contains("--swyf-only-zoomy-tests"))
+                    {
+                        var zoomy = TestNativeZoomy(os, surface);
+                        try { while (zoomy.MoveNext()) yield return zoomy.Current; }
+                        finally { (zoomy as IDisposable)?.Dispose(); }
+                        yield break;
+                    }
                     if (Environment.GetCommandLineArgs().Contains("--swyf-only-paint-tests"))
                     {
                         var focusedPaint = TestNativePaint(os, surface);
@@ -471,6 +478,9 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     var cameraChecks = TestNativeCamera(os, surface);
                     try { while (cameraChecks.MoveNext()) yield return cameraChecks.Current; }
                     finally { (cameraChecks as IDisposable)?.Dispose(); }
+                    var zoomyChecks = TestNativeZoomy(os, surface);
+                    try { while (zoomyChecks.MoveNext()) yield return zoomyChecks.Current; }
+                    finally { (zoomyChecks as IDisposable)?.Dispose(); }
                     var storeChecks = TestNativeStore(os, surface);
                     try { while (storeChecks.MoveNext()) yield return storeChecks.Current; }
                     finally { (storeChecks as IDisposable)?.Dispose(); }

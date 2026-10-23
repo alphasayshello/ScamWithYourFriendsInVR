@@ -13,6 +13,8 @@
 - One setup command prepares dependencies, builds and creates a separate game copy with verified files and PC/VR launchers. A fresh current-version install passes end-to-end setup checks without changing the stock game.
 
 ## Changed, needs another headset check
+- Zoomy now keeps the local head visible to its webcam while excluding floating VR UI, then restores the headset view. Simulated checks cover joining/leaving, mute/deafen, chat visibility, screen-share start/stop, controller-focused text sends and resource cleanup. Rebuilding the app no longer duplicates chat messages or its event listeners. Other players receiving video/audio and headset usability still need checking.
+- Paint can rebuild its controls without duplicate-brush errors or losing the current drawing, selected brush, saved path or undo history. Controller drawing, undo/redo and the rebuilt button references pass simulated checks.
 
 - PC/VR launchers now observe the first two seconds of the game process and report an immediate exit with its code. Setup/portable-install checks cover this behaviour, including a real short-lived native process. This does not certify loading, Steam authentication or headset readiness.
 
@@ -84,6 +86,8 @@
 - Remote voice position follows the tracked head, but how that sounds to other players still needs checking.
 
 ## Not finished
+
+- Intermittent paused-video seeking: one full computer run kept the old frame after a controller seek. The standalone recorder and a subsequent full run passed that check; the intermittent failure still needs investigation.
 
 - Every computer app and every action inside those apps.
 - Combat damage against players, charged/ranged hit outcomes and remaining weapons, other food variants, boost trajectories/final cone use and all held-item variants in VR.

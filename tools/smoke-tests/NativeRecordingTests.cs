@@ -102,7 +102,8 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                     bool correctFrame = wasPlaying ? frame.g > frame.r + .35f && frame.g > frame.b + .35f
                         : frame.b > frame.r + .35f && frame.b > frame.g + .35f;
                     if (correctFrame && (wasPlaying || Math.Abs(Convert.ToDouble(Member(playback, "CurrentTime")) - expectedTime) < .2)) break;
-                    Require(Time.realtimeSinceStartup < deadline, "Native video frame did not follow controller seek; playing=" + wasPlaying + "; colour=" + frame);
+                    Require(Time.realtimeSinceStartup < deadline, "Native video frame did not follow controller seek; playing=" + wasPlaying + "; colour=" + frame
+                        + "; requestedTime=" + expectedTime + "; currentTime=" + Member(playback, "CurrentTime") + "; duration=" + Member(playback, "Duration"));
                     yield return null;
                 }
                 Require(Member(fixture, "m_seekingPlayback") is bool released && !released

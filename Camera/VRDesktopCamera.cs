@@ -13,12 +13,17 @@ namespace ScamWithYourFriendsInVR.Camera
         private int scheduledFrame = -1;
         internal UnityEngine.Camera Source { get; private set; }
         private readonly Dictionary<Renderer, UnityEngine.Rendering.ShadowCastingMode> headVisibility = new Dictionary<Renderer, UnityEngine.Rendering.ShadowCastingMode>();
-        private readonly HashSet<UnityEngine.Camera> photoCameras = new HashSet<UnityEngine.Camera>();
+        private readonly HashSet<UnityEngine.Camera> captureCameras = new HashSet<UnityEngine.Camera>();
+        private readonly HashSet<UnityEngine.Camera> uiExcludedCameras = new HashSet<UnityEngine.Camera>();
+        private UnityEngine.Camera maskCamera;
+        private int originalMask, appliedMask;
         private readonly List<Renderer> captureRenderers = new List<Renderer>();
-        internal void RegisterPhoto(UnityEngine.Camera camera)
+        internal void RegisterCapture(UnityEngine.Camera camera, bool excludeUI = false)
         {
-            photoCameras.RemoveWhere(candidate => candidate == null);
-            if (camera != null && camera != VRManager.Instance?.Rig?.Head) photoCameras.Add(camera);
+            captureCameras.RemoveWhere(candidate => candidate == null);
+            uiExcludedCameras.RemoveWhere(candidate => candidate == null);
+            if (camera != null && camera != VRManager.Instance?.Rig?.Head) captureCameras.Add(camera);
+            if (excludeUI && camera != null && camera != VRManager.Instance?.Rig?.Head) uiExcludedCameras.Add(camera);
         }
         private readonly List<System.WeakReference> owners = new List<System.WeakReference>();
 
@@ -56,8 +61,14 @@ namespace ScamWithYourFriendsInVR.Camera
         private void BeginPreview(UnityEngine.Rendering.ScriptableRenderContext context, UnityEngine.Camera camera)
         {
             RestoreVisibility();
-            bool photo = photoCameras.Contains(camera) && camera.targetTexture != null;
-            if (!photo && (camera != preview || Source == null || Source == VRManager.Instance?.Rig?.Head)) return;
+            bool capture = captureCameras.Contains(camera) && camera.targetTexture != null;
+            if (!capture && (camera != preview || Source == null || Source == VRManager.Instance?.Rig?.Head)) return;
+            if (camera == preview || uiExcludedCameras.Contains(camera))
+            {
+                maskCamera = camera; originalMask = camera.cullingMask;
+                appliedMask = originalMask & ~(1 << 5);
+                camera.cullingMask = appliedMask;
+            }
             Component player = GameAdapter.Controller;
             if (player == null) return;
             player.GetComponentsInChildren(true, captureRenderers);
@@ -71,13 +82,15 @@ namespace ScamWithYourFriendsInVR.Camera
 
         private void EndPreview(UnityEngine.Rendering.ScriptableRenderContext context, UnityEngine.Camera camera)
         {
-            if (camera == preview || photoCameras.Contains(camera)) RestoreVisibility();
+            if (camera == preview || captureCameras.Contains(camera)) RestoreVisibility();
         }
 
         private void RestoreVisibility()
         {
             foreach (var state in headVisibility) if (state.Key != null) state.Key.shadowCastingMode = state.Value;
             headVisibility.Clear();
+            if (maskCamera != null && maskCamera.cullingMask == appliedMask) maskCamera.cullingMask = originalMask;
+            maskCamera = null;
         }
 
         private void OnDisable()
@@ -85,7 +98,7 @@ namespace ScamWithYourFriendsInVR.Camera
             UnityEngine.Rendering.RenderPipelineManager.beginCameraRendering -= BeginPreview;
             UnityEngine.Rendering.RenderPipelineManager.endCameraRendering -= EndPreview;
             RestoreVisibility();
-            photoCameras.Clear(); captureRenderers.Clear();
+            captureCameras.Clear(); uiExcludedCameras.Clear(); captureRenderers.Clear();
             if (preview != null) preview.enabled = false;
         }
 

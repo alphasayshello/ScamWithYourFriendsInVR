@@ -149,7 +149,7 @@ namespace ScamWithYourFriendsInVR.Patches
             if (camera == null) return;
             // Keep native photo renders separate from the first-person view:
             // only their render pass may temporarily show the local head.
-            VRManager.Instance.Rig.GetComponent<Camera.VRDesktopCamera>()?.RegisterPhoto(camera);
+            VRManager.Instance.Rig.GetComponent<Camera.VRDesktopCamera>()?.RegisterCapture(camera);
         }
 
         private static void AfterMeshVisibility(object __instance)

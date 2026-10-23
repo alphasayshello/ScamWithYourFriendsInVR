@@ -51,6 +51,35 @@ namespace ScamWithYourFriendsInVR.Patches
             catch (Exception ex) { GameAdapter.Report("Desktop camera preview patch", ex); }
             try
             {
+                Type zoomy = ReflectionTypes.Find("Kolkata.UI.KolkataOsZoomyApp");
+                var webcam = zoomy == null ? null : AccessTools.Method(zoomy, "ResolveWebcamTexture");
+                if (webcam != null) harmony.Patch(webcam, postfix: new HarmonyMethod(typeof(DesktopUIPatches), nameof(AfterZoomyWebcam)));
+                else Plugin.Log.LogWarning("Native meeting webcam method unavailable; Zoomy capture visibility unverified.");
+            }
+            catch (Exception ex) { GameAdapter.Report("Meeting webcam capture patch", ex); }
+            try
+            {
+                Type zoomy = ReflectionTypes.Find("Kolkata.UI.KolkataOsZoomyApp");
+                var build = zoomy == null ? null : AccessTools.Method(zoomy, "BuildContent");
+                var dispose = zoomy == null ? null : AccessTools.Method(zoomy, "Dispose");
+                if (build != null && dispose != null)
+                {
+                    harmony.Patch(build, prefix: new HarmonyMethod(typeof(DesktopUIPatches), nameof(BeforeZoomyContent)));
+                    harmony.Patch(dispose, prefix: new HarmonyMethod(typeof(DesktopUIPatches), nameof(BeforeZoomyDispose)));
+                }
+                else Plugin.Log.LogWarning("Native meeting lifecycle methods unavailable; Zoomy rebuild subscriptions unverified.");
+            }
+            catch (Exception ex) { GameAdapter.Report("Meeting content lifecycle patch", ex); }
+            try
+            {
+                Type paint = ReflectionTypes.Find("Kolkata.UI.KolkataOsPaintApp");
+                var rail = paint == null ? null : AccessTools.Method(paint, "BuildBrushRail");
+                if (rail != null) harmony.Patch(rail, prefix: new HarmonyMethod(typeof(DesktopUIPatches), nameof(BeforePaintBrushRail)));
+                else Plugin.Log.LogWarning("Native brush rail unavailable; paint content recreation unverified.");
+            }
+            catch (Exception ex) { GameAdapter.Report("Paint content lifecycle patch", ex); }
+            try
+            {
                 Type app = ReflectionTypes.Find("Kolkata.UI.KolkataOsBanditCamApp");
                 var build = app == null ? null : AccessTools.Method(app, "BuildPlaybackControls");
                 if (build != null) harmony.Patch(build, postfix: new HarmonyMethod(typeof(DesktopUIPatches), nameof(AfterPlaybackControls)));
@@ -198,6 +227,55 @@ namespace ScamWithYourFriendsInVR.Patches
             position.x = Mathf.Clamp(position.x, offset.x, offset.x + width);
             position.y = Mathf.Clamp(position.y, offset.y, offset.y + height);
             GameAdapter.Write(evt, "localPosition", position);
+        }
+
+        private static void AfterZoomyWebcam(object __instance, object __0, Texture __result)
+        {
+            VRManager manager = VRManager.Instance;
+            if (manager == null || !manager.Ready || manager.Rig == null || !(__result is RenderTexture texture)) return;
+            var feeds = GameAdapter.Read(__instance, "m_webcamFeeds") as System.Collections.IDictionary;
+            object id = GameAdapter.Read(__0, "netId");
+            if (feeds == null || id == null || !feeds.Contains(id)) return;
+            var camera = GameAdapter.Read(feeds[id], "Camera") as UnityEngine.Camera;
+            if (camera != null && camera.targetTexture == texture)
+                manager.Rig.GetComponent<Camera.VRDesktopCamera>()?.RegisterCapture(camera, true);
+        }
+
+        private static void BeforeZoomyContent(object __instance)
+        {
+            if (Plugin.Mode?.Value != Plugin.PlayerMode.VR) return;
+            DetachZoomyHandlers(__instance);
+            (GameAdapter.Read(__instance, "m_tickSchedule") as IVisualElementScheduledItem)?.Pause();
+            (GameAdapter.Read(__instance, "m_tooltip") as IDisposable)?.Dispose();
+        }
+
+        private static void BeforeZoomyDispose(object __instance)
+        {
+            if (Plugin.Mode?.Value == Plugin.PlayerMode.VR) DetachZoomyHandlers(__instance);
+        }
+
+        private static void BeforePaintBrushRail(object __instance)
+        {
+            if (Plugin.Mode?.Value != Plugin.PlayerMode.VR) return;
+            // The native builder adds every brush again after replacing the
+            // window content. Discard its detached button references only.
+            (GameAdapter.Read(__instance, "m_brushButtons") as System.Collections.IDictionary)?.Clear();
+        }
+
+        private static void DetachZoomyHandlers(object owner)
+        {
+            Type participant = ReflectionTypes.Find("KolkataZoomyPlayer");
+            if (participant == null || owner == null) return;
+            foreach (string name in new[] { "ParticipantsChanged", "ChatMessageReceived" })
+            {
+                var field = AccessTools.Field(participant, name);
+                var changed = participant.GetEvent(name, BindingFlags.Public | BindingFlags.Static);
+                if (!(field?.GetValue(null) is Delegate handlers) || changed == null) continue;
+                string method = name == "ParticipantsChanged" ? "OnParticipantsChanged" : "OnChatMessage";
+                foreach (Delegate handler in handlers.GetInvocationList())
+                    if (ReferenceEquals(handler.Target, owner) && handler.Method.Name == method)
+                        changed.RemoveEventHandler(null, handler);
+            }
         }
 
         private static bool BeforeCameraPreview(object __instance)

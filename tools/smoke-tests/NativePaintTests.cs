@@ -108,6 +108,25 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 finally { Destroy(decoded); }
                 Logger.LogInfo("PAINT PASS: controller ray draws a native stroke and saves matching image pixels in an isolated folder");
 
+                appFixtureAim = false; manager.Pointer.Cancel();
+                object canvasBefore = Member(paint, "m_canvas"), brushBefore = Member(paint, "m_activeBrush");
+                Texture2D textureBefore = Texture();
+                for (int rebuild = 0; rebuild < 2; rebuild++)
+                {
+                    AccessTools.Method(os.GetType(), "RefreshApp").Invoke(os, new[] { app });
+                    yield return null; yield return new WaitForEndOfFrame();
+                    var brushes = Member(paint, "m_brushButtons") as IDictionary;
+                    var content = Member(app, "WindowContent") as VisualElement;
+                    Require(ReferenceEquals(Member(paint, "m_canvas"), canvasBefore) && ReferenceEquals(Texture(), textureBefore)
+                        && ReferenceEquals(Member(paint, "m_activeBrush"), brushBefore) && DarkCenter()
+                        && (bool)Member(canvasBefore, "CanUndo") && Member(paint, "m_currentPath") as string == saved,
+                        "Native paint content rebuild lost its canvas, selected brush, saved path or undo history");
+                    Require(brushes != null && brushes.Count == ((IEnumerable)Member(paint, "m_brushes")).Cast<object>().Count()
+                        && brushes.Values.Cast<Button>().All(button => button.panel == surface.Panel && content.Contains(button)),
+                        "Native paint rebuild retained detached or missing brush buttons");
+                }
+                Logger.LogInfo("PAINT REBUILD PASS: repeated native content recreation retains artwork pixels/history/brush/path and binds one current button per brush");
+
                 appFixtureAim = false;
                 var click = ClickAppControl(surface, Member(paint, "m_undoButton") as VisualElement);
                 try { while (click.MoveNext()) yield return click.Current; }
