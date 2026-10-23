@@ -26,9 +26,23 @@ namespace ScamWithYourFriendsInVR.Patches
         private static Component CurrentHud => hud.TryGetTarget(out Component current) && current != null ? current : null;
         internal static void RememberHud(object candidate) { if (candidate is Component component && component != null) hud.SetTarget(component); }
         internal static void ClearUiState() => hud.SetTarget(null);
-        internal enum ModalLayer { None, Results, Feedback }
+        internal enum ModalLayer { None, Results, Feedback, ComputerConfirmation }
         internal static ModalLayer ActiveModal => Static("FeedbackUi", "IsOpen") is bool feedback && feedback ? ModalLayer.Feedback
-            : Read(CurrentHud, "runBreakdownVisible") is bool review && review ? ModalLayer.Results : ModalLayer.None;
+            : Read(CurrentHud, "runBreakdownVisible") is bool review && review ? ModalLayer.Results
+            : ComputerConfirmationOwner != null ? ModalLayer.ComputerConfirmation : ModalLayer.None;
+        internal static object ComputerConfirmationOwner
+        {
+            get
+            {
+                if (!MonitorCaptured) return null;
+                object desktop = Read(Static("KolkataOsSingleton", "Instance"), "Controller");
+                object active = Read(desktop, "m_activeApp");
+                if (Read(active, "State")?.ToString() != "OpenVisible"
+                    || Read(Read(active, "Definition"), "contentType") as string != "gameManager") return null;
+                object owner = Read(desktop, "m_gameManagerApp");
+                return Read(owner, "pendingAction") is Delegate ? owner : null;
+            }
+        }
         internal static bool ModalOverlayOpen => ActiveModal != ModalLayer.None;
         internal static Component LocalPlayer => Static("Metater.MetaPlayer", "LocalPlayerInstance") as Component;
         internal static Component Controller => Static("Metater.MetaPlayerController", "Instance") as Component;
@@ -174,6 +188,14 @@ namespace ScamWithYourFriendsInVR.Patches
             }
             object players = Static("TabMenu", "Instance");
             if (Read(players, "IsOpen") is bool playersOpen && playersOpen) { Write(players, "IsOpen", false); return; }
+            object confirmation = ComputerConfirmationOwner;
+            if (confirmation != null)
+            {
+                Call(confirmation, "CancelPendingAction");
+                Type inputState = ReflectionTypes.Find("KolkataMonitorInputState");
+                if (inputState != null) AccessTools.Method(inputState, "ConsumeEscapeThisFrame")?.Invoke(null, null);
+                return;
+            }
             if (MonitorCaptured)
             {
                 object desktop = Static("KolkataOsSingleton", "Instance");

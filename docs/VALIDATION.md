@@ -14,6 +14,8 @@
 
 ## Changed, needs another headset check
 
+- Laptop game-manager confirmations now cancel with controller menu/back before exiting the computer. Opening a confirmation releases the old pointer press and requires a fresh trigger press to confirm. Simulated checks on both supported game versions cover Cancel, Back, held-input ownership, one confirmation dispatch and content rebuilds. Actual save clearing, loading, restarts, day changes and use on the physical laptop in a headset still need checking.
+
 - Disscord preserves contact search and an existing draft when its window content rebuilds. Its native newest-message scroll now finds the actual final history row. Simulated checks cover offline contact selection/read state, search, rebuilds, latest-message positioning and controller history scrolling. An unavailable attachment reports its native failure without activating a game virus. Live recipients, outgoing delivery, positive attachment effects and headset usability still need checking.
 
 - Meteor Cookie now rebuilds its window without accumulating session listeners, detached particle pools or old category tabs. Totals and leaderboard panels refresh, live bonus events retain their expiry, and the next event keeps its native schedule. Simulated controller checks cover clicking, categories, held-input cancellation during rebuilds and a native upgrade purchase in an isolated unsaved session. Real saved progression, every upgrade/boost, leaderboard delivery and headset usability still need checking.

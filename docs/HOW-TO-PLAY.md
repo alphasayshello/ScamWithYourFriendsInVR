@@ -24,6 +24,8 @@ The laser stays visible in menus and computers. During normal play it appears fo
 
 Menu/back closes an open VR keyboard, feedback overlay or results panel before changing the menu behind it. Use a fresh press for each layer; dismissing results does not also open settings.
 
+In the laptop's game manager, menu/back cancels an open confirmation before exiting the computer. Release the trigger and press again after a confirmation opens; an old held press cannot activate its Confirm button.
+
 The laser stays visible while feedback or results are open, including when pointing away from the panel. Gameplay actions pause behind these overlays; a cancelled give-up hold needs a fresh press after closing them.
 
 If an overlay opens during a button press or slider drag, that interaction is cancelled. Release the trigger before using the new overlay, then press again. Closing it does not resume the old drag or turn your next click into a double click.
