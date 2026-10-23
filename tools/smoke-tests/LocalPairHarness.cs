@@ -128,6 +128,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 bool tackle = Environment.GetCommandLineArgs().Contains("--swyf-only-tackle-tests");
                 bool voice = Environment.GetCommandLineArgs().Contains("--swyf-only-voice-tests");
                 bool xray = Environment.GetCommandLineArgs().Contains("--swyf-only-xray-tests");
+                bool launcherFlight = Environment.GetCommandLineArgs().Contains("--swyf-only-javelin-flight-tests");
                 bool jump = Environment.GetCommandLineArgs().Contains("--swyf-only-jump-tests");
                 bool sprint = Environment.GetCommandLineArgs().Contains("--swyf-only-sprint-tests");
                 bool heldWeapons = Environment.GetCommandLineArgs().Contains("--swyf-only-held-weapon-tests");
@@ -147,6 +148,7 @@ namespace ScamWithYourFriendsInVR.SmokeTests
                 else if (singleCombat && tackle) { test = TestNativeTackle(); testName = "TACKLE"; }
                 else if (singleCombat && voice) { test = TestNativeVoice(); testName = "VOICE"; }
                 else if (singleCombat && xray) { test = TestNativeXray(); testName = "XRAY"; }
+                else if (singleCombat && launcherFlight) { test = TestNativeJavelinFlight(); testName = "LAUNCHER"; }
                 else if (singleCombat && spray) { test = Environment.GetCommandLineArgs().Contains("--swyf-spray-recovery-tests") ? TestNativeSprayRecovery() : TestNativeSpray(); testName = "SPRAY"; }
                 else if (singleCombat && jump) { test = TestNativeJump(); testName = "JUMP"; }
                 else if (singleCombat && sprint) { test = TestNativeSprint(); testName = "SPRINT"; }
